@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tech_challenge}
+      POSTGRES_USER: ${POSTGRES_USER:-tech_challenge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tech_challenge}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # api:
+  #   build:
+  #     context: .
+  #   environment:
+  #     PORT: ${PORT:-8080}
+  #     DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-tech_challenge}:${POSTGRES_PASSWORD:-tech_challenge}@postgres:5432/${POSTGRES_DB:-tech_challenge}?sslmode=disable}
+  #   ports:
+  #     - "${PORT:-8080}:8080"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+
+volumes:
+  pgdata:

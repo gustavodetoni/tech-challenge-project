@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -13,6 +14,7 @@ type Config struct {
 }
 
 func Load() (Config, error) {
+	_ = godotenv.Load()
 	viper.SetDefault("PORT", "8080")
 	viper.AutomaticEnv()
 
@@ -27,4 +29,3 @@ func Load() (Config, error) {
 		DatabaseURL: viper.GetString("DATABASE_URL"),
 	}, nil
 }
-

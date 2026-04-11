@@ -9,13 +9,28 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+    command: ["sh", "-c", "/goose -dir=/app/internal/infra/db/migrations postgres \"$DATABASE_URL\" up"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-tech_challenge}:${POSTGRES_PASSWORD:-tech_challenge}@postgres:5432/${POSTGRES_DB:-tech_challenge}}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # api:
   #   build:
   #     context: .
   #   environment:
   #     PORT: ${PORT:-8080}
-  #     DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-tech_challenge}:${POSTGRES_PASSWORD:-tech_challenge}@postgres:5432/${POSTGRES_DB:-tech_challenge}?sslmode=disable}
+  #     DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-tech_challenge}:${POSTGRES_PASSWORD:-tech_challenge}@postgres:5432/${POSTGRES_DB:-tech_challenge}}
   #   ports:
   #     - "${PORT:-8080}:8080"
   #   depends_on:

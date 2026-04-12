@@ -19,10 +19,14 @@ func main() {
 	}
 
 	if cfg.DatabaseURL != "" {
-		if _, err := db.Connect(context.Background(), cfg.DatabaseURL); err != nil {
+		gormDB, err := db.Connect(context.Background(), cfg.DatabaseURL)
+		if err != nil {
 			log.Fatal(err)
 		}
 		log.Println("Connected to database")
+		if err := db.InitAndCheckMigration(context.Background(), gormDB); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	router := gin.New()

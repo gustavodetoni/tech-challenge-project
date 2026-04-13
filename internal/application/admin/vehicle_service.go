@@ -11,6 +11,7 @@ import (
 
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
+	"github.com/soat-architecture/tech-challenge-project/pkg/br/plate"
 )
 
 type VehicleService struct {
@@ -22,7 +23,7 @@ func NewVehicleService(repo repository.VehicleRepository) *VehicleService {
 }
 
 func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
-	in.Plate = normalizePlate(in.Plate)
+	in.Plate = plate.Normalize(in.Plate)
 	in.Brand = strings.TrimSpace(in.Brand)
 	in.Model = strings.TrimSpace(in.Model)
 	if in.ClientID == "" {
@@ -50,7 +51,7 @@ func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehic
 }
 
 func (s *VehicleService) Update(ctx context.Context, id string, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
-	in.Plate = normalizePlate(in.Plate)
+	in.Plate = plate.Normalize(in.Plate)
 	in.Brand = strings.TrimSpace(in.Brand)
 	in.Model = strings.TrimSpace(in.Model)
 	if in.ClientID == "" {
@@ -84,11 +85,4 @@ func (s *VehicleService) FindByID(ctx context.Context, id string) (*vehicle.Vehi
 
 func (s *VehicleService) ListByClientID(ctx context.Context, clientID string, limit, offset int) ([]vehicle.Vehicle, error) {
 	return s.repo.ListByClientID(ctx, clientID, limit, offset)
-}
-
-func normalizePlate(v string) string {
-	v = strings.ToUpper(strings.TrimSpace(v))
-	v = strings.ReplaceAll(v, "-", "")
-	v = strings.ReplaceAll(v, " ", "")
-	return v
 }

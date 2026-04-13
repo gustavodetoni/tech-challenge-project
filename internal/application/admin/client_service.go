@@ -6,12 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brazilian-utils/go/cnpj"
-	"github.com/brazilian-utils/go/cpf"
 	"github.com/google/uuid"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
+	"github.com/soat-architecture/tech-challenge-project/pkg/br/document"
 )
 
 type ClientService struct {
@@ -24,7 +23,7 @@ func NewClientService(repo repository.ClientRepository) *ClientService {
 
 func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.Client, error) {
 	in.Name = strings.TrimSpace(in.Name)
-	in.DocumentNumber = strings.TrimSpace(in.DocumentNumber)
+	in.DocumentNumber = document.Normalize(in.DocumentNumber)
 	if in.Name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -45,7 +44,7 @@ func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.C
 
 func (s *ClientService) Update(ctx context.Context, id string, in client.Client) (*client.Client, error) {
 	in.Name = strings.TrimSpace(in.Name)
-	in.DocumentNumber = strings.TrimSpace(in.DocumentNumber)
+	in.DocumentNumber = document.Normalize(in.DocumentNumber)
 	if in.Name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -77,9 +76,9 @@ func (s *ClientService) List(ctx context.Context, limit, offset int) ([]client.C
 func isValidDocument(docType client.DocumentType, doc string) bool {
 	switch docType {
 	case client.DocumentTypeCPF:
-		return cpf.IsValid(doc)
+		return document.IsValidCPF(doc)
 	case client.DocumentTypeCNPJ:
-		return cnpj.IsValid(doc)
+		return document.IsValidCNPJ(doc)
 	default:
 		return false
 	}

@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brazilian-utils/go/cnpj"
-	"github.com/brazilian-utils/go/cpf"
 	"github.com/brazilian-utils/go/licenseplate"
 	"github.com/google/uuid"
 
@@ -20,6 +18,8 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
+	"github.com/soat-architecture/tech-challenge-project/pkg/br/document"
+	"github.com/soat-architecture/tech-challenge-project/pkg/br/plate"
 )
 
 var (
@@ -85,12 +85,13 @@ type CreateDraftOutput struct {
 
 func (s *Service) CreateDraft(ctx context.Context, in CreateDraftInput) (*CreateDraftOutput, error) {
 	doc := strings.TrimSpace(in.ClientDocumentNumber)
+	doc = document.Normalize(doc)
 	if !isValidDocument(in.ClientDocumentType, doc) {
 		return nil, fmt.Errorf("%w: invalid document", ErrInvalidInput)
 	}
 
-	plate := normalizePlate(in.VehiclePlate)
-	if !licenseplate.IsValid(plate, "") {
+	vehiclePlate := plate.Normalize(in.VehiclePlate)
+	if !licenseplate.IsValid(vehiclePlate, "") {
 		return nil, fmt.Errorf("%w: invalid plate", ErrInvalidInput)
 	}
 
@@ -109,7 +110,7 @@ func (s *Service) CreateDraft(ctx context.Context, in CreateDraftInput) (*Create
 		return nil, err
 	}
 
-	v, err := s.findOrCreateVehicle(ctx, cl.ID, plate, in.VehicleBrand, in.VehicleModel, in.VehicleManufactureYear, in.VehicleModelYear, in.VehicleColor)
+	v, err := s.findOrCreateVehicle(ctx, cl.ID, vehiclePlate, in.VehicleBrand, in.VehicleModel, in.VehicleManufactureYear, in.VehicleModelYear, in.VehicleColor)
 	if err != nil {
 		return nil, err
 	}
@@ -184,15 +185,15 @@ func (s *Service) Deliver(ctx context.Context, serviceOrderID string, changedByU
 }
 
 func (s *Service) ClientGetByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
-	return s.flow.GetClientViewByCode(ctx, code, documentNumber)
+	return s.flow.GetClientViewByCode(ctx, code, document.Normalize(documentNumber))
 }
 
 func (s *Service) ClientApproveBudget(ctx context.Context, code string, documentNumber string, approvedByName *string) error {
-	return s.flow.ApproveLatestBudgetByCode(ctx, code, documentNumber, approvedByName)
+	return s.flow.ApproveLatestBudgetByCode(ctx, code, document.Normalize(documentNumber), approvedByName)
 }
 
 func (s *Service) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {
-	return s.flow.RejectLatestBudgetByCode(ctx, code, documentNumber, reason)
+	return s.flow.RejectLatestBudgetByCode(ctx, code, document.Normalize(documentNumber), reason)
 }
 
 func (s *Service) findOrCreateClient(ctx context.Context, docType client.DocumentType, docNumber, name string, email, phone *string) (*client.Client, error) {
@@ -346,19 +347,12 @@ func unique(ids []string) []string {
 func isValidDocument(docType client.DocumentType, doc string) bool {
 	switch docType {
 	case client.DocumentTypeCPF:
-		return cpf.IsValid(doc)
+		return document.IsValidCPF(doc)
 	case client.DocumentTypeCNPJ:
-		return cnpj.IsValid(doc)
+		return document.IsValidCNPJ(doc)
 	default:
 		return false
 	}
-}
-
-func normalizePlate(v string) string {
-	v = strings.ToUpper(strings.TrimSpace(v))
-	v = strings.ReplaceAll(v, "-", "")
-	v = strings.ReplaceAll(v, " ", "")
-	return v
 }
 
 func newServiceOrderCode() (string, error) {

@@ -3,6 +3,7 @@ module github.com/soat-architecture/tech-challenge-project
 go 1.25.0
 
 require (
+	github.com/brazilian-utils/go v0.0.0-20260207184714-4cadbf30cf1b
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0

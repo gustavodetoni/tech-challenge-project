@@ -15,6 +15,13 @@ type Deps struct {
 	Health *controllers.HealthController
 	Auth   *controllers.AuthController
 	AuthMW *middlewares.AuthMiddleware
+
+	AdminClients       *controllers.AdminClientsController
+	AdminVehicles      *controllers.AdminVehiclesController
+	AdminServices      *controllers.AdminServicesController
+	AdminParts         *controllers.AdminPartsController
+	AdminServiceOrders *controllers.AdminServiceOrdersController
+	AdminMetrics       *controllers.AdminMetricsController
 }
 
 func Register(router *gin.Engine, deps Deps) {
@@ -28,4 +35,37 @@ func Register(router *gin.Engine, deps Deps) {
 	protected := router.Group("/")
 	protected.Use(deps.AuthMW.RequireAuth())
 	protected.GET("/me", deps.Auth.Me)
+
+	adminGroup := router.Group("/admin")
+	adminGroup.Use(deps.AuthMW.RequireRoles("ADMIN", "MANAGER"))
+
+	adminGroup.GET("/clients", deps.AdminClients.List)
+	adminGroup.POST("/clients", deps.AdminClients.Create)
+	adminGroup.GET("/clients/:id", deps.AdminClients.Get)
+	adminGroup.PUT("/clients/:id", deps.AdminClients.Update)
+	adminGroup.DELETE("/clients/:id", deps.AdminClients.Delete)
+
+	adminGroup.GET("/clients/:id/vehicles", deps.AdminVehicles.ListByClient)
+	adminGroup.POST("/clients/:id/vehicles", deps.AdminVehicles.CreateForClient)
+	adminGroup.GET("/vehicles/:id", deps.AdminVehicles.Get)
+	adminGroup.PUT("/vehicles/:id", deps.AdminVehicles.Update)
+	adminGroup.DELETE("/vehicles/:id", deps.AdminVehicles.Delete)
+
+	adminGroup.GET("/services", deps.AdminServices.List)
+	adminGroup.POST("/services", deps.AdminServices.Create)
+	adminGroup.GET("/services/:id", deps.AdminServices.Get)
+	adminGroup.PUT("/services/:id", deps.AdminServices.Update)
+	adminGroup.DELETE("/services/:id", deps.AdminServices.Delete)
+
+	adminGroup.GET("/parts", deps.AdminParts.List)
+	adminGroup.POST("/parts", deps.AdminParts.Create)
+	adminGroup.GET("/parts/:id", deps.AdminParts.Get)
+	adminGroup.PUT("/parts/:id", deps.AdminParts.Update)
+	adminGroup.DELETE("/parts/:id", deps.AdminParts.Delete)
+	adminGroup.POST("/parts/:id/stock-movements", deps.AdminParts.AdjustStock)
+
+	adminGroup.GET("/service-orders", deps.AdminServiceOrders.List)
+	adminGroup.GET("/service-orders/:id", deps.AdminServiceOrders.Get)
+
+	adminGroup.GET("/metrics/avg-execution-time", deps.AdminMetrics.AverageExecutionTime)
 }

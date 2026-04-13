@@ -1,5 +1,17 @@
 basePath: /
 definitions:
+  controllers.adjustStockRequest:
+    properties:
+      movement_type:
+        type: string
+      notes:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - movement_type
+    - quantity
+    type: object
   controllers.authResponse:
     properties:
       access_token:
@@ -12,6 +24,102 @@ definitions:
         type: string
       user_id:
         type: string
+    type: object
+  controllers.avgExecutionResponse:
+    properties:
+      average_minutes:
+        type: number
+    type: object
+  controllers.clientResponse:
+    properties:
+      document_number:
+        type: string
+      document_type:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  controllers.createClientRequest:
+    properties:
+      document_number:
+        type: string
+      document_type:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    required:
+    - document_number
+    - document_type
+    - name
+    type: object
+  controllers.createPartRequest:
+    properties:
+      active:
+        type: boolean
+      description:
+        type: string
+      name:
+        type: string
+      sku:
+        type: string
+      stock_quantity:
+        type: integer
+      unit_price_cents:
+        type: integer
+    required:
+    - name
+    - sku
+    type: object
+  controllers.createServiceRequest:
+    properties:
+      active:
+        type: boolean
+      base_price_cents:
+        type: integer
+      description:
+        type: string
+      estimated_minutes:
+        type: integer
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  controllers.createVehicleRequest:
+    properties:
+      brand:
+        type: string
+      chassis:
+        type: string
+      color:
+        type: string
+      manufacture_year:
+        type: integer
+      mileage:
+        type: integer
+      model:
+        type: string
+      model_year:
+        type: integer
+      notes:
+        type: string
+      plate:
+        type: string
+    required:
+    - brand
+    - model
+    - model_year
+    - plate
     type: object
   controllers.loginRequest:
     properties:
@@ -38,6 +146,23 @@ definitions:
       role:
         type: string
     type: object
+  controllers.partResponse:
+    properties:
+      active:
+        type: boolean
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      sku:
+        type: string
+      stock_quantity:
+        type: integer
+      unit_price_cents:
+        type: integer
+    type: object
   controllers.registerRequest:
     properties:
       email:
@@ -51,12 +176,772 @@ definitions:
     - name
     - password
     type: object
+  controllers.serviceOrderDetailResponse:
+    properties:
+      client_id:
+        type: string
+      code:
+        type: string
+      id:
+        type: string
+      opened_at:
+        type: string
+      status:
+        type: string
+      vehicle_id:
+        type: string
+    type: object
+  controllers.serviceOrderSummaryResponse:
+    properties:
+      client_id:
+        type: string
+      client_name:
+        type: string
+      code:
+        type: string
+      id:
+        type: string
+      opened_at:
+        type: string
+      plate:
+        type: string
+      status:
+        type: string
+      vehicle_id:
+        type: string
+    type: object
+  controllers.serviceResponse:
+    properties:
+      active:
+        type: boolean
+      base_price_cents:
+        type: integer
+      description:
+        type: string
+      estimated_minutes:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  controllers.vehicleResponse:
+    properties:
+      brand:
+        type: string
+      chassis:
+        type: string
+      client_id:
+        type: string
+      color:
+        type: string
+      id:
+        type: string
+      manufacture_year:
+        type: integer
+      mileage:
+        type: integer
+      model:
+        type: string
+      model_year:
+        type: integer
+      notes:
+        type: string
+      plate:
+        type: string
+    type: object
 info:
   contact: {}
   description: API for the Tech Challenge project.
   title: Tech Challenge API
   version: "1.0"
 paths:
+  /admin/clients:
+    get:
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.clientResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List clients
+      tags:
+      - admin-clients
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Client
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createClientRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.clientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create client
+      tags:
+      - admin-clients
+  /admin/clients/{id}:
+    delete:
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete client
+      tags:
+      - admin-clients
+    get:
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.clientResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get client
+      tags:
+      - admin-clients
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Client
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createClientRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.clientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update client
+      tags:
+      - admin-clients
+  /admin/clients/{id}/vehicles:
+    get:
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.vehicleResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List vehicles by client
+      tags:
+      - admin-vehicles
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vehicle
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createVehicleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.vehicleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create vehicle for client
+      tags:
+      - admin-vehicles
+  /admin/metrics/avg-execution-time:
+    get:
+      parameters:
+      - description: From (RFC3339)
+        in: query
+        name: from
+        type: string
+      - description: To (RFC3339)
+        in: query
+        name: to
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.avgExecutionResponse'
+      security:
+      - BearerAuth: []
+      summary: Average execution time (service orders)
+      tags:
+      - admin-metrics
+  /admin/parts:
+    get:
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.partResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List parts and supplies
+      tags:
+      - admin-parts
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Part
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createPartRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.partResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create part
+      tags:
+      - admin-parts
+  /admin/parts/{id}:
+    delete:
+      parameters:
+      - description: Part ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete part
+      tags:
+      - admin-parts
+    get:
+      parameters:
+      - description: Part ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.partResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get part
+      tags:
+      - admin-parts
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Part ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Part
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createPartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.partResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update part
+      tags:
+      - admin-parts
+  /admin/parts/{id}/stock-movements:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Part ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stock movement
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.adjustStockRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.partResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Adjust part stock (creates stock movement)
+      tags:
+      - admin-parts
+  /admin/service-orders:
+    get:
+      parameters:
+      - description: Status
+        in: query
+        name: status
+        type: string
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.serviceOrderSummaryResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List service orders
+      tags:
+      - admin-service-orders
+  /admin/service-orders/{id}:
+    get:
+      parameters:
+      - description: Service Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.serviceOrderDetailResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get service order
+      tags:
+      - admin-service-orders
+  /admin/services:
+    get:
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.serviceResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List services
+      tags:
+      - admin-services
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Service
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.serviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create service
+      tags:
+      - admin-services
+  /admin/services/{id}:
+    delete:
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete service
+      tags:
+      - admin-services
+    get:
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.serviceResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get service
+      tags:
+      - admin-services
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Service
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.serviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update service
+      tags:
+      - admin-services
+  /admin/vehicles/{id}:
+    delete:
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete vehicle
+      tags:
+      - admin-vehicles
+    get:
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.vehicleResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get vehicle
+      tags:
+      - admin-vehicles
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vehicle
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createVehicleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.vehicleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update vehicle
+      tags:
+      - admin-vehicles
   /auth/login:
     post:
       consumes:

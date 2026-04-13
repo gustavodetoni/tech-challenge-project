@@ -1,0 +1,15 @@
+package repository
+
+import (
+	"context"
+	"time"
+
+	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
+)
+
+type ServiceOrderRepository interface {
+	List(ctx context.Context, limit, offset int, status *order.Status) ([]order.ServiceOrderSummary, error)
+	FindByID(ctx context.Context, id string) (*order.ServiceOrder, error)
+	AverageExecutionMinutes(ctx context.Context, from, to *time.Time) (float64, error)
+}
+

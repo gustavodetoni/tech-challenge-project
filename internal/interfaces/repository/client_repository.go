@@ -11,6 +11,6 @@ type ClientRepository interface {
 	Update(ctx context.Context, c *client.Client) error
 	Delete(ctx context.Context, id string) error
 	FindByID(ctx context.Context, id string) (*client.Client, error)
+	FindByDocument(ctx context.Context, documentNumber string) (*client.Client, error)
 	List(ctx context.Context, limit, offset int) ([]client.Client, error)
 }
-

@@ -713,6 +713,60 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-service-orders"
+                ],
+                "summary": "Create service order (draft budget)",
+                "parameters": [
+                    {
+                        "description": "Service order",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.createServiceOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.createServiceOrderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/service-orders/{id}": {
@@ -741,6 +795,150 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controllers.serviceOrderDetailResponse"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/service-orders/{id}/budget/send": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-service-orders"
+                ],
+                "summary": "Send budget for approval",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/service-orders/{id}/deliver": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-service-orders"
+                ],
+                "summary": "Deliver service order",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/service-orders/{id}/diagnosis/start": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-service-orders"
+                ],
+                "summary": "Start diagnosis",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/service-orders/{id}/finish": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "admin-service-orders"
+                ],
+                "summary": "Finish service order",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     },
                     "404": {
                         "description": "Not Found",
@@ -1234,6 +1432,170 @@ const docTemplate = `{
                 }
             }
         },
+        "/client/service-orders/{code}": {
+            "get": {
+                "tags": [
+                    "client-service-orders"
+                ],
+                "summary": "Get service order progress (client)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CPF/CNPJ",
+                        "name": "document_number",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Service Order Code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.clientServiceOrderResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/client/service-orders/{code}/budget/approve": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "client-service-orders"
+                ],
+                "summary": "Approve latest budget",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CPF/CNPJ",
+                        "name": "document_number",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Service Order Code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Approval info",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.approveBudgetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/client/service-orders/{code}/budget/reject": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "client-service-orders"
+                ],
+                "summary": "Reject latest budget",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CPF/CNPJ",
+                        "name": "document_number",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Service Order Code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Rejection reason",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.rejectBudgetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "tags": [
@@ -1306,6 +1668,14 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.approveBudgetRequest": {
+            "type": "object",
+            "properties": {
+                "approved_by_name": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.authResponse": {
             "type": "object",
             "properties": {
@@ -1353,6 +1723,26 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.clientServiceOrderResponse": {
+            "type": "object",
+            "properties": {
+                "budget_status": {
+                    "type": "string"
+                },
+                "budget_total_cents": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "opened_at": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
@@ -1405,6 +1795,88 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "unit_price_cents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controllers.createServiceOrderRequest": {
+            "type": "object",
+            "required": [
+                "client_document_number",
+                "client_document_type",
+                "client_name",
+                "vehicle_brand",
+                "vehicle_model",
+                "vehicle_model_year",
+                "vehicle_plate"
+            ],
+            "properties": {
+                "client_document_number": {
+                    "type": "string"
+                },
+                "client_document_type": {
+                    "type": "string"
+                },
+                "client_email": {
+                    "type": "string"
+                },
+                "client_name": {
+                    "type": "string"
+                },
+                "client_phone": {
+                    "type": "string"
+                },
+                "customer_complaint": {
+                    "type": "string"
+                },
+                "parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/serviceorder.ItemInput"
+                    }
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/serviceorder.ItemInput"
+                    }
+                },
+                "vehicle_brand": {
+                    "type": "string"
+                },
+                "vehicle_color": {
+                    "type": "string"
+                },
+                "vehicle_manufacture_year": {
+                    "type": "integer"
+                },
+                "vehicle_model": {
+                    "type": "string"
+                },
+                "vehicle_model_year": {
+                    "type": "integer"
+                },
+                "vehicle_plate": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.createServiceOrderResponse": {
+            "type": "object",
+            "properties": {
+                "budget_id": {
+                    "type": "string"
+                },
+                "budget_status": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "service_order_id": {
+                    "type": "string"
+                },
+                "total_cents": {
                     "type": "integer"
                 }
             }
@@ -1553,6 +2025,17 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.rejectBudgetRequest": {
+            "type": "object",
+            "required": [
+                "reason"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.serviceOrderDetailResponse": {
             "type": "object",
             "properties": {
@@ -1663,6 +2146,17 @@ const docTemplate = `{
                 },
                 "plate": {
                     "type": "string"
+                }
+            }
+        },
+        "serviceorder.ItemInput": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
                 }
             }
         }

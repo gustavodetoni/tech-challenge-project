@@ -15,29 +15,29 @@ const (
 )
 
 type ServiceOrder struct {
-	ID             string
-	Code           string
-	ClientID       string
-	VehicleID      string
-	AssignedUserID *string
-	Status         Status
-	OpenedAt       time.Time
-	ExecutionStart *time.Time
-	FinishedAt     *time.Time
-	DeliveredAt    *time.Time
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	DeletedAt      *time.Time
+	ID                string
+	Code              string
+	ClientID          string
+	VehicleID         string
+	AssignedUserID    *string
+	Status            Status
+	CustomerComplaint *string
+	OpenedAt          time.Time
+	ExecutionStart    *time.Time
+	FinishedAt        *time.Time
+	DeliveredAt       *time.Time
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         *time.Time
 }
 
 type ServiceOrderSummary struct {
-	ID        string
-	Code      string
-	Status    Status
-	OpenedAt  time.Time
-	ClientID  string
+	ID         string
+	Code       string
+	Status     Status
+	OpenedAt   time.Time
+	ClientID   string
 	ClientName string
-	VehicleID string
-	Plate     string
+	VehicleID  string
+	Plate      string
 }
-

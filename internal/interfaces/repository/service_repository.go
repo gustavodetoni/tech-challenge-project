@@ -11,6 +11,6 @@ type ServiceRepository interface {
 	Update(ctx context.Context, s *service.Service) error
 	Delete(ctx context.Context, id string) error
 	FindByID(ctx context.Context, id string) (*service.Service, error)
+	FindByIDs(ctx context.Context, ids []string) ([]service.Service, error)
 	List(ctx context.Context, limit, offset int) ([]service.Service, error)
 }
-

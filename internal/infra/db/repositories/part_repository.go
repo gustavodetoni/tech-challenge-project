@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
-	"gorm.io/gorm/clause"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/part"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
@@ -21,32 +21,32 @@ type PartRepository struct {
 func NewPartRepository(db *gorm.DB) *PartRepository { return &PartRepository{db: db} }
 
 type partRow struct {
-	ID            string     `gorm:"column:id;type:uuid;primaryKey"`
-	SKU           string     `gorm:"column:sku"`
-	Name          string     `gorm:"column:name"`
-	Description   *string    `gorm:"column:description"`
-	UnitPriceCents int64     `gorm:"column:unit_price_cents"`
-	StockQuantity int        `gorm:"column:stock_quantity"`
-	Active        bool       `gorm:"column:active"`
-	CreatedAt     time.Time  `gorm:"column:created_at"`
-	UpdatedAt     time.Time  `gorm:"column:updated_at"`
-	DeletedAt     *time.Time `gorm:"column:deleted_at"`
+	ID             string     `gorm:"column:id;type:uuid;primaryKey"`
+	SKU            string     `gorm:"column:sku"`
+	Name           string     `gorm:"column:name"`
+	Description    *string    `gorm:"column:description"`
+	UnitPriceCents int64      `gorm:"column:unit_price_cents"`
+	StockQuantity  int        `gorm:"column:stock_quantity"`
+	Active         bool       `gorm:"column:active"`
+	CreatedAt      time.Time  `gorm:"column:created_at"`
+	UpdatedAt      time.Time  `gorm:"column:updated_at"`
+	DeletedAt      *time.Time `gorm:"column:deleted_at"`
 }
 
 func (partRow) TableName() string { return "parts" }
 
 type stockMovementRow struct {
-	ID            string     `gorm:"column:id;type:uuid;primaryKey"`
-	PartID        string     `gorm:"column:part_id"`
-	MovementType  string     `gorm:"column:movement_type"`
-	Quantity      int        `gorm:"column:quantity"`
-	UnitCostCents *int64     `gorm:"column:unit_cost_cents"`
-	ReferenceType *string    `gorm:"column:reference_type"`
-	ReferenceID   *string    `gorm:"column:reference_id"`
-	Notes         *string    `gorm:"column:notes"`
-	CreatedByUserID *string  `gorm:"column:created_by_user_id"`
-	CreatedAt     time.Time  `gorm:"column:created_at"`
-	DeletedAt     *time.Time `gorm:"column:deleted_at"`
+	ID              string     `gorm:"column:id;type:uuid;primaryKey"`
+	PartID          string     `gorm:"column:part_id"`
+	MovementType    string     `gorm:"column:movement_type"`
+	Quantity        int        `gorm:"column:quantity"`
+	UnitCostCents   *int64     `gorm:"column:unit_cost_cents"`
+	ReferenceType   *string    `gorm:"column:reference_type"`
+	ReferenceID     *string    `gorm:"column:reference_id"`
+	Notes           *string    `gorm:"column:notes"`
+	CreatedByUserID *string    `gorm:"column:created_by_user_id"`
+	CreatedAt       time.Time  `gorm:"column:created_at"`
+	DeletedAt       *time.Time `gorm:"column:deleted_at"`
 }
 
 func (stockMovementRow) TableName() string { return "stock_movements" }
@@ -135,6 +135,27 @@ func (r *PartRepository) FindByID(ctx context.Context, id string) (*part.Part, e
 	}
 
 	return mapPart(row), nil
+}
+
+func (r *PartRepository) FindByIDs(ctx context.Context, ids []string) ([]part.Part, error) {
+	if len(ids) == 0 {
+		return []part.Part{}, nil
+	}
+
+	var rows []partRow
+	err := r.db.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		Where("id IN ?", ids).
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]part.Part, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, *mapPart(row))
+	}
+	return out, nil
 }
 
 func (r *PartRepository) List(ctx context.Context, limit, offset int) ([]part.Part, error) {

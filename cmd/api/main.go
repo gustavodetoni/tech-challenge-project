@@ -10,6 +10,7 @@ import (
 
 	adminApp "github.com/soat-architecture/tech-challenge-project/internal/application/admin"
 	appAuth "github.com/soat-architecture/tech-challenge-project/internal/application/auth"
+	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
 	"github.com/soat-architecture/tech-challenge-project/internal/config"
 	"github.com/soat-architecture/tech-challenge-project/internal/infra/auth"
 	"github.com/soat-architecture/tech-challenge-project/internal/infra/db"
@@ -59,12 +60,14 @@ func main() {
 	serviceRepo := repositories.NewServiceRepository(gormDB)
 	partRepo := repositories.NewPartRepository(gormDB)
 	serviceOrderRepo := repositories.NewServiceOrderRepository(gormDB)
+	serviceOrderFlowRepo := repositories.NewServiceOrderFlowRepository(gormDB)
 
 	clientSvc := adminApp.NewClientService(clientRepo)
 	vehicleSvc := adminApp.NewVehicleService(vehicleRepo)
 	serviceSvc := adminApp.NewServiceService(serviceRepo)
 	partSvc := adminApp.NewPartService(partRepo)
 	serviceOrderSvc := adminApp.NewServiceOrderService(serviceOrderRepo)
+	serviceOrderFlowSvc := serviceorder.NewService(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
 
 	routes.Register(router, routes.Deps{
 		Health: controllers.NewHealthController(),
@@ -77,6 +80,9 @@ func main() {
 		AdminParts:         controllers.NewAdminPartsController(partSvc),
 		AdminServiceOrders: controllers.NewAdminServiceOrdersController(serviceOrderSvc),
 		AdminMetrics:       controllers.NewAdminMetricsController(serviceOrderSvc),
+
+		AdminServiceOrderFlow: controllers.NewAdminServiceOrderFlowController(serviceOrderFlowSvc),
+		ClientServiceOrders:   controllers.NewClientServiceOrderController(serviceOrderFlowSvc),
 	})
 
 	if err := router.Run(fmt.Sprintf(":%d", cfg.Port)); err != nil {

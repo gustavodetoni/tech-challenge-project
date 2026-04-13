@@ -132,6 +132,21 @@ func (r *VehicleRepository) FindByID(ctx context.Context, id string) (*vehicle.V
 	return mapVehicle(row), nil
 }
 
+func (r *VehicleRepository) FindByPlate(ctx context.Context, plate string) (*vehicle.Vehicle, error) {
+	var row vehicleRow
+	err := r.db.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		Where("plate = ?", plate).
+		First(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repository.ErrNotFound
+		}
+		return nil, err
+	}
+	return mapVehicle(row), nil
+}
+
 func (r *VehicleRepository) ListByClientID(ctx context.Context, clientID string, limit, offset int) ([]vehicle.Vehicle, error) {
 	if limit <= 0 || limit > 200 {
 		limit = 50
@@ -177,4 +192,3 @@ func mapVehicle(row vehicleRow) *vehicle.Vehicle {
 		DeletedAt:       row.DeletedAt,
 	}
 }
-

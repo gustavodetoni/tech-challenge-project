@@ -19,15 +19,15 @@ type ServiceRepository struct {
 func NewServiceRepository(db *gorm.DB) *ServiceRepository { return &ServiceRepository{db: db} }
 
 type serviceRow struct {
-	ID              string     `gorm:"column:id;type:uuid;primaryKey"`
-	Name            string     `gorm:"column:name"`
-	Description     *string    `gorm:"column:description"`
-	BasePriceCents  int64      `gorm:"column:base_price_cents"`
-	EstimatedMinutes int       `gorm:"column:estimated_minutes"`
-	Active          bool       `gorm:"column:active"`
-	CreatedAt       time.Time  `gorm:"column:created_at"`
-	UpdatedAt       time.Time  `gorm:"column:updated_at"`
-	DeletedAt       *time.Time `gorm:"column:deleted_at"`
+	ID               string     `gorm:"column:id;type:uuid;primaryKey"`
+	Name             string     `gorm:"column:name"`
+	Description      *string    `gorm:"column:description"`
+	BasePriceCents   int64      `gorm:"column:base_price_cents"`
+	EstimatedMinutes int        `gorm:"column:estimated_minutes"`
+	Active           bool       `gorm:"column:active"`
+	CreatedAt        time.Time  `gorm:"column:created_at"`
+	UpdatedAt        time.Time  `gorm:"column:updated_at"`
+	DeletedAt        *time.Time `gorm:"column:deleted_at"`
 }
 
 func (serviceRow) TableName() string { return "services" }
@@ -65,12 +65,12 @@ func (r *ServiceRepository) Update(ctx context.Context, s *service.Service) erro
 	}
 
 	updates := map[string]any{
-		"name":             s.Name,
-		"description":      s.Description,
-		"base_price_cents": s.BasePriceCents,
+		"name":              s.Name,
+		"description":       s.Description,
+		"base_price_cents":  s.BasePriceCents,
 		"estimated_minutes": s.EstimatedMinutes,
-		"active":           s.Active,
-		"updated_at":       s.UpdatedAt,
+		"active":            s.Active,
+		"updated_at":        s.UpdatedAt,
 	}
 	tx := r.db.WithContext(ctx).
 		Model(&serviceRow{}).
@@ -115,6 +115,27 @@ func (r *ServiceRepository) FindByID(ctx context.Context, id string) (*service.S
 	return mapService(row), nil
 }
 
+func (r *ServiceRepository) FindByIDs(ctx context.Context, ids []string) ([]service.Service, error) {
+	if len(ids) == 0 {
+		return []service.Service{}, nil
+	}
+
+	var rows []serviceRow
+	err := r.db.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		Where("id IN ?", ids).
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]service.Service, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, *mapService(row))
+	}
+	return out, nil
+}
+
 func (r *ServiceRepository) List(ctx context.Context, limit, offset int) ([]service.Service, error) {
 	if limit <= 0 || limit > 200 {
 		limit = 50
@@ -154,4 +175,3 @@ func mapService(row serviceRow) *service.Service {
 		DeletedAt:        row.DeletedAt,
 	}
 }
-

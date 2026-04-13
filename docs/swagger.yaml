@@ -12,6 +12,11 @@ definitions:
     - movement_type
     - quantity
     type: object
+  controllers.approveBudgetRequest:
+    properties:
+      approved_by_name:
+        type: string
+    type: object
   controllers.authResponse:
     properties:
       access_token:
@@ -43,6 +48,19 @@ definitions:
       name:
         type: string
       phone:
+        type: string
+    type: object
+  controllers.clientServiceOrderResponse:
+    properties:
+      budget_status:
+        type: string
+      budget_total_cents:
+        type: integer
+      code:
+        type: string
+      opened_at:
+        type: string
+      status:
         type: string
     type: object
   controllers.createClientRequest:
@@ -79,6 +97,62 @@ definitions:
     required:
     - name
     - sku
+    type: object
+  controllers.createServiceOrderRequest:
+    properties:
+      client_document_number:
+        type: string
+      client_document_type:
+        type: string
+      client_email:
+        type: string
+      client_name:
+        type: string
+      client_phone:
+        type: string
+      customer_complaint:
+        type: string
+      parts:
+        items:
+          $ref: '#/definitions/serviceorder.ItemInput'
+        type: array
+      services:
+        items:
+          $ref: '#/definitions/serviceorder.ItemInput'
+        type: array
+      vehicle_brand:
+        type: string
+      vehicle_color:
+        type: string
+      vehicle_manufacture_year:
+        type: integer
+      vehicle_model:
+        type: string
+      vehicle_model_year:
+        type: integer
+      vehicle_plate:
+        type: string
+    required:
+    - client_document_number
+    - client_document_type
+    - client_name
+    - vehicle_brand
+    - vehicle_model
+    - vehicle_model_year
+    - vehicle_plate
+    type: object
+  controllers.createServiceOrderResponse:
+    properties:
+      budget_id:
+        type: string
+      budget_status:
+        type: string
+      code:
+        type: string
+      service_order_id:
+        type: string
+      total_cents:
+        type: integer
     type: object
   controllers.createServiceRequest:
     properties:
@@ -176,6 +250,13 @@ definitions:
     - name
     - password
     type: object
+  controllers.rejectBudgetRequest:
+    properties:
+      reason:
+        type: string
+    required:
+    - reason
+    type: object
   controllers.serviceOrderDetailResponse:
     properties:
       client_id:
@@ -249,6 +330,13 @@ definitions:
         type: string
       plate:
         type: string
+    type: object
+  serviceorder.ItemInput:
+    properties:
+      id:
+        type: string
+      quantity:
+        type: integer
     type: object
 info:
   contact: {}
@@ -693,6 +781,40 @@ paths:
       summary: List service orders
       tags:
       - admin-service-orders
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Service order
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.createServiceOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.createServiceOrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create service order (draft budget)
+      tags:
+      - admin-service-orders
   /admin/service-orders/{id}:
     get:
       parameters:
@@ -715,6 +837,94 @@ paths:
       security:
       - BearerAuth: []
       summary: Get service order
+      tags:
+      - admin-service-orders
+  /admin/service-orders/{id}/budget/send:
+    post:
+      parameters:
+      - description: Service Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send budget for approval
+      tags:
+      - admin-service-orders
+  /admin/service-orders/{id}/deliver:
+    post:
+      parameters:
+      - description: Service Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Deliver service order
+      tags:
+      - admin-service-orders
+  /admin/service-orders/{id}/diagnosis/start:
+    post:
+      parameters:
+      - description: Service Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Start diagnosis
+      tags:
+      - admin-service-orders
+  /admin/service-orders/{id}/finish:
+    post:
+      parameters:
+      - description: Service Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Finish service order
       tags:
       - admin-service-orders
   /admin/services:
@@ -1020,6 +1230,114 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /client/service-orders/{code}:
+    get:
+      parameters:
+      - description: CPF/CNPJ
+        in: query
+        name: document_number
+        required: true
+        type: string
+      - description: Service Order Code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.clientServiceOrderResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get service order progress (client)
+      tags:
+      - client-service-orders
+  /client/service-orders/{code}/budget/approve:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: CPF/CNPJ
+        in: query
+        name: document_number
+        required: true
+        type: string
+      - description: Service Order Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Approval info
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/controllers.approveBudgetRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Approve latest budget
+      tags:
+      - client-service-orders
+  /client/service-orders/{code}/budget/reject:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: CPF/CNPJ
+        in: query
+        name: document_number
+        required: true
+        type: string
+      - description: Service Order Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Rejection reason
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.rejectBudgetRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reject latest budget
+      tags:
+      - client-service-orders
   /health:
     get:
       responses:

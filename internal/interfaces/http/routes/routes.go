@@ -22,6 +22,9 @@ type Deps struct {
 	AdminParts         *controllers.AdminPartsController
 	AdminServiceOrders *controllers.AdminServiceOrdersController
 	AdminMetrics       *controllers.AdminMetricsController
+
+	AdminServiceOrderFlow *controllers.AdminServiceOrderFlowController
+	ClientServiceOrders   *controllers.ClientServiceOrderController
 }
 
 func Register(router *gin.Engine, deps Deps) {
@@ -66,6 +69,16 @@ func Register(router *gin.Engine, deps Deps) {
 
 	adminGroup.GET("/service-orders", deps.AdminServiceOrders.List)
 	adminGroup.GET("/service-orders/:id", deps.AdminServiceOrders.Get)
+	adminGroup.POST("/service-orders", deps.AdminServiceOrderFlow.CreateDraft)
+	adminGroup.POST("/service-orders/:id/diagnosis/start", deps.AdminServiceOrderFlow.StartDiagnosis)
+	adminGroup.POST("/service-orders/:id/budget/send", deps.AdminServiceOrderFlow.SendBudget)
+	adminGroup.POST("/service-orders/:id/finish", deps.AdminServiceOrderFlow.Finish)
+	adminGroup.POST("/service-orders/:id/deliver", deps.AdminServiceOrderFlow.Deliver)
 
 	adminGroup.GET("/metrics/avg-execution-time", deps.AdminMetrics.AverageExecutionTime)
+
+	clientGroup := router.Group("/client")
+	clientGroup.GET("/service-orders/:code", deps.ClientServiceOrders.Get)
+	clientGroup.POST("/service-orders/:code/budget/approve", deps.ClientServiceOrders.ApproveBudget)
+	clientGroup.POST("/service-orders/:code/budget/reject", deps.ClientServiceOrders.RejectBudget)
 }

@@ -107,14 +107,29 @@ func (r *ClientRepository) FindByID(ctx context.Context, id string) (*client.Cli
 		Where("deleted_at IS NULL").
 		Where("id = ?", id).
 		First(&row).Error
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, repository.ErrNotFound
-			}
-			return nil, err
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repository.ErrNotFound
 		}
-		return mapClient(row), nil
+		return nil, err
 	}
+	return mapClient(row), nil
+}
+
+func (r *ClientRepository) FindByDocument(ctx context.Context, documentNumber string) (*client.Client, error) {
+	var row clientRow
+	err := r.db.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		Where("document_number = ?", documentNumber).
+		First(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repository.ErrNotFound
+		}
+		return nil, err
+	}
+	return mapClient(row), nil
+}
 
 func (r *ClientRepository) List(ctx context.Context, limit, offset int) ([]client.Client, error) {
 	if limit <= 0 || limit > 200 {

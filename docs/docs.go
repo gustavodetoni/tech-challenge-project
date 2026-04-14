@@ -423,11 +423,6 @@ const docTemplate = `{
         },
         "/admin/service-orders": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "tags": [
                     "admin-service-orders"
                 ],
@@ -458,7 +453,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controllers.serviceOrderSummaryResponse"
+                                "$ref": "#/definitions/dto.ServiceOrderSummaryResponse"
                             }
                         }
                     }
@@ -476,7 +471,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.createServiceOrderRequest"
+                            "$ref": "#/definitions/dto.CreateServiceOrderRequest"
                         }
                     }
                 ],
@@ -484,7 +479,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controllers.createServiceOrderResponse"
+                            "$ref": "#/definitions/dto.CreateServiceOrderResponse"
                         }
                     }
                 }
@@ -492,11 +487,6 @@ const docTemplate = `{
         },
         "/admin/service-orders/{id}": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "tags": [
                     "admin-service-orders"
                 ],
@@ -514,16 +504,41 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.serviceOrderDetailResponse"
+                            "$ref": "#/definitions/dto.ServiceOrderDetailResponse"
                         }
+                    }
+                }
+            }
+        },
+        "/admin/service-orders/{id}/budget/revise": {
+            "post": {
+                "tags": [
+                    "admin-service-orders"
+                ],
+                "summary": "Revise budget (new version, draft)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     },
-                    "404": {
-                        "description": "Not Found",
+                    {
+                        "description": "Budget revision",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.ReviseBudgetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ReviseBudgetResponse"
                         }
                     }
                 }
@@ -752,6 +767,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/users/{id}/role": {
+            "put": {
+                "tags": [
+                    "admin-users"
+                ],
+                "summary": "Update user role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Role update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateUserRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/admin/vehicles/{id}": {
             "get": {
                 "tags": [
@@ -839,7 +885,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.authResponse"
+                            "$ref": "#/definitions/dto.AuthResponse"
                         }
                     }
                 }
@@ -858,7 +904,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.registerRequest"
+                            "$ref": "#/definitions/dto.RegisterRequest"
                         }
                     }
                 ],
@@ -866,7 +912,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controllers.authResponse"
+                            "$ref": "#/definitions/dto.AuthResponse"
                         }
                     }
                 }
@@ -898,7 +944,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.clientServiceOrderResponse"
+                            "$ref": "#/definitions/dto.ClientServiceOrderResponse"
                         }
                     }
                 }
@@ -1008,7 +1054,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.meResponse"
+                            "$ref": "#/definitions/dto.MeResponse"
                         }
                     }
                 }
@@ -1024,175 +1070,11 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.authResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "expires_at": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "token_type": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
         "controllers.avgExecutionResponse": {
             "type": "object",
             "properties": {
                 "average_minutes": {
                     "type": "number"
-                }
-            }
-        },
-        "controllers.clientServiceOrderResponse": {
-            "type": "object",
-            "properties": {
-                "budget_status": {
-                    "type": "string"
-                },
-                "budget_total_cents": {
-                    "type": "integer"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "opened_at": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.createServiceOrderRequest": {
-            "type": "object",
-            "required": [
-                "client_document_number",
-                "client_document_type",
-                "client_name",
-                "vehicle_brand",
-                "vehicle_model",
-                "vehicle_model_year",
-                "vehicle_plate"
-            ],
-            "properties": {
-                "client_document_number": {
-                    "type": "string"
-                },
-                "client_document_type": {
-                    "type": "string"
-                },
-                "client_email": {
-                    "type": "string"
-                },
-                "client_name": {
-                    "type": "string"
-                },
-                "client_phone": {
-                    "type": "string"
-                },
-                "customer_complaint": {
-                    "type": "string"
-                },
-                "parts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/serviceorder.ItemInput"
-                    }
-                },
-                "services": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/serviceorder.ItemInput"
-                    }
-                },
-                "vehicle_brand": {
-                    "type": "string"
-                },
-                "vehicle_color": {
-                    "type": "string"
-                },
-                "vehicle_manufacture_year": {
-                    "type": "integer"
-                },
-                "vehicle_model": {
-                    "type": "string"
-                },
-                "vehicle_model_year": {
-                    "type": "integer"
-                },
-                "vehicle_plate": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.createServiceOrderResponse": {
-            "type": "object",
-            "properties": {
-                "budget_id": {
-                    "type": "string"
-                },
-                "budget_status": {
-                    "type": "string"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "service_order_id": {
-                    "type": "string"
-                },
-                "total_cents": {
-                    "type": "integer"
-                }
-            }
-        },
-        "controllers.meResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "expires_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "issued_at": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.registerRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "name",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
                 }
             }
         },
@@ -1203,58 +1085,6 @@ const docTemplate = `{
             ],
             "properties": {
                 "reason": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.serviceOrderDetailResponse": {
-            "type": "object",
-            "properties": {
-                "client_id": {
-                    "type": "string"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "opened_at": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "vehicle_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.serviceOrderSummaryResponse": {
-            "type": "object",
-            "properties": {
-                "client_id": {
-                    "type": "string"
-                },
-                "client_name": {
-                    "type": "string"
-                },
-                "code": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "opened_at": {
-                    "type": "string"
-                },
-                "plate": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "vehicle_id": {
                     "type": "string"
                 }
             }
@@ -1277,6 +1107,26 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "token_type": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ClientResponse": {
             "type": "object",
             "properties": {
@@ -1296,6 +1146,26 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ClientServiceOrderResponse": {
+            "type": "object",
+            "properties": {
+                "budget_status": {
+                    "type": "string"
+                },
+                "budget_total_cents": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "opened_at": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
@@ -1348,6 +1218,88 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "unit_price_cents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.CreateServiceOrderRequest": {
+            "type": "object",
+            "required": [
+                "client_document_number",
+                "client_document_type",
+                "client_name",
+                "vehicle_brand",
+                "vehicle_model",
+                "vehicle_model_year",
+                "vehicle_plate"
+            ],
+            "properties": {
+                "client_document_number": {
+                    "type": "string"
+                },
+                "client_document_type": {
+                    "type": "string"
+                },
+                "client_email": {
+                    "type": "string"
+                },
+                "client_name": {
+                    "type": "string"
+                },
+                "client_phone": {
+                    "type": "string"
+                },
+                "customer_complaint": {
+                    "type": "string"
+                },
+                "parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderItemRequest"
+                    }
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderItemRequest"
+                    }
+                },
+                "vehicle_brand": {
+                    "type": "string"
+                },
+                "vehicle_color": {
+                    "type": "string"
+                },
+                "vehicle_manufacture_year": {
+                    "type": "integer"
+                },
+                "vehicle_model": {
+                    "type": "string"
+                },
+                "vehicle_model_year": {
+                    "type": "integer"
+                },
+                "vehicle_plate": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateServiceOrderResponse": {
+            "type": "object",
+            "properties": {
+                "budget_id": {
+                    "type": "string"
+                },
+                "budget_status": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "service_order_id": {
+                    "type": "string"
+                },
+                "total_cents": {
                     "type": "integer"
                 }
             }
@@ -1413,6 +1365,29 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MeResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "issued_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.PartResponse": {
             "type": "object",
             "properties": {
@@ -1439,6 +1414,219 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ReviseBudgetRequest": {
+            "type": "object",
+            "properties": {
+                "parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderItemRequest"
+                    }
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderItemRequest"
+                    }
+                }
+            }
+        },
+        "dto.ReviseBudgetResponse": {
+            "type": "object",
+            "properties": {
+                "budget_id": {
+                    "type": "string"
+                },
+                "budget_status": {
+                    "type": "string"
+                },
+                "total_cents": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ServiceOrderBudgetResponse": {
+            "type": "object",
+            "properties": {
+                "approved_at": {
+                    "type": "string"
+                },
+                "approved_by_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "rejected_at": {
+                    "type": "string"
+                },
+                "rejection_reason": {
+                    "type": "string"
+                },
+                "sent_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_cents": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ServiceOrderDetailResponse": {
+            "type": "object",
+            "properties": {
+                "budget_parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderLineResponse"
+                    }
+                },
+                "budget_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderLineResponse"
+                    }
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latest_budget": {
+                    "$ref": "#/definitions/dto.ServiceOrderBudgetResponse"
+                },
+                "opened_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "status_history": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderStatusHistory"
+                    }
+                },
+                "vehicle_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ServiceOrderItemRequest": {
+            "type": "object",
+            "required": [
+                "id",
+                "quantity"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ServiceOrderLineResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "ref_id": {
+                    "type": "string"
+                },
+                "total_price_cents": {
+                    "type": "integer"
+                },
+                "unit_price_cents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ServiceOrderStatusHistory": {
+            "type": "object",
+            "properties": {
+                "changed_at": {
+                    "type": "string"
+                },
+                "changed_by_user_id": {
+                    "type": "string"
+                },
+                "from_status": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "to_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ServiceOrderSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "type": "string"
+                },
+                "client_name": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "opened_at": {
+                    "type": "string"
+                },
+                "plate": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "vehicle_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ServiceResponse": {
             "type": "object",
             "properties": {
@@ -1458,6 +1646,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdateUserRoleRequest": {
+            "type": "object",
+            "required": [
+                "role"
+            ],
+            "properties": {
+                "role": {
                     "type": "string"
                 }
             }
@@ -1497,17 +1696,6 @@ const docTemplate = `{
                 },
                 "plate": {
                     "type": "string"
-                }
-            }
-        },
-        "serviceorder.ItemInput": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "integer"
                 }
             }
         }

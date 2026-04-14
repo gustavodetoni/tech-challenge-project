@@ -22,6 +22,7 @@ type Deps struct {
 	AdminParts         *controllers.AdminPartsController
 	AdminServiceOrders *controllers.AdminServiceOrdersController
 	AdminMetrics       *controllers.AdminMetricsController
+	AdminUsers         *controllers.AdminUsersController
 
 	AdminServiceOrderFlow *controllers.AdminServiceOrderFlowController
 	ClientServiceOrders   *controllers.ClientServiceOrderController
@@ -71,11 +72,16 @@ func Register(router *gin.Engine, deps Deps) {
 	adminGroup.GET("/service-orders/:id", deps.AdminServiceOrders.Get)
 	adminGroup.POST("/service-orders", deps.AdminServiceOrderFlow.CreateDraft)
 	adminGroup.POST("/service-orders/:id/diagnosis/start", deps.AdminServiceOrderFlow.StartDiagnosis)
+	adminGroup.POST("/service-orders/:id/budget/revise", deps.AdminServiceOrderFlow.ReviseBudget)
 	adminGroup.POST("/service-orders/:id/budget/send", deps.AdminServiceOrderFlow.SendBudget)
 	adminGroup.POST("/service-orders/:id/finish", deps.AdminServiceOrderFlow.Finish)
 	adminGroup.POST("/service-orders/:id/deliver", deps.AdminServiceOrderFlow.Deliver)
 
 	adminGroup.GET("/metrics/avg-execution-time", deps.AdminMetrics.AverageExecutionTime)
+
+	adminOnly := router.Group("/admin")
+	adminOnly.Use(deps.AuthMW.RequireRoles("ADMIN"))
+	adminOnly.PUT("/users/:id/role", deps.AdminUsers.UpdateRole)
 
 	clientGroup := router.Group("/client")
 	clientGroup.GET("/service-orders/:code", deps.ClientServiceOrders.Get)

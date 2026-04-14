@@ -10,6 +10,6 @@ import (
 type ServiceOrderRepository interface {
 	List(ctx context.Context, limit, offset int, status *order.Status) ([]order.ServiceOrderSummary, error)
 	FindByID(ctx context.Context, id string) (*order.ServiceOrder, error)
+	GetDetailByID(ctx context.Context, id string) (*order.ServiceOrderDetail, error)
 	AverageExecutionMinutes(ctx context.Context, from, to *time.Time) (float64, error)
 }
-

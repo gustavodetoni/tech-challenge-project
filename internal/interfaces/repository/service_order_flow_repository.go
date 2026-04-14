@@ -23,8 +23,17 @@ type ClientServiceOrderView struct {
 	BudgetTotalCents int64
 }
 
+type CreateBudgetRevisionParams struct {
+	ServiceOrderID  string
+	Budget          order.Budget
+	BudgetServices  []order.BudgetServiceItem
+	BudgetParts     []order.BudgetPartItem
+	ChangedByUserID *string
+}
+
 type ServiceOrderFlowRepository interface {
 	CreateDraft(ctx context.Context, p CreateServiceOrderDraftParams) (*order.ServiceOrder, *order.Budget, error)
+	CreateBudgetRevision(ctx context.Context, p CreateBudgetRevisionParams) (*order.Budget, error)
 	StartDiagnosis(ctx context.Context, serviceOrderID string, changedByUserID *string) error
 	SendLatestBudget(ctx context.Context, serviceOrderID string, changedByUserID *string) error
 	Finish(ctx context.Context, serviceOrderID string, changedByUserID *string) error

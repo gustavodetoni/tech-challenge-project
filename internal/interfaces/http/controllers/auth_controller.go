@@ -23,8 +23,8 @@ func NewAuthController(auth *appAuth.Service, users repository.UserRepository) *
 
 // @Summary Register a new user
 // @Tags auth
-// @Param request body registerRequest true "Register request"
-// @Success 201 {object} authResponse
+// @Param request body dto.RegisterRequest true "Register request"
+// @Success 201 {object} dto.AuthResponse
 // @Router /auth/register [post]
 func (a *AuthController) Register(c *gin.Context) {
 	var req dto.RegisterRequest
@@ -61,7 +61,7 @@ func (a *AuthController) Register(c *gin.Context) {
 
 // @Summary Login with email/password
 // @Tags auth
-// @Success 200 {object} authResponse
+// @Success 200 {object} dto.AuthResponse
 // @Router /auth/login [post]
 func (a *AuthController) Login(c *gin.Context) {
 	var req dto.LoginRequest
@@ -97,7 +97,7 @@ func (a *AuthController) Login(c *gin.Context) {
 
 // @Summary Current identity
 // @Tags auth
-// @Success 200 {object} meResponse
+// @Success 200 {object} dto.MeResponse
 // @Router /me [get]
 func (a *AuthController) Me(c *gin.Context) {
 	claims, ok := middlewares.GetClaims(c)

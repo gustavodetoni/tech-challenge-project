@@ -15,22 +15,24 @@ type ServiceOrderRepository struct {
 	db *gorm.DB
 }
 
-func NewServiceOrderRepository(db *gorm.DB) *ServiceOrderRepository { return &ServiceOrderRepository{db: db} }
+func NewServiceOrderRepository(db *gorm.DB) *ServiceOrderRepository {
+	return &ServiceOrderRepository{db: db}
+}
 
 type serviceOrderRow struct {
-	ID                string     `gorm:"column:id;type:uuid;primaryKey"`
-	Code              string     `gorm:"column:code"`
-	ClientID          string     `gorm:"column:client_id"`
-	VehicleID         string     `gorm:"column:vehicle_id"`
-	AssignedUserID    *string    `gorm:"column:assigned_user_id"`
-	Status            string     `gorm:"column:status"`
-	OpenedAt          time.Time  `gorm:"column:opened_at"`
+	ID                 string     `gorm:"column:id;type:uuid;primaryKey"`
+	Code               string     `gorm:"column:code"`
+	ClientID           string     `gorm:"column:client_id"`
+	VehicleID          string     `gorm:"column:vehicle_id"`
+	AssignedUserID     *string    `gorm:"column:assigned_user_id"`
+	Status             string     `gorm:"column:status"`
+	OpenedAt           time.Time  `gorm:"column:opened_at"`
 	ExecutionStartedAt *time.Time `gorm:"column:execution_started_at"`
-	FinishedAt        *time.Time `gorm:"column:finished_at"`
-	DeliveredAt       *time.Time `gorm:"column:delivered_at"`
-	CreatedAt         time.Time  `gorm:"column:created_at"`
-	UpdatedAt         time.Time  `gorm:"column:updated_at"`
-	DeletedAt         *time.Time `gorm:"column:deleted_at"`
+	FinishedAt         *time.Time `gorm:"column:finished_at"`
+	DeliveredAt        *time.Time `gorm:"column:delivered_at"`
+	CreatedAt          time.Time  `gorm:"column:created_at"`
+	UpdatedAt          time.Time  `gorm:"column:updated_at"`
+	DeletedAt          *time.Time `gorm:"column:deleted_at"`
 }
 
 func (serviceOrderRow) TableName() string { return "service_orders" }
@@ -117,6 +119,175 @@ func (r *ServiceOrderRepository) FindByID(ctx context.Context, id string) (*orde
 	}, nil
 }
 
+type budgetDetailRow struct {
+	ID               string     `gorm:"column:id"`
+	ServiceOrderID   string     `gorm:"column:service_order_id"`
+	Version          int        `gorm:"column:version"`
+	Status           string     `gorm:"column:status"`
+	TotalAmountCents int64      `gorm:"column:total_amount_cents"`
+	SentAt           *time.Time `gorm:"column:sent_at"`
+	ApprovedAt       *time.Time `gorm:"column:approved_at"`
+	RejectedAt       *time.Time `gorm:"column:rejected_at"`
+	ApprovedByName   *string    `gorm:"column:approved_by_name"`
+	RejectionReason  *string    `gorm:"column:rejection_reason"`
+	CreatedAt        time.Time  `gorm:"column:created_at"`
+	UpdatedAt        time.Time  `gorm:"column:updated_at"`
+	DeletedAt        *time.Time `gorm:"column:deleted_at"`
+}
+
+func (budgetDetailRow) TableName() string { return "budgets" }
+
+type budgetServiceDetailRow struct {
+	ServiceID       *string    `gorm:"column:service_id"`
+	Description     string     `gorm:"column:description"`
+	Quantity        int        `gorm:"column:quantity"`
+	UnitPriceCents  int64      `gorm:"column:unit_price_cents"`
+	TotalPriceCents int64      `gorm:"column:total_price_cents"`
+	DeletedAt       *time.Time `gorm:"column:deleted_at"`
+}
+
+func (budgetServiceDetailRow) TableName() string { return "budget_services" }
+
+type budgetPartDetailRow struct {
+	PartID          *string    `gorm:"column:part_id"`
+	Description     string     `gorm:"column:description"`
+	Quantity        int        `gorm:"column:quantity"`
+	UnitPriceCents  int64      `gorm:"column:unit_price_cents"`
+	TotalPriceCents int64      `gorm:"column:total_price_cents"`
+	DeletedAt       *time.Time `gorm:"column:deleted_at"`
+}
+
+func (budgetPartDetailRow) TableName() string { return "budget_parts" }
+
+type statusHistoryDetailRow struct {
+	FromStatus      *string    `gorm:"column:from_status"`
+	ToStatus        string     `gorm:"column:to_status"`
+	ChangedByUserID *string    `gorm:"column:changed_by_user_id"`
+	Reason          *string    `gorm:"column:reason"`
+	ChangedAt       time.Time  `gorm:"column:changed_at"`
+	DeletedAt       *time.Time `gorm:"column:deleted_at"`
+}
+
+func (statusHistoryDetailRow) TableName() string { return "service_order_status_history" }
+
+func (r *ServiceOrderRepository) GetDetailByID(ctx context.Context, id string) (*order.ServiceOrderDetail, error) {
+	so, err := r.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var b budgetDetailRow
+	budgetErr := r.db.WithContext(ctx).
+		Where("deleted_at is null").
+		Where("service_order_id = ?", so.ID).
+		Order("version desc").
+		First(&b).Error
+	if budgetErr != nil && !errors.Is(budgetErr, gorm.ErrRecordNotFound) {
+		return nil, budgetErr
+	}
+
+	var latestBudget *order.Budget
+	if budgetErr == nil {
+		latestBudget = &order.Budget{
+			ID:               b.ID,
+			ServiceOrderID:   b.ServiceOrderID,
+			Version:          b.Version,
+			Status:           order.BudgetStatus(b.Status),
+			TotalAmountCents: b.TotalAmountCents,
+			SentAt:           b.SentAt,
+			ApprovedAt:       b.ApprovedAt,
+			RejectedAt:       b.RejectedAt,
+			ApprovedByName:   b.ApprovedByName,
+			RejectionReason:  b.RejectionReason,
+			CreatedAt:        b.CreatedAt,
+			UpdatedAt:        b.UpdatedAt,
+			DeletedAt:        b.DeletedAt,
+		}
+	}
+
+	budgetServices := []order.BudgetServiceItem{}
+	budgetParts := []order.BudgetPartItem{}
+	if latestBudget != nil {
+		var bs []budgetServiceDetailRow
+		if err := r.db.WithContext(ctx).
+			Where("deleted_at is null").
+			Where("budget_id = ?", latestBudget.ID).
+			Order("created_at asc").
+			Find(&bs).Error; err != nil {
+			return nil, err
+		}
+		budgetServices = make([]order.BudgetServiceItem, 0, len(bs))
+		for _, it := range bs {
+			serviceID := ""
+			if it.ServiceID != nil {
+				serviceID = *it.ServiceID
+			}
+			budgetServices = append(budgetServices, order.BudgetServiceItem{
+				ServiceID:       serviceID,
+				Description:     it.Description,
+				Quantity:        it.Quantity,
+				UnitPriceCents:  it.UnitPriceCents,
+				TotalPriceCents: it.TotalPriceCents,
+			})
+		}
+
+		var bp []budgetPartDetailRow
+		if err := r.db.WithContext(ctx).
+			Where("deleted_at is null").
+			Where("budget_id = ?", latestBudget.ID).
+			Order("created_at asc").
+			Find(&bp).Error; err != nil {
+			return nil, err
+		}
+		budgetParts = make([]order.BudgetPartItem, 0, len(bp))
+		for _, it := range bp {
+			partID := ""
+			if it.PartID != nil {
+				partID = *it.PartID
+			}
+			budgetParts = append(budgetParts, order.BudgetPartItem{
+				PartID:          partID,
+				Description:     it.Description,
+				Quantity:        it.Quantity,
+				UnitPriceCents:  it.UnitPriceCents,
+				TotalPriceCents: it.TotalPriceCents,
+			})
+		}
+	}
+
+	var histRows []statusHistoryDetailRow
+	if err := r.db.WithContext(ctx).
+		Where("deleted_at is null").
+		Where("service_order_id = ?", so.ID).
+		Order("changed_at asc").
+		Find(&histRows).Error; err != nil {
+		return nil, err
+	}
+	hist := make([]order.StatusHistoryEntry, 0, len(histRows))
+	for _, it := range histRows {
+		var from *order.Status
+		if it.FromStatus != nil {
+			s := order.Status(*it.FromStatus)
+			from = &s
+		}
+		hist = append(hist, order.StatusHistoryEntry{
+			FromStatus:      from,
+			ToStatus:        order.Status(it.ToStatus),
+			ChangedAt:       it.ChangedAt,
+			ChangedByUserID: it.ChangedByUserID,
+			Reason:          it.Reason,
+		})
+	}
+
+	return &order.ServiceOrderDetail{
+		ServiceOrder:   *so,
+		LatestBudget:   latestBudget,
+		BudgetServices: budgetServices,
+		BudgetParts:    budgetParts,
+		StatusHistory:  hist,
+	}, nil
+}
+
 func (r *ServiceOrderRepository) AverageExecutionMinutes(ctx context.Context, from, to *time.Time) (float64, error) {
 	q := r.db.WithContext(ctx).
 		Table("service_orders so").
@@ -137,4 +308,3 @@ func (r *ServiceOrderRepository) AverageExecutionMinutes(ctx context.Context, fr
 	}
 	return avg, nil
 }
-

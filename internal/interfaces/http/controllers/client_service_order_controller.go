@@ -24,7 +24,7 @@ func NewClientServiceOrderController(svc *serviceorder.Service) *ClientServiceOr
 // @Tags client-service-orders
 // @Param document_number query string true "CPF/CNPJ"
 // @Param code path string true "Service Order Code"
-// @Success 200 {object} clientServiceOrderResponse
+// @Success 200 {object} dto.ClientServiceOrderResponse
 // @Router /client/service-orders/{code} [get]
 func (h *ClientServiceOrderController) Get(c *gin.Context) {
 	code, doc, ok := getCodeAndDocumentNumber(c)

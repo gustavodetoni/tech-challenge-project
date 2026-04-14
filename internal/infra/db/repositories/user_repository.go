@@ -95,6 +95,25 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*user.User, e
 	return mapUser(row), nil
 }
 
+func (r *UserRepository) UpdateRole(ctx context.Context, id string, role user.Role) error {
+	now := time.Now().UTC()
+	tx := r.db.WithContext(ctx).
+		Model(&userRow{}).
+		Where("deleted_at IS NULL").
+		Where("id = ?", id).
+		Updates(map[string]any{
+			"role":       string(role),
+			"updated_at": now,
+		})
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return repository.ErrNotFound
+	}
+	return nil
+}
+
 func mapUser(row userRow) *user.User {
 	return &user.User{
 		ID:           row.ID,

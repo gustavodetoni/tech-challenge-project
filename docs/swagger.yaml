@@ -5,120 +5,10 @@ definitions:
       approved_by_name:
         type: string
     type: object
-  controllers.authResponse:
-    properties:
-      access_token:
-        type: string
-      expires_at:
-        type: string
-      role:
-        type: string
-      token_type:
-        type: string
-      user_id:
-        type: string
-    type: object
   controllers.avgExecutionResponse:
     properties:
       average_minutes:
         type: number
-    type: object
-  controllers.clientServiceOrderResponse:
-    properties:
-      budget_status:
-        type: string
-      budget_total_cents:
-        type: integer
-      code:
-        type: string
-      opened_at:
-        type: string
-      status:
-        type: string
-    type: object
-  controllers.createServiceOrderRequest:
-    properties:
-      client_document_number:
-        type: string
-      client_document_type:
-        type: string
-      client_email:
-        type: string
-      client_name:
-        type: string
-      client_phone:
-        type: string
-      customer_complaint:
-        type: string
-      parts:
-        items:
-          $ref: '#/definitions/serviceorder.ItemInput'
-        type: array
-      services:
-        items:
-          $ref: '#/definitions/serviceorder.ItemInput'
-        type: array
-      vehicle_brand:
-        type: string
-      vehicle_color:
-        type: string
-      vehicle_manufacture_year:
-        type: integer
-      vehicle_model:
-        type: string
-      vehicle_model_year:
-        type: integer
-      vehicle_plate:
-        type: string
-    required:
-    - client_document_number
-    - client_document_type
-    - client_name
-    - vehicle_brand
-    - vehicle_model
-    - vehicle_model_year
-    - vehicle_plate
-    type: object
-  controllers.createServiceOrderResponse:
-    properties:
-      budget_id:
-        type: string
-      budget_status:
-        type: string
-      code:
-        type: string
-      service_order_id:
-        type: string
-      total_cents:
-        type: integer
-    type: object
-  controllers.meResponse:
-    properties:
-      email:
-        type: string
-      expires_at:
-        type: string
-      id:
-        type: string
-      issued_at:
-        type: string
-      name:
-        type: string
-      role:
-        type: string
-    type: object
-  controllers.registerRequest:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - name
-    - password
     type: object
   controllers.rejectBudgetRequest:
     properties:
@@ -126,40 +16,6 @@ definitions:
         type: string
     required:
     - reason
-    type: object
-  controllers.serviceOrderDetailResponse:
-    properties:
-      client_id:
-        type: string
-      code:
-        type: string
-      id:
-        type: string
-      opened_at:
-        type: string
-      status:
-        type: string
-      vehicle_id:
-        type: string
-    type: object
-  controllers.serviceOrderSummaryResponse:
-    properties:
-      client_id:
-        type: string
-      client_name:
-        type: string
-      code:
-        type: string
-      id:
-        type: string
-      opened_at:
-        type: string
-      plate:
-        type: string
-      status:
-        type: string
-      vehicle_id:
-        type: string
     type: object
   dto.AdjustStockRequest:
     properties:
@@ -172,6 +28,19 @@ definitions:
     required:
     - movement_type
     - quantity
+    type: object
+  dto.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+      role:
+        type: string
+      token_type:
+        type: string
+      user_id:
+        type: string
     type: object
   dto.ClientResponse:
     properties:
@@ -186,6 +55,19 @@ definitions:
       name:
         type: string
       phone:
+        type: string
+    type: object
+  dto.ClientServiceOrderResponse:
+    properties:
+      budget_status:
+        type: string
+      budget_total_cents:
+        type: integer
+      code:
+        type: string
+      opened_at:
+        type: string
+      status:
         type: string
     type: object
   dto.CreateClientRequest:
@@ -222,6 +104,62 @@ definitions:
     required:
     - name
     - sku
+    type: object
+  dto.CreateServiceOrderRequest:
+    properties:
+      client_document_number:
+        type: string
+      client_document_type:
+        type: string
+      client_email:
+        type: string
+      client_name:
+        type: string
+      client_phone:
+        type: string
+      customer_complaint:
+        type: string
+      parts:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderItemRequest'
+        type: array
+      services:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderItemRequest'
+        type: array
+      vehicle_brand:
+        type: string
+      vehicle_color:
+        type: string
+      vehicle_manufacture_year:
+        type: integer
+      vehicle_model:
+        type: string
+      vehicle_model_year:
+        type: integer
+      vehicle_plate:
+        type: string
+    required:
+    - client_document_number
+    - client_document_type
+    - client_name
+    - vehicle_brand
+    - vehicle_model
+    - vehicle_model_year
+    - vehicle_plate
+    type: object
+  dto.CreateServiceOrderResponse:
+    properties:
+      budget_id:
+        type: string
+      budget_status:
+        type: string
+      code:
+        type: string
+      service_order_id:
+        type: string
+      total_cents:
+        type: integer
     type: object
   dto.CreateServiceRequest:
     properties:
@@ -264,6 +202,21 @@ definitions:
     - model_year
     - plate
     type: object
+  dto.MeResponse:
+    properties:
+      email:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      issued_at:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+    type: object
   dto.PartResponse:
     properties:
       active:
@@ -281,6 +234,146 @@ definitions:
       unit_price_cents:
         type: integer
     type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  dto.ReviseBudgetRequest:
+    properties:
+      parts:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderItemRequest'
+        type: array
+      services:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderItemRequest'
+        type: array
+    type: object
+  dto.ReviseBudgetResponse:
+    properties:
+      budget_id:
+        type: string
+      budget_status:
+        type: string
+      total_cents:
+        type: integer
+      version:
+        type: integer
+    type: object
+  dto.ServiceOrderBudgetResponse:
+    properties:
+      approved_at:
+        type: string
+      approved_by_name:
+        type: string
+      id:
+        type: string
+      rejected_at:
+        type: string
+      rejection_reason:
+        type: string
+      sent_at:
+        type: string
+      status:
+        type: string
+      total_cents:
+        type: integer
+      version:
+        type: integer
+    type: object
+  dto.ServiceOrderDetailResponse:
+    properties:
+      budget_parts:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderLineResponse'
+        type: array
+      budget_services:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderLineResponse'
+        type: array
+      client_id:
+        type: string
+      code:
+        type: string
+      id:
+        type: string
+      latest_budget:
+        $ref: '#/definitions/dto.ServiceOrderBudgetResponse'
+      opened_at:
+        type: string
+      status:
+        type: string
+      status_history:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderStatusHistory'
+        type: array
+      vehicle_id:
+        type: string
+    type: object
+  dto.ServiceOrderItemRequest:
+    properties:
+      id:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - id
+    - quantity
+    type: object
+  dto.ServiceOrderLineResponse:
+    properties:
+      description:
+        type: string
+      quantity:
+        type: integer
+      ref_id:
+        type: string
+      total_price_cents:
+        type: integer
+      unit_price_cents:
+        type: integer
+    type: object
+  dto.ServiceOrderStatusHistory:
+    properties:
+      changed_at:
+        type: string
+      changed_by_user_id:
+        type: string
+      from_status:
+        type: string
+      reason:
+        type: string
+      to_status:
+        type: string
+    type: object
+  dto.ServiceOrderSummaryResponse:
+    properties:
+      client_id:
+        type: string
+      client_name:
+        type: string
+      code:
+        type: string
+      id:
+        type: string
+      opened_at:
+        type: string
+      plate:
+        type: string
+      status:
+        type: string
+      vehicle_id:
+        type: string
+    type: object
   dto.ServiceResponse:
     properties:
       active:
@@ -295,6 +388,13 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  dto.UpdateUserRoleRequest:
+    properties:
+      role:
+        type: string
+    required:
+    - role
     type: object
   dto.VehicleResponse:
     properties:
@@ -320,13 +420,6 @@ definitions:
         type: string
       plate:
         type: string
-    type: object
-  serviceorder.ItemInput:
-    properties:
-      id:
-        type: string
-      quantity:
-        type: integer
     type: object
 info:
   contact: {}
@@ -616,10 +709,8 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controllers.serviceOrderSummaryResponse'
+              $ref: '#/definitions/dto.ServiceOrderSummaryResponse'
             type: array
-      security:
-      - BearerAuth: []
       summary: List service orders
       tags:
       - admin-service-orders
@@ -630,12 +721,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createServiceOrderRequest'
+          $ref: '#/definitions/dto.CreateServiceOrderRequest'
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controllers.createServiceOrderResponse'
+            $ref: '#/definitions/dto.CreateServiceOrderResponse'
       summary: Create service order (draft budget)
       tags:
       - admin-service-orders
@@ -651,16 +742,30 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.serviceOrderDetailResponse'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.ServiceOrderDetailResponse'
       summary: Get service order
+      tags:
+      - admin-service-orders
+  /admin/service-orders/{id}/budget/revise:
+    post:
+      parameters:
+      - description: Service Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Budget revision
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ReviseBudgetRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ReviseBudgetResponse'
+      summary: Revise budget (new version, draft)
       tags:
       - admin-service-orders
   /admin/service-orders/{id}/budget/send:
@@ -806,6 +911,26 @@ paths:
       summary: Update service
       tags:
       - admin-services
+  /admin/users/{id}/role:
+    put:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRoleRequest'
+      responses:
+        "204":
+          description: No Content
+      summary: Update user role
+      tags:
+      - admin-users
   /admin/vehicles/{id}:
     delete:
       parameters:
@@ -862,7 +987,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.authResponse'
+            $ref: '#/definitions/dto.AuthResponse'
       summary: Login with email/password
       tags:
       - auth
@@ -874,12 +999,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.registerRequest'
+          $ref: '#/definitions/dto.RegisterRequest'
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controllers.authResponse'
+            $ref: '#/definitions/dto.AuthResponse'
       summary: Register a new user
       tags:
       - auth
@@ -900,7 +1025,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.clientServiceOrderResponse'
+            $ref: '#/definitions/dto.ClientServiceOrderResponse'
       summary: Get service order progress (client)
       tags:
       - client-service-orders
@@ -971,7 +1096,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.meResponse'
+            $ref: '#/definitions/dto.MeResponse'
       summary: Current identity
       tags:
       - auth

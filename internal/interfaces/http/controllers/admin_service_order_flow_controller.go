@@ -25,13 +25,22 @@ func NewAdminServiceOrderFlowController(svc *serviceorder.Service) *AdminService
 // @Summary Create service order (draft budget)
 // @Tags admin-service-orders
 // @Param request body dto.CreateServiceOrderRequest true "Service order"
-// @Success 201 {object} createServiceOrderResponse
+// @Success 201 {object} dto.CreateServiceOrderResponse
 // @Router /admin/service-orders [post]
 func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 	var req dto.CreateServiceOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
+	}
+
+	services := make([]serviceorder.ItemInput, 0, len(req.Services))
+	for _, it := range req.Services {
+		services = append(services, serviceorder.ItemInput{ID: it.ID, Quantity: it.Quantity})
+	}
+	parts := make([]serviceorder.ItemInput, 0, len(req.Parts))
+	for _, it := range req.Parts {
+		parts = append(parts, serviceorder.ItemInput{ID: it.ID, Quantity: it.Quantity})
 	}
 
 	out, err := h.svc.CreateDraft(c.Request.Context(), serviceorder.CreateDraftInput{
@@ -47,8 +56,8 @@ func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 		VehicleModelYear:       req.VehicleModelYear,
 		VehicleColor:           req.VehicleColor,
 		CustomerComplaint:      req.CustomerComplaint,
-		Services:               req.Services,
-		Parts:                  req.Parts,
+		Services:               services,
+		Parts:                  parts,
 	})
 	if err != nil {
 		switch {
@@ -70,6 +79,62 @@ func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 		BudgetID:       out.BudgetID,
 		BudgetStatus:   string(out.BudgetStatus),
 		TotalCents:     out.TotalCents,
+	})
+}
+
+// @Summary Revise budget (new version, draft)
+// @Tags admin-service-orders
+// @Param id path string true "Service Order ID"
+// @Param request body dto.ReviseBudgetRequest true "Budget revision"
+// @Success 201 {object} dto.ReviseBudgetResponse
+// @Router /admin/service-orders/{id}/budget/revise [post]
+func (h *AdminServiceOrderFlowController) ReviseBudget(c *gin.Context) {
+	id := c.Param("id")
+
+	var req dto.ReviseBudgetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	services := make([]serviceorder.ItemInput, 0, len(req.Services))
+	for _, it := range req.Services {
+		services = append(services, serviceorder.ItemInput{ID: it.ID, Quantity: it.Quantity})
+	}
+	parts := make([]serviceorder.ItemInput, 0, len(req.Parts))
+	for _, it := range req.Parts {
+		parts = append(parts, serviceorder.ItemInput{ID: it.ID, Quantity: it.Quantity})
+	}
+
+	claims, _ := middlewares.GetClaims(c)
+	var userID *string
+	if claims != nil && claims.Subject != "" {
+		userID = &claims.Subject
+	}
+
+	out, err := h.svc.ReviseBudget(c.Request.Context(), id, serviceorder.ReviseBudgetInput{
+		Services: services,
+		Parts:    parts,
+	}, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, serviceorder.ErrInvalidInput):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		case errors.Is(err, repository.ErrNotFound):
+			shared.WriteRepoError(c, err)
+		case errors.Is(err, repository.ErrConflict):
+			c.JSON(http.StatusConflict, gin.H{"error": "conflict"})
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, dto.ReviseBudgetResponse{
+		BudgetID:     out.BudgetID,
+		BudgetStatus: string(out.BudgetStatus),
+		Version:      out.Version,
+		TotalCents:   out.TotalCents,
 	})
 }
 

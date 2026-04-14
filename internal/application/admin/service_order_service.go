@@ -24,7 +24,10 @@ func (s *ServiceOrderService) FindByID(ctx context.Context, id string) (*order.S
 	return s.repo.FindByID(ctx, id)
 }
 
+func (s *ServiceOrderService) GetDetailByID(ctx context.Context, id string) (*order.ServiceOrderDetail, error) {
+	return s.repo.GetDetailByID(ctx, id)
+}
+
 func (s *ServiceOrderService) AverageExecutionMinutes(ctx context.Context, from, to *time.Time) (float64, error) {
 	return s.repo.AverageExecutionMinutes(ctx, from, to)
 }
-

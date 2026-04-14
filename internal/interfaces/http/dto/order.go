@@ -1,8 +1,9 @@
 package dto
 
-import (
-	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
-)
+type ServiceOrderItemRequest struct {
+	ID       string `json:"id" binding:"required"`
+	Quantity int    `json:"quantity" binding:"required"`
+}
 
 type CreateServiceOrderRequest struct {
 	ClientDocumentType   string  `json:"client_document_type" binding:"required"`
@@ -20,8 +21,8 @@ type CreateServiceOrderRequest struct {
 
 	CustomerComplaint *string `json:"customer_complaint"`
 
-	Services []serviceorder.ItemInput `json:"services"`
-	Parts    []serviceorder.ItemInput `json:"parts"`
+	Services []ServiceOrderItemRequest `json:"services"`
+	Parts    []ServiceOrderItemRequest `json:"parts"`
 }
 
 type CreateServiceOrderResponse struct {
@@ -50,6 +51,40 @@ type ServiceOrderDetailResponse struct {
 	ClientID  string `json:"client_id"`
 	VehicleID string `json:"vehicle_id"`
 	OpenedAt  string `json:"opened_at"`
+
+	LatestBudget   *ServiceOrderBudgetResponse `json:"latest_budget,omitempty"`
+	BudgetServices []ServiceOrderLineResponse  `json:"budget_services,omitempty"`
+	BudgetParts    []ServiceOrderLineResponse  `json:"budget_parts,omitempty"`
+	StatusHistory  []ServiceOrderStatusHistory `json:"status_history,omitempty"`
+}
+
+type ServiceOrderBudgetResponse struct {
+	ID         string  `json:"id"`
+	Version    int     `json:"version"`
+	Status     string  `json:"status"`
+	TotalCents int64   `json:"total_cents"`
+	SentAt     *string `json:"sent_at,omitempty"`
+	ApprovedAt *string `json:"approved_at,omitempty"`
+	RejectedAt *string `json:"rejected_at,omitempty"`
+
+	ApprovedByName  *string `json:"approved_by_name,omitempty"`
+	RejectionReason *string `json:"rejection_reason,omitempty"`
+}
+
+type ServiceOrderLineResponse struct {
+	RefID           *string `json:"ref_id,omitempty"`
+	Description     string  `json:"description"`
+	Quantity        int     `json:"quantity"`
+	UnitPriceCents  int64   `json:"unit_price_cents"`
+	TotalPriceCents int64   `json:"total_price_cents"`
+}
+
+type ServiceOrderStatusHistory struct {
+	FromStatus      *string `json:"from_status,omitempty"`
+	ToStatus        string  `json:"to_status"`
+	ChangedAt       string  `json:"changed_at"`
+	ChangedByUserID *string `json:"changed_by_user_id,omitempty"`
+	Reason          *string `json:"reason,omitempty"`
 }
 
 type ClientServiceOrderResponse struct {
@@ -58,4 +93,16 @@ type ClientServiceOrderResponse struct {
 	OpenedAt         string `json:"opened_at"`
 	BudgetStatus     string `json:"budget_status"`
 	BudgetTotalCents int64  `json:"budget_total_cents"`
+}
+
+type ReviseBudgetRequest struct {
+	Services []ServiceOrderItemRequest `json:"services"`
+	Parts    []ServiceOrderItemRequest `json:"parts"`
+}
+
+type ReviseBudgetResponse struct {
+	BudgetID     string `json:"budget_id"`
+	BudgetStatus string `json:"budget_status"`
+	Version      int    `json:"version"`
+	TotalCents   int64  `json:"total_cents"`
 }

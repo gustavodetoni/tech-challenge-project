@@ -83,6 +83,18 @@ type CreateDraftOutput struct {
 	TotalCents     int64
 }
 
+type ReviseBudgetInput struct {
+	Services []ItemInput
+	Parts    []ItemInput
+}
+
+type ReviseBudgetOutput struct {
+	BudgetID     string
+	BudgetStatus order.BudgetStatus
+	Version      int
+	TotalCents   int64
+}
+
 func (s *Service) CreateDraft(ctx context.Context, in CreateDraftInput) (*CreateDraftOutput, error) {
 	doc := strings.TrimSpace(in.ClientDocumentNumber)
 	doc = document.Normalize(doc)
@@ -165,6 +177,55 @@ func (s *Service) CreateDraft(ctx context.Context, in CreateDraftInput) (*Create
 		BudgetID:       createdBudget.ID,
 		BudgetStatus:   createdBudget.Status,
 		TotalCents:     createdBudget.TotalAmountCents,
+	}, nil
+}
+
+func (s *Service) ReviseBudget(ctx context.Context, serviceOrderID string, in ReviseBudgetInput, changedByUserID *string) (*ReviseBudgetOutput, error) {
+	if serviceOrderID == "" {
+		return nil, fmt.Errorf("%w: missing service_order_id", ErrInvalidInput)
+	}
+
+	serviceLines, serviceTotal, err := s.buildServiceLines(ctx, in.Services)
+	if err != nil {
+		return nil, err
+	}
+	partLines, partTotal, err := s.buildPartLines(ctx, in.Parts)
+	if err != nil {
+		return nil, err
+	}
+	if len(serviceLines) == 0 && len(partLines) == 0 {
+		return nil, fmt.Errorf("%w: at least one item is required", ErrInvalidInput)
+	}
+
+	total := serviceTotal + partTotal
+
+	now := time.Now().UTC()
+	b := order.Budget{
+		ID:               uuid.NewString(),
+		ServiceOrderID:   serviceOrderID,
+		Version:          0,
+		Status:           order.BudgetStatusDraft,
+		TotalAmountCents: total,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	createdBudget, err := s.flow.CreateBudgetRevision(ctx, repository.CreateBudgetRevisionParams{
+		ServiceOrderID:  serviceOrderID,
+		Budget:          b,
+		BudgetServices:  serviceLines,
+		BudgetParts:     partLines,
+		ChangedByUserID: changedByUserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &ReviseBudgetOutput{
+		BudgetID:     createdBudget.ID,
+		BudgetStatus: createdBudget.Status,
+		Version:      createdBudget.Version,
+		TotalCents:   createdBudget.TotalAmountCents,
 	}, nil
 }
 

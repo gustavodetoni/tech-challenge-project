@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "3c1d2f15-3a2b-4db4-9c4c-3d4c0f84c8c2",
     "name": "Tech Challenge API",
-    "description": "Collection generated from the project routes and the recorded curl flow in RESULTS.md.\n\nNotes:\n- Admin endpoints require a token with role ADMIN or MANAGER.\n- By default, /auth/register creates a VIEWER. Promote the user role in DB if needed, then login again.\n  Example SQL (inside the Postgres container):\n  UPDATE users SET role='ADMIN' WHERE lower(email)=lower('<email>');\n\nEnvironment variables expected:\n- baseUrl, access_token, email, password\n- cpf, client_id, plate, vehicle_id, service_id, part_id, service_order_id, service_order_code\n\nSecurity:\n- This collection uses Bearer auth with {{access_token}} at the collection level. Public routes override auth per-request.\n",
+    "description": "Collection generated from the project routes and the recorded curl flow in RESULTS.md.\n\nNotes:\n- Admin endpoints require a token with role ADMIN or MANAGER.\n- By default, /auth/register creates a VIEWER.\n  - First ADMIN: promote in DB manually, then login again to refresh the token.\n    Example SQL (inside the Postgres container):\n    UPDATE users SET role='ADMIN' WHERE lower(email)=lower('<email>');\n  - After you have an ADMIN token: promote other users via PUT /admin/users/:id/role (requires ADMIN), then the user should login again.\n\nEnvironment variables expected:\n- baseUrl, access_token, email, password\n- user_id, cpf, client_id, plate, vehicle_id, service_id, part_id, service_order_id, service_order_code\n\nSecurity:\n- This collection uses Bearer auth with {{access_token}} at the collection level. Public routes override auth per-request.\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,6 +10,7 @@
     { "key": "access_token", "value": "", "type": "string" },
     { "key": "email", "value": "", "type": "string" },
     { "key": "password", "value": "Senha@123", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
     { "key": "cpf", "value": "46420082412", "type": "string" },
     { "key": "plate", "value": "ABC1D23", "type": "string" },
     { "key": "client_id", "value": "", "type": "string" },
@@ -136,6 +137,20 @@
         },
         {
           "name": "Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.id) pm.collectionVariables.set('user_id', j.id);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/me", "host": ["{{baseUrl}}"], "path": ["me"] }
@@ -145,7 +160,7 @@
     },
     {
       "name": "Admin (requires ADMIN/MANAGER)",
-      "description": "These routes require a token whose JWT claim `role` is ADMIN or MANAGER. If you registered a new user (VIEWER), promote it in DB then login again to refresh the token.",
+      "description": "These routes require a token whose JWT claim `role` is ADMIN or MANAGER.\n\nNote:\n- /admin/users/:id/role requires ADMIN (not just MANAGER).",
       "item": [
         {
           "name": "Clients",
@@ -507,6 +522,18 @@
               }
             },
             {
+              "name": "Revise budget (new version, draft)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"services\": [\n    { \"id\": \"{{service_id}}\", \"quantity\": 1 }\n  ],\n  \"parts\": [\n    { \"id\": \"{{part_id}}\", \"quantity\": 1 }\n  ]\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/service-orders/{{service_order_id}}/budget/revise", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders", "{{service_order_id}}", "budget", "revise"] }
+              }
+            },
+            {
               "name": "Send budget",
               "request": {
                 "method": "POST",
@@ -525,6 +552,20 @@
               "request": {
                 "method": "POST",
                 "url": { "raw": "{{baseUrl}}/admin/service-orders/{{service_order_id}}/deliver", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders", "{{service_order_id}}", "deliver"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Users (ADMIN only)",
+          "item": [
+            {
+              "name": "Update user role",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"role\": \"MANAGER\"\n}" },
+                "url": { "raw": "{{baseUrl}}/admin/users/{{user_id}}/role", "host": ["{{baseUrl}}"], "path": ["admin", "users", "{{user_id}}", "role"] }
               }
             }
           ]

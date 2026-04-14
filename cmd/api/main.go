@@ -67,6 +67,7 @@ func main() {
 	serviceSvc := adminApp.NewServiceService(serviceRepo)
 	partSvc := adminApp.NewPartService(partRepo)
 	serviceOrderSvc := adminApp.NewServiceOrderService(serviceOrderRepo)
+	userSvc := adminApp.NewUserService(userRepo)
 	serviceOrderFlowSvc := serviceorder.NewService(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
 
 	routes.Register(router, routes.Deps{
@@ -80,6 +81,7 @@ func main() {
 		AdminParts:         controllers.NewAdminPartsController(partSvc),
 		AdminServiceOrders: controllers.NewAdminServiceOrdersController(serviceOrderSvc),
 		AdminMetrics:       controllers.NewAdminMetricsController(serviceOrderSvc),
+		AdminUsers:         controllers.NewAdminUsersController(userSvc),
 
 		AdminServiceOrderFlow: controllers.NewAdminServiceOrderFlowController(serviceOrderFlowSvc),
 		ClientServiceOrders:   controllers.NewClientServiceOrderController(serviceOrderFlowSvc),

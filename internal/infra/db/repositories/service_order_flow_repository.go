@@ -252,6 +252,104 @@ func (r *ServiceOrderFlowRepository) CreateDraft(ctx context.Context, p reposito
 	return &so, &createdBudget, nil
 }
 
+func (r *ServiceOrderFlowRepository) CreateBudgetRevision(ctx context.Context, p repository.CreateBudgetRevisionParams) (*order.Budget, error) {
+	now := time.Now().UTC()
+	b := p.Budget
+	b.ServiceOrderID = p.ServiceOrderID
+	b.CreatedAt = now
+	b.UpdatedAt = now
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var so struct {
+			ID     string
+			Status string
+		}
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Table("service_orders").
+			Select("id, status").
+			Where("id = ? AND deleted_at is null", p.ServiceOrderID).
+			Limit(1).
+			Scan(&so).Error; err != nil {
+			return err
+		}
+		if so.ID == "" {
+			return repository.ErrNotFound
+		}
+		if order.Status(so.Status) != order.StatusInDiagnosis {
+			return repository.ErrConflict
+		}
+
+		latest, err := latestBudgetForUpdate(tx, p.ServiceOrderID)
+		if err != nil {
+			return err
+		}
+
+		b.Version = latest.Version + 1
+		if b.Version < 2 {
+			b.Version = 2
+		}
+
+		if err := tx.Create(&budgetRow{
+			ID:               b.ID,
+			ServiceOrderID:   b.ServiceOrderID,
+			Version:          b.Version,
+			Status:           string(b.Status),
+			TotalAmountCents: b.TotalAmountCents,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}).Error; err != nil {
+			return err
+		}
+
+		for _, it := range p.BudgetServices {
+			serviceID := it.ServiceID
+			row := budgetServiceRow{
+				ID:              uuid.NewString(),
+				BudgetID:        b.ID,
+				ServiceID:       &serviceID,
+				Description:     it.Description,
+				Quantity:        it.Quantity,
+				UnitPriceCents:  it.UnitPriceCents,
+				TotalPriceCents: it.TotalPriceCents,
+				CreatedAt:       now,
+				UpdatedAt:       now,
+			}
+			if err := tx.Create(&row).Error; err != nil {
+				return err
+			}
+		}
+
+		for _, it := range p.BudgetParts {
+			partID := it.PartID
+			row := budgetPartRow{
+				ID:              uuid.NewString(),
+				BudgetID:        b.ID,
+				PartID:          &partID,
+				Description:     it.Description,
+				Quantity:        it.Quantity,
+				UnitPriceCents:  it.UnitPriceCents,
+				TotalPriceCents: it.TotalPriceCents,
+				CreatedAt:       now,
+				UpdatedAt:       now,
+			}
+			if err := tx.Create(&row).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, repository.ErrConflict
+		}
+		return nil, err
+	}
+
+	return &b, nil
+}
+
 func (r *ServiceOrderFlowRepository) StartDiagnosis(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return r.transitionStatus(ctx, serviceOrderID, order.StatusInDiagnosis, changedByUserID, nil, map[string]any{
 		"diagnosis_started_at": time.Now().UTC(),

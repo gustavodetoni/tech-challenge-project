@@ -1,17 +1,5 @@
 basePath: /
 definitions:
-  controllers.adjustStockRequest:
-    properties:
-      movement_type:
-        type: string
-      notes:
-        type: string
-      quantity:
-        type: integer
-    required:
-    - movement_type
-    - quantity
-    type: object
   controllers.approveBudgetRequest:
     properties:
       approved_by_name:
@@ -35,21 +23,6 @@ definitions:
       average_minutes:
         type: number
     type: object
-  controllers.clientResponse:
-    properties:
-      document_number:
-        type: string
-      document_type:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      phone:
-        type: string
-    type: object
   controllers.clientServiceOrderResponse:
     properties:
       budget_status:
@@ -62,41 +35,6 @@ definitions:
         type: string
       status:
         type: string
-    type: object
-  controllers.createClientRequest:
-    properties:
-      document_number:
-        type: string
-      document_type:
-        type: string
-      email:
-        type: string
-      name:
-        type: string
-      phone:
-        type: string
-    required:
-    - document_number
-    - document_type
-    - name
-    type: object
-  controllers.createPartRequest:
-    properties:
-      active:
-        type: boolean
-      description:
-        type: string
-      name:
-        type: string
-      sku:
-        type: string
-      stock_quantity:
-        type: integer
-      unit_price_cents:
-        type: integer
-    required:
-    - name
-    - sku
     type: object
   controllers.createServiceOrderRequest:
     properties:
@@ -154,57 +92,6 @@ definitions:
       total_cents:
         type: integer
     type: object
-  controllers.createServiceRequest:
-    properties:
-      active:
-        type: boolean
-      base_price_cents:
-        type: integer
-      description:
-        type: string
-      estimated_minutes:
-        type: integer
-      name:
-        type: string
-    required:
-    - name
-    type: object
-  controllers.createVehicleRequest:
-    properties:
-      brand:
-        type: string
-      chassis:
-        type: string
-      color:
-        type: string
-      manufacture_year:
-        type: integer
-      mileage:
-        type: integer
-      model:
-        type: string
-      model_year:
-        type: integer
-      notes:
-        type: string
-      plate:
-        type: string
-    required:
-    - brand
-    - model
-    - model_year
-    - plate
-    type: object
-  controllers.loginRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
   controllers.meResponse:
     properties:
       email:
@@ -219,23 +106,6 @@ definitions:
         type: string
       role:
         type: string
-    type: object
-  controllers.partResponse:
-    properties:
-      active:
-        type: boolean
-      description:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      sku:
-        type: string
-      stock_quantity:
-        type: integer
-      unit_price_cents:
-        type: integer
     type: object
   controllers.registerRequest:
     properties:
@@ -291,7 +161,127 @@ definitions:
       vehicle_id:
         type: string
     type: object
-  controllers.serviceResponse:
+  dto.AdjustStockRequest:
+    properties:
+      movement_type:
+        type: string
+      notes:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - movement_type
+    - quantity
+    type: object
+  dto.ClientResponse:
+    properties:
+      document_number:
+        type: string
+      document_type:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  dto.CreateClientRequest:
+    properties:
+      document_number:
+        type: string
+      document_type:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    required:
+    - document_number
+    - document_type
+    - name
+    type: object
+  dto.CreatePartRequest:
+    properties:
+      active:
+        type: boolean
+      description:
+        type: string
+      name:
+        type: string
+      sku:
+        type: string
+      stock_quantity:
+        type: integer
+      unit_price_cents:
+        type: integer
+    required:
+    - name
+    - sku
+    type: object
+  dto.CreateServiceRequest:
+    properties:
+      active:
+        type: boolean
+      base_price_cents:
+        type: integer
+      description:
+        type: string
+      estimated_minutes:
+        type: integer
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  dto.CreateVehicleRequest:
+    properties:
+      brand:
+        type: string
+      chassis:
+        type: string
+      color:
+        type: string
+      manufacture_year:
+        type: integer
+      mileage:
+        type: integer
+      model:
+        type: string
+      model_year:
+        type: integer
+      notes:
+        type: string
+      plate:
+        type: string
+    required:
+    - brand
+    - model
+    - model_year
+    - plate
+    type: object
+  dto.PartResponse:
+    properties:
+      active:
+        type: boolean
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      sku:
+        type: string
+      stock_quantity:
+        type: integer
+      unit_price_cents:
+        type: integer
+    type: object
+  dto.ServiceResponse:
     properties:
       active:
         type: boolean
@@ -306,7 +296,7 @@ definitions:
       name:
         type: string
     type: object
-  controllers.vehicleResponse:
+  dto.VehicleResponse:
     properties:
       brand:
         type: string
@@ -360,44 +350,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controllers.clientResponse'
+              $ref: '#/definitions/dto.ClientResponse'
             type: array
-      security:
-      - BearerAuth: []
       summary: List clients
       tags:
       - admin-clients
     post:
-      consumes:
-      - application/json
       parameters:
       - description: Client
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createClientRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreateClientRequest'
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controllers.clientResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.ClientResponse'
       summary: Create client
       tags:
       - admin-clients
@@ -412,14 +382,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Delete client
       tags:
       - admin-clients
@@ -434,21 +396,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.clientResponse'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.ClientResponse'
       summary: Get client
       tags:
       - admin-clients
     put:
-      consumes:
-      - application/json
       parameters:
       - description: Client ID
         in: path
@@ -460,28 +412,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createClientRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreateClientRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.clientResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.ClientResponse'
       summary: Update client
       tags:
       - admin-clients
@@ -506,16 +442,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controllers.vehicleResponse'
+              $ref: '#/definitions/dto.VehicleResponse'
             type: array
-      security:
-      - BearerAuth: []
       summary: List vehicles by client
       tags:
       - admin-vehicles
     post:
-      consumes:
-      - application/json
       parameters:
       - description: Client ID
         in: path
@@ -527,28 +459,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createVehicleRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreateVehicleRequest'
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controllers.vehicleResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.VehicleResponse'
       summary: Create vehicle for client
       tags:
       - admin-vehicles
@@ -568,8 +484,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/controllers.avgExecutionResponse'
-      security:
-      - BearerAuth: []
       summary: Average execution time (service orders)
       tags:
       - admin-metrics
@@ -589,44 +503,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controllers.partResponse'
+              $ref: '#/definitions/dto.PartResponse'
             type: array
-      security:
-      - BearerAuth: []
       summary: List parts and supplies
       tags:
       - admin-parts
     post:
-      consumes:
-      - application/json
       parameters:
       - description: Part
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createPartRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreatePartRequest'
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controllers.partResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.PartResponse'
       summary: Create part
       tags:
       - admin-parts
@@ -641,14 +535,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Delete part
       tags:
       - admin-parts
@@ -663,21 +549,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.partResponse'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.PartResponse'
       summary: Get part
       tags:
       - admin-parts
     put:
-      consumes:
-      - application/json
       parameters:
       - description: Part ID
         in: path
@@ -689,35 +565,17 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createPartRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreatePartRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.partResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.PartResponse'
       summary: Update part
       tags:
       - admin-parts
   /admin/parts/{id}/stock-movements:
     post:
-      consumes:
-      - application/json
       parameters:
       - description: Part ID
         in: path
@@ -729,28 +587,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.adjustStockRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.AdjustStockRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.partResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.PartResponse'
       summary: Adjust part stock (creates stock movement)
       tags:
       - admin-parts
@@ -782,8 +624,6 @@ paths:
       tags:
       - admin-service-orders
     post:
-      consumes:
-      - application/json
       parameters:
       - description: Service order
         in: body
@@ -791,27 +631,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controllers.createServiceOrderRequest'
-      produces:
-      - application/json
       responses:
         "201":
           description: Created
           schema:
             $ref: '#/definitions/controllers.createServiceOrderResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Create service order (draft budget)
       tags:
       - admin-service-orders
@@ -850,14 +674,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Send budget for approval
       tags:
       - admin-service-orders
@@ -872,14 +688,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Deliver service order
       tags:
       - admin-service-orders
@@ -894,14 +702,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Start diagnosis
       tags:
       - admin-service-orders
@@ -916,14 +716,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Finish service order
       tags:
       - admin-service-orders
@@ -943,44 +735,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controllers.serviceResponse'
+              $ref: '#/definitions/dto.ServiceResponse'
             type: array
-      security:
-      - BearerAuth: []
       summary: List services
       tags:
       - admin-services
     post:
-      consumes:
-      - application/json
       parameters:
       - description: Service
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createServiceRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreateServiceRequest'
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controllers.serviceResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.ServiceResponse'
       summary: Create service
       tags:
       - admin-services
@@ -995,14 +767,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Delete service
       tags:
       - admin-services
@@ -1017,21 +781,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.serviceResponse'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.ServiceResponse'
       summary: Get service
       tags:
       - admin-services
     put:
-      consumes:
-      - application/json
       parameters:
       - description: Service ID
         in: path
@@ -1043,28 +797,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createServiceRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreateServiceRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.serviceResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.ServiceResponse'
       summary: Update service
       tags:
       - admin-services
@@ -1079,14 +817,6 @@ paths:
       responses:
         "204":
           description: No Content
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Delete vehicle
       tags:
       - admin-vehicles
@@ -1101,21 +831,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.vehicleResponse'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.VehicleResponse'
       summary: Get vehicle
       tags:
       - admin-vehicles
     put:
-      consumes:
-      - application/json
       parameters:
       - description: Vehicle ID
         in: path
@@ -1127,74 +847,27 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.createVehicleRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/dto.CreateVehicleRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.vehicleResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
+            $ref: '#/definitions/dto.VehicleResponse'
       summary: Update vehicle
       tags:
       - admin-vehicles
   /auth/login:
     post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Login request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/controllers.loginRequest'
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
           schema:
             $ref: '#/definitions/controllers.authResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: Login with email/password
       tags:
       - auth
   /auth/register:
     post:
-      consumes:
-      - application/json
       parameters:
       - description: Register request
         in: body
@@ -1202,31 +875,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controllers.registerRequest'
-      produces:
-      - application/json
       responses:
         "201":
           description: Created
           schema:
             $ref: '#/definitions/controllers.authResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: Conflict
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: Register a new user
       tags:
       - auth
@@ -1248,19 +901,11 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/controllers.clientServiceOrderResponse'
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: Get service order progress (client)
       tags:
       - client-service-orders
   /client/service-orders/{code}/budget/approve:
     post:
-      consumes:
-      - application/json
       parameters:
       - description: CPF/CNPJ
         in: query
@@ -1277,30 +922,14 @@ paths:
         name: request
         schema:
           $ref: '#/definitions/controllers.approveBudgetRequest'
-      produces:
-      - application/json
       responses:
         "204":
           description: No Content
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: Approve latest budget
       tags:
       - client-service-orders
   /client/service-orders/{code}/budget/reject:
     post:
-      consumes:
-      - application/json
       parameters:
       - description: CPF/CNPJ
         in: query
@@ -1318,23 +947,9 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controllers.rejectBudgetRequest'
-      produces:
-      - application/json
       responses:
         "204":
           description: No Content
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       summary: Reject latest budget
       tags:
       - client-service-orders
@@ -1352,21 +967,11 @@ paths:
       - system
   /me:
     get:
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
           schema:
             $ref: '#/definitions/controllers.meResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
       summary: Current identity
       tags:
       - auth

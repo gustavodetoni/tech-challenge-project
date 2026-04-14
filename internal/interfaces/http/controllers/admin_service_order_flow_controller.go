@@ -8,7 +8,9 @@ import (
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
@@ -20,47 +22,13 @@ func NewAdminServiceOrderFlowController(svc *serviceorder.Service) *AdminService
 	return &AdminServiceOrderFlowController{svc: svc}
 }
 
-type createServiceOrderRequest struct {
-	ClientDocumentType   string  `json:"client_document_type" binding:"required"`
-	ClientDocumentNumber string  `json:"client_document_number" binding:"required"`
-	ClientName           string  `json:"client_name" binding:"required"`
-	ClientEmail          *string `json:"client_email"`
-	ClientPhone          *string `json:"client_phone"`
-
-	VehiclePlate           string  `json:"vehicle_plate" binding:"required"`
-	VehicleBrand           string  `json:"vehicle_brand" binding:"required"`
-	VehicleModel           string  `json:"vehicle_model" binding:"required"`
-	VehicleManufactureYear *int    `json:"vehicle_manufacture_year"`
-	VehicleModelYear       int     `json:"vehicle_model_year" binding:"required"`
-	VehicleColor           *string `json:"vehicle_color"`
-
-	CustomerComplaint *string `json:"customer_complaint"`
-
-	Services []serviceorder.ItemInput `json:"services"`
-	Parts    []serviceorder.ItemInput `json:"parts"`
-}
-
-type createServiceOrderResponse struct {
-	ServiceOrderID string `json:"service_order_id"`
-	Code           string `json:"code"`
-	BudgetID       string `json:"budget_id"`
-	BudgetStatus   string `json:"budget_status"`
-	TotalCents     int64  `json:"total_cents"`
-}
-
-// AdminCreateServiceOrder godoc
 // @Summary Create service order (draft budget)
 // @Tags admin-service-orders
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param request body createServiceOrderRequest true "Service order"
+// @Param request body dto.CreateServiceOrderRequest true "Service order"
 // @Success 201 {object} createServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 409 {object} map[string]string
 // @Router /admin/service-orders [post]
 func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
-	var req createServiceOrderRequest
+	var req dto.CreateServiceOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -96,7 +64,7 @@ func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, createServiceOrderResponse{
+	c.JSON(http.StatusCreated, dto.CreateServiceOrderResponse{
 		ServiceOrderID: out.ServiceOrderID,
 		Code:           out.Code,
 		BudgetID:       out.BudgetID,
@@ -105,13 +73,10 @@ func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 	})
 }
 
-// AdminStartDiagnosis godoc
 // @Summary Start diagnosis
 // @Tags admin-service-orders
-// @Security BearerAuth
 // @Param id path string true "Service Order ID"
 // @Success 204
-// @Failure 404 {object} map[string]string
 // @Router /admin/service-orders/{id}/diagnosis/start [post]
 func (h *AdminServiceOrderFlowController) StartDiagnosis(c *gin.Context) {
 	id := c.Param("id")
@@ -121,19 +86,16 @@ func (h *AdminServiceOrderFlowController) StartDiagnosis(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.StartDiagnosis(c.Request.Context(), id, userID); err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
 }
 
-// AdminSendBudget godoc
 // @Summary Send budget for approval
 // @Tags admin-service-orders
-// @Security BearerAuth
 // @Param id path string true "Service Order ID"
 // @Success 204
-// @Failure 404 {object} map[string]string
 // @Router /admin/service-orders/{id}/budget/send [post]
 func (h *AdminServiceOrderFlowController) SendBudget(c *gin.Context) {
 	id := c.Param("id")
@@ -143,19 +105,16 @@ func (h *AdminServiceOrderFlowController) SendBudget(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.SendBudget(c.Request.Context(), id, userID); err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
 }
 
-// AdminFinishServiceOrder godoc
 // @Summary Finish service order
 // @Tags admin-service-orders
-// @Security BearerAuth
 // @Param id path string true "Service Order ID"
 // @Success 204
-// @Failure 404 {object} map[string]string
 // @Router /admin/service-orders/{id}/finish [post]
 func (h *AdminServiceOrderFlowController) Finish(c *gin.Context) {
 	id := c.Param("id")
@@ -165,19 +124,16 @@ func (h *AdminServiceOrderFlowController) Finish(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.Finish(c.Request.Context(), id, userID); err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
 }
 
-// AdminDeliverServiceOrder godoc
 // @Summary Deliver service order
 // @Tags admin-service-orders
-// @Security BearerAuth
 // @Param id path string true "Service Order ID"
 // @Success 204
-// @Failure 404 {object} map[string]string
 // @Router /admin/service-orders/{id}/deliver [post]
 func (h *AdminServiceOrderFlowController) Deliver(c *gin.Context) {
 	id := c.Param("id")
@@ -187,7 +143,7 @@ func (h *AdminServiceOrderFlowController) Deliver(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.Deliver(c.Request.Context(), id, userID); err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)

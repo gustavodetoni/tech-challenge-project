@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 )
 
 type AdminMetricsController struct {
@@ -21,10 +22,8 @@ type avgExecutionResponse struct {
 	AverageMinutes float64 `json:"average_minutes"`
 }
 
-// AdminAverageExecutionTime godoc
 // @Summary Average execution time (service orders)
 // @Tags admin-metrics
-// @Security BearerAuth
 // @Param from query string false "From (RFC3339)"
 // @Param to query string false "To (RFC3339)"
 // @Success 200 {object} avgExecutionResponse
@@ -52,9 +51,8 @@ func (h *AdminMetricsController) AverageExecutionTime(c *gin.Context) {
 
 	avg, err := h.svc.AverageExecutionMinutes(c.Request.Context(), fromPtr, toPtr)
 	if err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, avgExecutionResponse{AverageMinutes: avg})
 }
-

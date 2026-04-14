@@ -3,11 +3,11 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
 	appAuth "github.com/soat-architecture/tech-challenge-project/internal/application/auth"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
@@ -21,47 +21,13 @@ func NewAuthController(auth *appAuth.Service, users repository.UserRepository) *
 	return &AuthController{auth: auth, users: users}
 }
 
-type registerRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type loginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type authResponse struct {
-	AccessToken string    `json:"access_token"`
-	TokenType   string    `json:"token_type"`
-	ExpiresAt   time.Time `json:"expires_at"`
-	UserID      string    `json:"user_id"`
-	Role        string    `json:"role"`
-}
-
-type meResponse struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	IssuedAt  time.Time `json:"issued_at,omitempty"`
-	ExpiresAt time.Time `json:"expires_at,omitempty"`
-}
-
-// Register godoc
 // @Summary Register a new user
 // @Tags auth
-// @Accept json
-// @Produce json
 // @Param request body registerRequest true "Register request"
 // @Success 201 {object} authResponse
-// @Failure 400 {object} map[string]string
-// @Failure 409 {object} map[string]string
-// @Failure 500 {object} map[string]string
 // @Router /auth/register [post]
 func (a *AuthController) Register(c *gin.Context) {
-	var req registerRequest
+	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -84,7 +50,7 @@ func (a *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, authResponse{
+	c.JSON(http.StatusCreated, dto.AuthResponse{
 		AccessToken: out.AccessToken,
 		TokenType:   "Bearer",
 		ExpiresAt:   out.ExpiresAt,
@@ -93,19 +59,12 @@ func (a *AuthController) Register(c *gin.Context) {
 	})
 }
 
-// Login godoc
 // @Summary Login with email/password
 // @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body loginRequest true "Login request"
 // @Success 200 {object} authResponse
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 500 {object} map[string]string
 // @Router /auth/login [post]
 func (a *AuthController) Login(c *gin.Context) {
-	var req loginRequest
+	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -127,7 +86,7 @@ func (a *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, authResponse{
+	c.JSON(http.StatusOK, dto.AuthResponse{
 		AccessToken: out.AccessToken,
 		TokenType:   "Bearer",
 		ExpiresAt:   out.ExpiresAt,
@@ -136,13 +95,9 @@ func (a *AuthController) Login(c *gin.Context) {
 	})
 }
 
-// Me godoc
 // @Summary Current identity
 // @Tags auth
-// @Security BearerAuth
-// @Produce json
 // @Success 200 {object} meResponse
-// @Failure 401 {object} map[string]string
 // @Router /me [get]
 func (a *AuthController) Me(c *gin.Context) {
 	claims, ok := middlewares.GetClaims(c)
@@ -162,7 +117,7 @@ func (a *AuthController) Me(c *gin.Context) {
 		return
 	}
 
-	resp := meResponse{
+	resp := dto.MeResponse{
 		ID:    u.ID,
 		Name:  u.Name,
 		Email: u.Email,

@@ -7,6 +7,9 @@ import (
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 )
 
 type AdminServicesController struct {
@@ -17,58 +20,33 @@ func NewAdminServicesController(svc *admin.ServiceService) *AdminServicesControl
 	return &AdminServicesController{svc: svc}
 }
 
-type createServiceRequest struct {
-	Name            string  `json:"name" binding:"required"`
-	Description     *string `json:"description"`
-	BasePriceCents  int64   `json:"base_price_cents"`
-	EstimatedMinutes int    `json:"estimated_minutes"`
-	Active          bool    `json:"active"`
-}
-
-type serviceResponse struct {
-	ID              string  `json:"id"`
-	Name            string  `json:"name"`
-	Description     *string `json:"description,omitempty"`
-	BasePriceCents  int64   `json:"base_price_cents"`
-	EstimatedMinutes int    `json:"estimated_minutes"`
-	Active          bool    `json:"active"`
-}
-
-// AdminListServices godoc
 // @Summary List services
 // @Tags admin-services
-// @Security BearerAuth
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
-// @Success 200 {array} serviceResponse
+// @Success 200 {array} dto.ServiceResponse
 // @Router /admin/services [get]
 func (h *AdminServicesController) List(c *gin.Context) {
-	limit, offset := parseLimitOffset(c)
+	limit, offset := shared.ParseLimitOffset(c)
 	services, err := h.svc.List(c.Request.Context(), limit, offset)
 	if err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
-	out := make([]serviceResponse, 0, len(services))
+	out := make([]dto.ServiceResponse, 0, len(services))
 	for _, s := range services {
-		out = append(out, mapServiceResponse(s))
+		out = append(out, mapper.ServiceResponseFromDomain(s))
 	}
 	c.JSON(http.StatusOK, out)
 }
 
-// AdminCreateService godoc
 // @Summary Create service
 // @Tags admin-services
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param request body createServiceRequest true "Service"
-// @Success 201 {object} serviceResponse
-// @Failure 400 {object} map[string]string
-// @Failure 409 {object} map[string]string
+// @Param request body dto.CreateServiceRequest true "Service"
+// @Success 201 {object} dto.ServiceResponse
 // @Router /admin/services [post]
 func (h *AdminServicesController) Create(c *gin.Context) {
-	var req createServiceRequest
+	var req dto.CreateServiceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -84,42 +62,33 @@ func (h *AdminServicesController) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, mapServiceResponse(*svc))
+	c.JSON(http.StatusCreated, mapper.ServiceResponseFromDomain(*svc))
 }
 
-// AdminGetService godoc
 // @Summary Get service
 // @Tags admin-services
-// @Security BearerAuth
 // @Param id path string true "Service ID"
-// @Success 200 {object} serviceResponse
-// @Failure 404 {object} map[string]string
+// @Success 200 {object} dto.ServiceResponse
 // @Router /admin/services/{id} [get]
 func (h *AdminServicesController) Get(c *gin.Context) {
 	id := c.Param("id")
 	svc, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, mapServiceResponse(*svc))
+	c.JSON(http.StatusOK, mapper.ServiceResponseFromDomain(*svc))
 }
 
-// AdminUpdateService godoc
 // @Summary Update service
 // @Tags admin-services
-// @Security BearerAuth
-// @Accept json
-// @Produce json
 // @Param id path string true "Service ID"
-// @Param request body createServiceRequest true "Service"
-// @Success 200 {object} serviceResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
+// @Param request body dto.CreateServiceRequest true "Service"
+// @Success 200 {object} dto.ServiceResponse
 // @Router /admin/services/{id} [put]
 func (h *AdminServicesController) Update(c *gin.Context) {
 	id := c.Param("id")
-	var req createServiceRequest
+	var req dto.CreateServiceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -132,37 +101,22 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 		Active:           req.Active,
 	})
 	if err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, mapServiceResponse(*svc))
+	c.JSON(http.StatusOK, mapper.ServiceResponseFromDomain(*svc))
 }
 
-// AdminDeleteService godoc
 // @Summary Delete service
 // @Tags admin-services
-// @Security BearerAuth
 // @Param id path string true "Service ID"
 // @Success 204
-// @Failure 404 {object} map[string]string
 // @Router /admin/services/{id} [delete]
 func (h *AdminServicesController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
 }
-
-func mapServiceResponse(s service.Service) serviceResponse {
-	return serviceResponse{
-		ID:               s.ID,
-		Name:             s.Name,
-		Description:      s.Description,
-		BasePriceCents:   s.BasePriceCents,
-		EstimatedMinutes: s.EstimatedMinutes,
-		Active:           s.Active,
-	}
-}
-

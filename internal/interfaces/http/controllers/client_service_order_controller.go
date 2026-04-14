@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
@@ -18,37 +20,25 @@ func NewClientServiceOrderController(svc *serviceorder.Service) *ClientServiceOr
 	return &ClientServiceOrderController{svc: svc}
 }
 
-type clientServiceOrderResponse struct {
-	Code             string `json:"code"`
-	Status           string `json:"status"`
-	OpenedAt         string `json:"opened_at"`
-	BudgetStatus     string `json:"budget_status"`
-	BudgetTotalCents int64  `json:"budget_total_cents"`
-}
-
-// ClientGetServiceOrder godoc
 // @Summary Get service order progress (client)
 // @Tags client-service-orders
 // @Param document_number query string true "CPF/CNPJ"
 // @Param code path string true "Service Order Code"
 // @Success 200 {object} clientServiceOrderResponse
-// @Failure 404 {object} map[string]string
 // @Router /client/service-orders/{code} [get]
 func (h *ClientServiceOrderController) Get(c *gin.Context) {
-	code := c.Param("code")
-	doc := c.Query("document_number")
-	if doc == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "document_number is required"})
+	code, doc, ok := getCodeAndDocumentNumber(c)
+	if !ok {
 		return
 	}
 
 	view, err := h.svc.ClientGetByCode(c.Request.Context(), code, doc)
 	if err != nil {
-		writeRepoError(c, err)
+		shared.WriteRepoError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, clientServiceOrderResponse{
+	c.JSON(http.StatusOK, dto.ClientServiceOrderResponse{
 		Code:             view.Code,
 		Status:           string(view.Status),
 		OpenedAt:         view.OpenedAt,
@@ -61,23 +51,16 @@ type approveBudgetRequest struct {
 	ApprovedByName *string `json:"approved_by_name"`
 }
 
-// ClientApproveBudget godoc
 // @Summary Approve latest budget
 // @Tags client-service-orders
-// @Accept json
-// @Produce json
 // @Param document_number query string true "CPF/CNPJ"
 // @Param code path string true "Service Order Code"
 // @Param request body approveBudgetRequest false "Approval info"
 // @Success 204
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
 // @Router /client/service-orders/{code}/budget/approve [post]
 func (h *ClientServiceOrderController) ApproveBudget(c *gin.Context) {
-	code := c.Param("code")
-	doc := c.Query("document_number")
-	if doc == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "document_number is required"})
+	code, doc, ok := getCodeAndDocumentNumber(c)
+	if !ok {
 		return
 	}
 
@@ -86,7 +69,7 @@ func (h *ClientServiceOrderController) ApproveBudget(c *gin.Context) {
 
 	if err := h.svc.ClientApproveBudget(c.Request.Context(), code, doc, req.ApprovedByName); err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			writeRepoError(c, err)
+			shared.WriteRepoError(c, err)
 			return
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -99,23 +82,16 @@ type rejectBudgetRequest struct {
 	Reason string `json:"reason" binding:"required"`
 }
 
-// ClientRejectBudget godoc
 // @Summary Reject latest budget
 // @Tags client-service-orders
-// @Accept json
-// @Produce json
 // @Param document_number query string true "CPF/CNPJ"
 // @Param code path string true "Service Order Code"
 // @Param request body rejectBudgetRequest true "Rejection reason"
 // @Success 204
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
 // @Router /client/service-orders/{code}/budget/reject [post]
 func (h *ClientServiceOrderController) RejectBudget(c *gin.Context) {
-	code := c.Param("code")
-	doc := c.Query("document_number")
-	if doc == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "document_number is required"})
+	code, doc, ok := getCodeAndDocumentNumber(c)
+	if !ok {
 		return
 	}
 
@@ -127,11 +103,25 @@ func (h *ClientServiceOrderController) RejectBudget(c *gin.Context) {
 
 	if err := h.svc.ClientRejectBudget(c.Request.Context(), code, doc, req.Reason); err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			writeRepoError(c, err)
+			shared.WriteRepoError(c, err)
 			return
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func getCodeAndDocumentNumber(c *gin.Context) (string, string, bool) {
+	code := c.Param("code")
+	doc := c.Query("document_number")
+
+	if doc == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "document_number is required",
+		})
+		return "", "", false
+	}
+
+	return code, doc, true
 }

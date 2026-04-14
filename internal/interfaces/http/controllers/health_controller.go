@@ -10,7 +10,6 @@ type HealthController struct{}
 
 func NewHealthController() *HealthController { return &HealthController{} }
 
-// Health godoc
 // @Summary Health check
 // @Tags system
 // @Success 200 {object} map[string]string

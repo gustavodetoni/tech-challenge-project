@@ -1,4 +1,4 @@
-package controllers
+package shared
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
-func parseLimitOffset(c *gin.Context) (limit, offset int) {
+func ParseLimitOffset(c *gin.Context) (limit, offset int) {
 	limit = 50
 	offset = 0
 
@@ -28,7 +28,7 @@ func parseLimitOffset(c *gin.Context) (limit, offset int) {
 	return limit, offset
 }
 
-func writeRepoError(c *gin.Context, err error) {
+func WriteRepoError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, repository.ErrNotFound):
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
@@ -38,4 +38,3 @@ func writeRepoError(c *gin.Context, err error) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
 	}
 }
-

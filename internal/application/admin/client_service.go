@@ -22,15 +22,10 @@ func NewClientService(repo repository.ClientRepository) *ClientService {
 }
 
 func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.Client, error) {
-	in.Name = strings.TrimSpace(in.Name)
-	in.DocumentNumber = document.Normalize(in.DocumentNumber)
-	if in.Name == "" {
-		return nil, errors.New("name is required")
+	err := verifyClient(in)
+	if err != nil {
+		return nil, err
 	}
-	if !isValidDocument(in.DocumentType, in.DocumentNumber) {
-		return nil, errors.New("invalid document")
-	}
-
 	now := time.Now().UTC()
 	in.ID = uuid.NewString()
 	in.CreatedAt = now
@@ -43,15 +38,10 @@ func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.C
 }
 
 func (s *ClientService) Update(ctx context.Context, id string, in client.Client) (*client.Client, error) {
-	in.Name = strings.TrimSpace(in.Name)
-	in.DocumentNumber = document.Normalize(in.DocumentNumber)
-	if in.Name == "" {
-		return nil, errors.New("name is required")
+	err := verifyClient(in)
+	if err != nil {
+		return nil, err
 	}
-	if !isValidDocument(in.DocumentType, in.DocumentNumber) {
-		return nil, errors.New("invalid document")
-	}
-
 	in.ID = id
 	in.UpdatedAt = time.Now().UTC()
 	if err := s.repo.Update(ctx, &in); err != nil {
@@ -82,4 +72,16 @@ func isValidDocument(docType client.DocumentType, doc string) bool {
 	default:
 		return false
 	}
+}
+
+func verifyClient(in client.Client) error {
+	in.Name = strings.TrimSpace(in.Name)
+	in.DocumentNumber = document.Normalize(in.DocumentNumber)
+	if in.Name == "" {
+		return errors.New("name is required")
+	}
+	if !isValidDocument(in.DocumentType, in.DocumentNumber) {
+		return errors.New("invalid document")
+	}
+	return nil
 }

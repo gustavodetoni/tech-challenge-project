@@ -1,0 +1,603 @@
+{
+  "info": {
+    "_postman_id": "3c1d2f15-3a2b-4db4-9c4c-3d4c0f84c8c2",
+    "name": "Tech Challenge API",
+    "description": "Collection generated from the project routes and the recorded curl flow in RESULTS.md.\n\nNotes:\n- Admin endpoints require a token with role ADMIN or MANAGER.\n- By default, /auth/register creates a VIEWER. Promote the user role in DB if needed, then login again.\n  Example SQL (inside the Postgres container):\n  UPDATE users SET role='ADMIN' WHERE lower(email)=lower('<email>');\n\nEnvironment variables expected:\n- baseUrl, access_token, email, password\n- cpf, client_id, plate, vehicle_id, service_id, part_id, service_order_id, service_order_code\n\nSecurity:\n- This collection uses Bearer auth with {{access_token}} at the collection level. Public routes override auth per-request.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "email", "value": "", "type": "string" },
+    { "key": "password", "value": "Senha@123", "type": "string" },
+    { "key": "cpf", "value": "46420082412", "type": "string" },
+    { "key": "plate", "value": "ABC1D23", "type": "string" },
+    { "key": "client_id", "value": "", "type": "string" },
+    { "key": "vehicle_id", "value": "", "type": "string" },
+    { "key": "service_id", "value": "", "type": "string" },
+    { "key": "part_id", "value": "", "type": "string" },
+    { "key": "service_order_id", "value": "", "type": "string" },
+    { "key": "service_order_code", "value": "", "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const email = pm.collectionVariables.get('email');",
+          "if (!email) {",
+          "  pm.collectionVariables.set('email', `teste+gustavo-${Date.now()}@gmail.com`);",
+          "}",
+          "const baseUrl = pm.collectionVariables.get('baseUrl');",
+          "if (!baseUrl) {",
+          "  pm.collectionVariables.set('baseUrl', 'http://localhost:8080');",
+          "}",
+          "const password = pm.collectionVariables.get('password');",
+          "if (!password) {",
+          "  pm.collectionVariables.set('password', 'Senha@123');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": { "raw": "{{baseUrl}}/swagger/index.html", "host": ["{{baseUrl}}"], "path": ["swagger", "index.html"] }
+          }
+        },
+        {
+          "name": "Swagger JSON",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": { "raw": "{{baseUrl}}/swagger/doc.json", "host": ["{{baseUrl}}"], "path": ["swagger", "doc.json"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gustavo\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.access_token) pm.collectionVariables.set('access_token', j.access_token);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/me", "host": ["{{baseUrl}}"], "path": ["me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin (requires ADMIN/MANAGER)",
+      "description": "These routes require a token whose JWT claim `role` is ADMIN or MANAGER. If you registered a new user (VIEWER), promote it in DB then login again to refresh the token.",
+      "item": [
+        {
+          "name": "Clients",
+          "item": [
+            {
+              "name": "List clients",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/clients?limit=10&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "clients"],
+                  "query": [
+                    { "key": "limit", "value": "10" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create client",
+              "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.id) pm.collectionVariables.set('client_id', j.id);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"document_type\": \"CPF\",\n  \"document_number\": \"{{cpf}}\",\n  \"name\": \"Gustavo\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"11999998888\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/clients", "host": ["{{baseUrl}}"], "path": ["admin", "clients"] }
+              }
+            },
+            {
+              "name": "Get client",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/admin/clients/{{client_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "clients", "{{client_id}}"] }
+              }
+            },
+            {
+              "name": "Update client",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"document_type\": \"CPF\",\n  \"document_number\": \"{{cpf}}\",\n  \"name\": \"Gustavo Detoni\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"11999990000\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/clients/{{client_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "clients", "{{client_id}}"] }
+              }
+            },
+            {
+              "name": "Delete client",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/admin/clients/{{client_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "clients", "{{client_id}}"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vehicles",
+          "item": [
+            {
+              "name": "List vehicles by client",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/clients/{{client_id}}/vehicles?limit=10&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "clients", "{{client_id}}", "vehicles"],
+                  "query": [
+                    { "key": "limit", "value": "10" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create vehicle for client",
+              "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.id) pm.collectionVariables.set('vehicle_id', j.id);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plate\": \"{{plate}}\",\n  \"brand\": \"Mitsubishi\",\n  \"model\": \"Lancer\",\n  \"manufacture_year\": 2014,\n  \"model_year\": 2015,\n  \"color\": \"Prata\",\n  \"mileage\": 85000,\n  \"notes\": \"Primeiro carro do cliente\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/clients/{{client_id}}/vehicles", "host": ["{{baseUrl}}"], "path": ["admin", "clients", "{{client_id}}", "vehicles"] }
+              }
+            },
+            {
+              "name": "Get vehicle",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/admin/vehicles/{{vehicle_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "vehicles", "{{vehicle_id}}"] }
+              }
+            },
+            {
+              "name": "Update vehicle",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plate\": \"{{plate}}\",\n  \"brand\": \"Mitsubishi\",\n  \"model\": \"Lancer\",\n  \"manufacture_year\": 2014,\n  \"model_year\": 2015,\n  \"color\": \"Preto\",\n  \"mileage\": 86000,\n  \"notes\": \"Revisão programada\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/vehicles/{{vehicle_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "vehicles", "{{vehicle_id}}"] }
+              }
+            },
+            {
+              "name": "Delete vehicle",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/admin/vehicles/{{vehicle_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "vehicles", "{{vehicle_id}}"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Services",
+          "item": [
+            {
+              "name": "List services",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/services?limit=10&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "services"],
+                  "query": [
+                    { "key": "limit", "value": "10" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create service",
+              "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.id) pm.collectionVariables.set('service_id', j.id);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Troca de óleo\",\n  \"description\": \"Troca de óleo do motor\",\n  \"base_price_cents\": 15000,\n  \"estimated_minutes\": 60,\n  \"active\": true\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/services", "host": ["{{baseUrl}}"], "path": ["admin", "services"] }
+              }
+            },
+            {
+              "name": "Get service",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/admin/services/{{service_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "services", "{{service_id}}"] }
+              }
+            },
+            {
+              "name": "Update service",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Troca de óleo\",\n  \"description\": \"Troca de óleo + filtro\",\n  \"base_price_cents\": 17000,\n  \"estimated_minutes\": 75,\n  \"active\": true\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/services/{{service_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "services", "{{service_id}}"] }
+              }
+            },
+            {
+              "name": "Delete service",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/admin/services/{{service_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "services", "{{service_id}}"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Parts",
+          "item": [
+            {
+              "name": "List parts",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/parts?limit=10&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "parts"],
+                  "query": [
+                    { "key": "limit", "value": "10" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create part",
+              "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.id) pm.collectionVariables.set('part_id', j.id);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"FILTRO-OLEO-{{$randomInt}}\",\n  \"name\": \"Filtro de óleo\",\n  \"description\": \"Filtro de óleo original\",\n  \"unit_price_cents\": 5000,\n  \"stock_quantity\": 10,\n  \"active\": true\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/parts", "host": ["{{baseUrl}}"], "path": ["admin", "parts"] }
+              }
+            },
+            {
+              "name": "Get part",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/admin/parts/{{part_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "parts", "{{part_id}}"] }
+              }
+            },
+            {
+              "name": "Update part",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"FILTRO-OLEO-{{$randomInt}}\",\n  \"name\": \"Filtro de óleo\",\n  \"description\": \"Filtro de óleo (atualizado)\",\n  \"unit_price_cents\": 5500,\n  \"stock_quantity\": 10,\n  \"active\": true\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/parts/{{part_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "parts", "{{part_id}}"] }
+              }
+            },
+            {
+              "name": "Adjust stock",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"movement_type\": \"IN\",\n  \"quantity\": 5,\n  \"notes\": \"Entrada de estoque manual\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/parts/{{part_id}}/stock-movements", "host": ["{{baseUrl}}"], "path": ["admin", "parts", "{{part_id}}", "stock-movements"] }
+              }
+            },
+            {
+              "name": "Delete part",
+              "request": {
+                "method": "DELETE",
+                "url": { "raw": "{{baseUrl}}/admin/parts/{{part_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "parts", "{{part_id}}"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Service Orders",
+          "item": [
+            {
+              "name": "List service orders",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/service-orders?limit=10&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "service-orders"],
+                  "query": [
+                    { "key": "limit", "value": "10" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create draft (service order + budget)",
+              "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const j = pm.response.json();",
+                  "  if (j && j.service_order_id) pm.collectionVariables.set('service_order_id', j.service_order_id);",
+                  "  if (j && j.code) pm.collectionVariables.set('service_order_code', j.code);",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"client_document_type\": \"CPF\",\n  \"client_document_number\": \"{{cpf}}\",\n  \"client_name\": \"Gustavo\",\n  \"vehicle_plate\": \"{{plate}}\",\n  \"vehicle_brand\": \"Mitsubishi\",\n  \"vehicle_model\": \"Lancer\",\n  \"vehicle_model_year\": 2015,\n  \"customer_complaint\": \"Barulho no motor ao ligar\",\n  \"services\": [\n    { \"id\": \"{{service_id}}\", \"quantity\": 1 }\n  ],\n  \"parts\": [\n    { \"id\": \"{{part_id}}\", \"quantity\": 1 }\n  ]\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/admin/service-orders", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders"] }
+              }
+            },
+            {
+              "name": "Get service order",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{baseUrl}}/admin/service-orders/{{service_order_id}}", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders", "{{service_order_id}}"] }
+              }
+            },
+            {
+              "name": "Start diagnosis",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{baseUrl}}/admin/service-orders/{{service_order_id}}/diagnosis/start", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders", "{{service_order_id}}", "diagnosis", "start"] }
+              }
+            },
+            {
+              "name": "Send budget",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{baseUrl}}/admin/service-orders/{{service_order_id}}/budget/send", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders", "{{service_order_id}}", "budget", "send"] }
+              }
+            },
+            {
+              "name": "Finish",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{baseUrl}}/admin/service-orders/{{service_order_id}}/finish", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders", "{{service_order_id}}", "finish"] }
+              }
+            },
+            {
+              "name": "Deliver",
+              "request": {
+                "method": "POST",
+                "url": { "raw": "{{baseUrl}}/admin/service-orders/{{service_order_id}}/deliver", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders", "{{service_order_id}}", "deliver"] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Metrics",
+          "item": [
+            {
+              "name": "Average execution time",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/metrics/avg-execution-time?from=2026-04-07T00:00:00Z&to=2026-04-14T23:59:59Z",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "metrics", "avg-execution-time"],
+                  "query": [
+                    { "key": "from", "value": "2026-04-07T00:00:00Z" },
+                    { "key": "to", "value": "2026-04-14T23:59:59Z" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Client (no auth)",
+      "item": [
+        {
+          "name": "Get service order by code",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/client/service-orders/{{service_order_code}}?document_number={{cpf}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["client", "service-orders", "{{service_order_code}}"],
+              "query": [{ "key": "document_number", "value": "{{cpf}}" }]
+            }
+          }
+        },
+        {
+          "name": "Approve budget",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"approved_by_name\": \"Gustavo\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/client/service-orders/{{service_order_code}}/budget/approve?document_number={{cpf}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["client", "service-orders", "{{service_order_code}}", "budget", "approve"],
+              "query": [{ "key": "document_number", "value": "{{cpf}}" }]
+            }
+          }
+        },
+        {
+          "name": "Reject budget",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Muito caro, vou pensar melhor\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/client/service-orders/{{service_order_code}}/budget/reject?document_number={{cpf}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["client", "service-orders", "{{service_order_code}}", "budget", "reject"],
+              "query": [{ "key": "document_number", "value": "{{cpf}}" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

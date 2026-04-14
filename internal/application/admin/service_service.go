@@ -16,15 +16,14 @@ type ServiceService struct {
 	repo repository.ServiceRepository
 }
 
-func NewServiceService(repo repository.ServiceRepository) *ServiceService { return &ServiceService{repo: repo} }
+func NewServiceService(repo repository.ServiceRepository) *ServiceService {
+	return &ServiceService{repo: repo}
+}
 
 func (s *ServiceService) Create(ctx context.Context, in service.Service) (*service.Service, error) {
-	in.Name = strings.TrimSpace(in.Name)
-	if in.Name == "" {
-		return nil, errors.New("name is required")
-	}
-	if in.BasePriceCents < 0 || in.EstimatedMinutes < 0 {
-		return nil, errors.New("invalid price/estimated minutes")
+	err := verifyService(in)
+	if err != nil {
+		return nil, err
 	}
 	now := time.Now().UTC()
 	in.ID = uuid.NewString()
@@ -39,12 +38,9 @@ func (s *ServiceService) Create(ctx context.Context, in service.Service) (*servi
 }
 
 func (s *ServiceService) Update(ctx context.Context, id string, in service.Service) (*service.Service, error) {
-	in.Name = strings.TrimSpace(in.Name)
-	if in.Name == "" {
-		return nil, errors.New("name is required")
-	}
-	if in.BasePriceCents < 0 || in.EstimatedMinutes < 0 {
-		return nil, errors.New("invalid price/estimated minutes")
+	err := verifyService(in)
+	if err != nil {
+		return nil, err
 	}
 	in.ID = id
 	in.UpdatedAt = time.Now().UTC()
@@ -66,3 +62,13 @@ func (s *ServiceService) List(ctx context.Context, limit, offset int) ([]service
 	return s.repo.List(ctx, limit, offset)
 }
 
+func verifyService(in service.Service) error {
+	in.Name = strings.TrimSpace(in.Name)
+	if in.Name == "" {
+		return errors.New("name is required")
+	}
+	if in.BasePriceCents < 0 || in.EstimatedMinutes < 0 {
+		return errors.New("invalid price/estimated minutes")
+	}
+	return nil
+}

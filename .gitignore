@@ -1,3 +1,5 @@
 .env
 .instructions
 tmp/
+bin
+.idea

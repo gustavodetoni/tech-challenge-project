@@ -23,22 +23,10 @@ func NewVehicleService(repo repository.VehicleRepository) *VehicleService {
 }
 
 func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
-	in.Plate = plate.Normalize(in.Plate)
-	in.Brand = strings.TrimSpace(in.Brand)
-	in.Model = strings.TrimSpace(in.Model)
-	if in.ClientID == "" {
-		return nil, errors.New("client_id is required")
+	err := verifyVehicle(in)
+	if err != nil {
+		return nil, err
 	}
-	if !licenseplate.IsValid(in.Plate, "") {
-		return nil, errors.New("invalid plate")
-	}
-	if in.Brand == "" || in.Model == "" {
-		return nil, errors.New("brand and model are required")
-	}
-	if in.ModelYear < 1900 || in.ModelYear > 2100 {
-		return nil, errors.New("invalid model_year")
-	}
-
 	now := time.Now().UTC()
 	in.ID = uuid.NewString()
 	in.CreatedAt = now
@@ -51,22 +39,10 @@ func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehic
 }
 
 func (s *VehicleService) Update(ctx context.Context, id string, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
-	in.Plate = plate.Normalize(in.Plate)
-	in.Brand = strings.TrimSpace(in.Brand)
-	in.Model = strings.TrimSpace(in.Model)
-	if in.ClientID == "" {
-		return nil, errors.New("client_id is required")
+	err := verifyVehicle(in)
+	if err != nil {
+		return nil, err
 	}
-	if !licenseplate.IsValid(in.Plate, "") {
-		return nil, errors.New("invalid plate")
-	}
-	if in.Brand == "" || in.Model == "" {
-		return nil, errors.New("brand and model are required")
-	}
-	if in.ModelYear < 1900 || in.ModelYear > 2100 {
-		return nil, errors.New("invalid model_year")
-	}
-
 	in.ID = id
 	in.UpdatedAt = time.Now().UTC()
 	if err := s.repo.Update(ctx, &in); err != nil {
@@ -85,4 +61,23 @@ func (s *VehicleService) FindByID(ctx context.Context, id string) (*vehicle.Vehi
 
 func (s *VehicleService) ListByClientID(ctx context.Context, clientID string, limit, offset int) ([]vehicle.Vehicle, error) {
 	return s.repo.ListByClientID(ctx, clientID, limit, offset)
+}
+
+func verifyVehicle(in vehicle.Vehicle) error {
+	in.Plate = plate.Normalize(in.Plate)
+	in.Brand = strings.TrimSpace(in.Brand)
+	in.Model = strings.TrimSpace(in.Model)
+	if in.ClientID == "" {
+		return errors.New("client_id is required")
+	}
+	if !licenseplate.IsValid(in.Plate, "") {
+		return errors.New("invalid plate")
+	}
+	if in.Brand == "" || in.Model == "" {
+		return errors.New("brand and model are required")
+	}
+	if in.ModelYear < 1900 || in.ModelYear > 2100 {
+		return errors.New("invalid model_year")
+	}
+	return nil
 }

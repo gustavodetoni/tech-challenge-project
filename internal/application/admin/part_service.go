@@ -19,15 +19,10 @@ type PartService struct {
 func NewPartService(repo repository.PartRepository) *PartService { return &PartService{repo: repo} }
 
 func (s *PartService) Create(ctx context.Context, in part.Part) (*part.Part, error) {
-	in.SKU = strings.TrimSpace(in.SKU)
-	in.Name = strings.TrimSpace(in.Name)
-	if in.SKU == "" || in.Name == "" {
-		return nil, errors.New("sku and name are required")
+	err := verifyPart(in, true)
+	if err != nil {
+		return nil, err
 	}
-	if in.UnitPriceCents < 0 || in.StockQuantity < 0 {
-		return nil, errors.New("invalid price/stock")
-	}
-
 	now := time.Now().UTC()
 	in.ID = uuid.NewString()
 	in.Active = true
@@ -41,15 +36,10 @@ func (s *PartService) Create(ctx context.Context, in part.Part) (*part.Part, err
 }
 
 func (s *PartService) Update(ctx context.Context, id string, in part.Part) (*part.Part, error) {
-	in.SKU = strings.TrimSpace(in.SKU)
-	in.Name = strings.TrimSpace(in.Name)
-	if in.SKU == "" || in.Name == "" {
-		return nil, errors.New("sku and name are required")
+	err := verifyPart(in, false)
+	if err != nil {
+		return nil, err
 	}
-	if in.UnitPriceCents < 0 {
-		return nil, errors.New("invalid price")
-	}
-
 	in.ID = id
 	in.UpdatedAt = time.Now().UTC()
 	if err := s.repo.Update(ctx, &in); err != nil {
@@ -74,3 +64,17 @@ func (s *PartService) AdjustStock(ctx context.Context, partID string, movementTy
 	return s.repo.AdjustStock(ctx, partID, movementType, quantity, notes, createdByUserID)
 }
 
+func verifyPart(in part.Part, verifyStock bool) error {
+	in.SKU = strings.TrimSpace(in.SKU)
+	in.Name = strings.TrimSpace(in.Name)
+	if in.SKU == "" || in.Name == "" {
+		return errors.New("sku and name are required")
+	}
+	if in.UnitPriceCents < 0 {
+		return errors.New("invalid price")
+	}
+	if verifyStock && in.StockQuantity < 0 {
+		return errors.New("invalid stock")
+	}
+	return nil
+}

@@ -22,7 +22,7 @@ func NewClientService(repo repository.ClientRepository) *ClientService {
 }
 
 func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.Client, error) {
-	err := verifyClient(in)
+	err := verifyClient(&in)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.C
 }
 
 func (s *ClientService) Update(ctx context.Context, id string, in client.Client) (*client.Client, error) {
-	err := verifyClient(in)
+	err := verifyClient(&in)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func isValidDocument(docType client.DocumentType, doc string) bool {
 	}
 }
 
-func verifyClient(in client.Client) error {
+func verifyClient(in *client.Client) error {
 	in.Name = strings.TrimSpace(in.Name)
 	in.DocumentNumber = document.Normalize(in.DocumentNumber)
 	if in.Name == "" {

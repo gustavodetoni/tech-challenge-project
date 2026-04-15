@@ -21,7 +21,7 @@ func NewServiceService(repo repository.ServiceRepository) *ServiceService {
 }
 
 func (s *ServiceService) Create(ctx context.Context, in service.Service) (*service.Service, error) {
-	err := verifyService(in)
+	err := verifyService(&in)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (s *ServiceService) Create(ctx context.Context, in service.Service) (*servi
 }
 
 func (s *ServiceService) Update(ctx context.Context, id string, in service.Service) (*service.Service, error) {
-	err := verifyService(in)
+	err := verifyService(&in)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (s *ServiceService) List(ctx context.Context, limit, offset int) ([]service
 	return s.repo.List(ctx, limit, offset)
 }
 
-func verifyService(in service.Service) error {
+func verifyService(in *service.Service) error {
 	in.Name = strings.TrimSpace(in.Name)
 	if in.Name == "" {
 		return errors.New("name is required")

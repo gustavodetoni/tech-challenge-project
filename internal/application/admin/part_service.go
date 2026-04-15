@@ -19,7 +19,7 @@ type PartService struct {
 func NewPartService(repo repository.PartRepository) *PartService { return &PartService{repo: repo} }
 
 func (s *PartService) Create(ctx context.Context, in part.Part) (*part.Part, error) {
-	err := verifyPart(in, true)
+	err := verifyPart(&in, true)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (s *PartService) Create(ctx context.Context, in part.Part) (*part.Part, err
 }
 
 func (s *PartService) Update(ctx context.Context, id string, in part.Part) (*part.Part, error) {
-	err := verifyPart(in, false)
+	err := verifyPart(&in, false)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *PartService) AdjustStock(ctx context.Context, partID string, movementTy
 	return s.repo.AdjustStock(ctx, partID, movementType, quantity, notes, createdByUserID)
 }
 
-func verifyPart(in part.Part, verifyStock bool) error {
+func verifyPart(in *part.Part, verifyStock bool) error {
 	in.SKU = strings.TrimSpace(in.SKU)
 	in.Name = strings.TrimSpace(in.Name)
 	if in.SKU == "" || in.Name == "" {

@@ -321,6 +321,10 @@ func (s *Service) findOrCreateVehicle(ctx context.Context, clientID string, plat
 }
 
 func (s *Service) buildServiceLines(ctx context.Context, items []ItemInput) ([]order.BudgetServiceItem, int64, error) {
+	if len(items) == 0 {
+		return []order.BudgetServiceItem{}, 0, nil
+	}
+
 	ids := make([]string, 0, len(items))
 	qtyByID := make(map[string]int, len(items))
 	for _, it := range items {
@@ -357,6 +361,10 @@ func (s *Service) buildServiceLines(ctx context.Context, items []ItemInput) ([]o
 }
 
 func (s *Service) buildPartLines(ctx context.Context, items []ItemInput) ([]order.BudgetPartItem, int64, error) {
+	if len(items) == 0 {
+		return []order.BudgetPartItem{}, 0, nil
+	}
+
 	ids := make([]string, 0, len(items))
 	qtyByID := make(map[string]int, len(items))
 	for _, it := range items {

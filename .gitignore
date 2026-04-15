@@ -1,5 +1,5 @@
 .env
 .instructions
 tmp/
-bin
+bin/
 .idea

@@ -23,7 +23,7 @@ func NewVehicleService(repo repository.VehicleRepository) *VehicleService {
 }
 
 func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
-	err := verifyVehicle(in)
+	err := verifyVehicle(&in)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehic
 }
 
 func (s *VehicleService) Update(ctx context.Context, id string, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
-	err := verifyVehicle(in)
+	err := verifyVehicle(&in)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *VehicleService) ListByClientID(ctx context.Context, clientID string, li
 	return s.repo.ListByClientID(ctx, clientID, limit, offset)
 }
 
-func verifyVehicle(in vehicle.Vehicle) error {
+func verifyVehicle(in *vehicle.Vehicle) error {
 	in.Plate = plate.Normalize(in.Plate)
 	in.Brand = strings.TrimSpace(in.Brand)
 	in.Model = strings.TrimSpace(in.Model)

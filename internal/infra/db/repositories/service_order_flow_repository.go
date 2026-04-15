@@ -469,7 +469,7 @@ func (r *ServiceOrderFlowRepository) ApproveLatestBudgetByCode(ctx context.Conte
 				ID:              uuid.NewString(),
 				ServiceOrderID:  soID,
 				ServiceID:       it.ServiceID,
-				BudgetServiceID: ptrString(it.ID),
+				BudgetServiceID: PtrString(it.ID),
 				Description:     it.Description,
 				Quantity:        it.Quantity,
 				UnitPriceCents:  it.UnitPriceCents,
@@ -534,7 +534,7 @@ func (r *ServiceOrderFlowRepository) ApproveLatestBudgetByCode(ctx context.Conte
 				ID:              uuid.NewString(),
 				ServiceOrderID:  soID,
 				PartID:          it.PartID,
-				BudgetPartID:    ptrString(it.ID),
+				BudgetPartID:    PtrString(it.ID),
 				Description:     it.Description,
 				Quantity:        it.Quantity,
 				UnitPriceCents:  it.UnitPriceCents,
@@ -611,7 +611,7 @@ func (r *ServiceOrderFlowRepository) transitionStatusTx(tx *gorm.DB, serviceOrde
 	if current.Status == string(to) {
 		return nil
 	}
-	if !isAllowedTransition(order.Status(current.Status), to) {
+	if !IsAllowedTransition(order.Status(current.Status), to) {
 		return fmt.Errorf("invalid status transition %s -> %s", current.Status, to)
 	}
 
@@ -639,7 +639,7 @@ func (r *ServiceOrderFlowRepository) transitionStatusTx(tx *gorm.DB, serviceOrde
 	return tx.Create(&h).Error
 }
 
-func isAllowedTransition(from, to order.Status) bool {
+func IsAllowedTransition(from, to order.Status) bool {
 	switch from {
 	case order.StatusReceived:
 		return to == order.StatusInDiagnosis || to == order.StatusWaitingApproval
@@ -702,4 +702,4 @@ func serviceOrderIDByCodeAndDocumentForUpdate(tx *gorm.DB, code string, document
 	return r0.ID, nil
 }
 
-func ptrString(v string) *string { return &v }
+func PtrString(v string) *string { return &v }

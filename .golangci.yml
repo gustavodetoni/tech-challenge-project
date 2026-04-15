@@ -1,0 +1,33 @@
+version: "2"
+
+linters:
+  enable:
+    - revive
+  settings:
+    revive:
+      rules:
+        - name: indent-error-flow
+        - name: var-naming
+        - name: receiver-naming
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - errcheck
+        path: _test\\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

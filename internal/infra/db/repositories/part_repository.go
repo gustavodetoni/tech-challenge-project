@@ -202,7 +202,7 @@ func (r *PartRepository) AdjustStock(ctx context.Context, partID string, movemen
 			return err
 		}
 
-		newQty := p.StockQuantity
+		var newQty int
 		switch movementType {
 		case part.StockMovementIn:
 			newQty = p.StockQuantity + quantity

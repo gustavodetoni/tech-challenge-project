@@ -559,7 +559,7 @@ func (r *PartRepository) AdjustStock(ctx context.Context, partID string, movemen
 	if p == nil {
 		return nil, repository.ErrNotFound
 	}
-	newQty := p.StockQuantity
+	var newQty int
 	switch movementType {
 	case part.StockMovementIn:
 		newQty = p.StockQuantity + quantity
@@ -673,10 +673,7 @@ func (r *ServiceOrderRepository) GetDetailByID(ctx context.Context, id string) (
 	}
 
 	hist := r.s.statusHistoryBySO[id]
-	histOut := make([]order.StatusHistoryEntry, 0, len(hist))
-	for _, it := range hist {
-		histOut = append(histOut, it)
-	}
+	histOut := append([]order.StatusHistoryEntry{}, hist...)
 
 	return &order.ServiceOrderDetail{
 		ServiceOrder:   *so,

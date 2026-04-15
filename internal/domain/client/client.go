@@ -20,4 +20,3 @@ type Client struct {
 	UpdatedAt      time.Time
 	DeletedAt      *time.Time
 }
-

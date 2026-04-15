@@ -21,6 +21,10 @@ migrate-up:
 	docker compose run --rm migrate
 
 lint:
-	mkdir -p /tmp/go-tmp /tmp/go-build-cache /tmp/go-mod-cache /tmp/xdg-cache /tmp/golangci-lint-cache
-	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache XDG_CACHE_HOME=/tmp/xdg-cache GOLANGCI_LINT_CACHE=/tmp/golangci-lint-cache \
-		golangci-lint run
+	golangci-lint run
+
+lint-fix:
+	golangci-lint run --fix
+
+fmt:
+	goimports -w .

@@ -18,4 +18,3 @@ type Vehicle struct {
 	UpdatedAt       time.Time
 	DeletedAt       *time.Time
 }
-

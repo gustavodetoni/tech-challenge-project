@@ -1,0 +1,30 @@
+# VCS / IDE
+.git
+.github
+.idea
+.vscode
+
+# Local env / OS
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Build outputs / caches
+bin
+dist
+tmp
+*.log
+*.out
+coverage.*
+
+# Dev tooling
+.air.toml
+
+# Go (workspace local)
+**/*_test.go
+
+# Docs extras (não usados no build)
+docs/collections
+
+.DS_Store

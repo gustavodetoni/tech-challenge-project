@@ -5,11 +5,12 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY cmd ./cmd
+COPY internal ./internal
+COPY pkg ./pkg
+COPY docs ./docs
 
-RUN go build -o api ./cmd/api
-
-RUN GOBIN=/go/bin go install github.com/pressly/goose/v3/cmd/goose@v3.25.0
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o api ./cmd/api
 
 FROM alpine:3.20
 
@@ -18,7 +19,6 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates
 
 COPY --from=build /app/api /api
-COPY --from=build /go/bin/goose /goose
 COPY --from=build /app/internal/infra/db/migrations /app/internal/infra/db/migrations
 
 EXPOSE 8080

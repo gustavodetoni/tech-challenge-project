@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
+	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/controllers"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
@@ -111,20 +112,26 @@ func TestClientServiceOrderController_ApproveBudget_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	clientRepo := new(repomocks.ClientRepository)
+	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
+		ID:             "cl-1",
+		DocumentNumber: "46420082412",
+		Name:           "",
+	}, nil).Once()
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", (*string)(nil)).Return(repository.ErrNotFound).Once()
 
 	r := gin.New()
 	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", bytes.NewBufferString(`{}`))
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
+	clientRepo.AssertExpectations(t)
 	flowRepo.AssertExpectations(t)
 }
 
@@ -152,20 +159,26 @@ func TestClientServiceOrderController_ApproveBudget_BadRequest_GenericError(t *t
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	clientRepo := new(repomocks.ClientRepository)
+	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
+		ID:             "cl-1",
+		DocumentNumber: "46420082412",
+		Name:           "",
+	}, nil).Once()
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", (*string)(nil)).Return(assert.AnError).Once()
 
 	r := gin.New()
 	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", bytes.NewBufferString(`{}`))
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+	clientRepo.AssertExpectations(t)
 	flowRepo.AssertExpectations(t)
 }
 
@@ -174,31 +187,43 @@ func TestClientServiceOrderController_ApproveBudget_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	clientRepo := new(repomocks.ClientRepository)
+	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
+		ID:             "cl-1",
+		DocumentNumber: "46420082412",
+		Name:           "",
+	}, nil).Once()
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", (*string)(nil)).Return(nil).Once()
 
 	r := gin.New()
 	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", bytes.NewBufferString(`{}`))
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
+	clientRepo.AssertExpectations(t)
 	flowRepo.AssertExpectations(t)
 }
 
-func TestClientServiceOrderController_ApproveBudget_Success_WithName(t *testing.T) {
+func TestClientServiceOrderController_ApproveBudget_Success_UsesClientName(t *testing.T) {
 	t.Parallel()
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	clientRepo := new(repomocks.ClientRepository)
+	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
+		ID:             "cl-1",
+		DocumentNumber: "46420082412",
+		Name:           "Maria",
+	}, nil).Once()
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", mock.MatchedBy(func(v *string) bool {
 		return v != nil && *v == "Maria"
 	})).Return(nil).Once()
@@ -206,12 +231,12 @@ func TestClientServiceOrderController_ApproveBudget_Success_WithName(t *testing.
 	r := gin.New()
 	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", bytes.NewBufferString(`{"approved_by_name":"Maria"}`))
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
+	clientRepo.AssertExpectations(t)
 	flowRepo.AssertExpectations(t)
 }
 

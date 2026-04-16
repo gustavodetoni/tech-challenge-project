@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -56,10 +57,34 @@ func InitAndCheckMigration(ctx context.Context, gormDB *gorm.DB) error {
 		return fmt.Errorf("failed to resolve migrations directory")
 	}
 	migrationsDir := filepath.Join(filepath.Dir(thisFile), "migrations")
+	if !isDir(migrationsDir) {
+		candidates := []string{
+			filepath.Join("internal", "infra", "db", "migrations"),
+			filepath.Join(string(filepath.Separator), "app", "internal", "infra", "db", "migrations"),
+		}
+		for _, candidate := range candidates {
+			if isDir(candidate) {
+				migrationsDir = candidate
+				break
+			}
+		}
+	}
+	if !isDir(migrationsDir) {
+		wd, _ := os.Getwd()
+		return fmt.Errorf("migrations directory does not exist: %s (cwd=%s)", migrationsDir, wd)
+	}
 
 	if err := goose.Up(sqlDB, migrationsDir); err != nil {
 		return fmt.Errorf("failed to apply migration: %v", err)
 	}
 
 	return nil
+}
+
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
 }

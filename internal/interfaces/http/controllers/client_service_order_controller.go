@@ -47,15 +47,10 @@ func (h *ClientServiceOrderController) Get(c *gin.Context) {
 	})
 }
 
-type approveBudgetRequest struct {
-	ApprovedByName *string `json:"approved_by_name"`
-}
-
 // @Summary Approve latest budget
 // @Tags client-service-orders
 // @Param document_number query string true "CPF/CNPJ"
 // @Param code path string true "Service Order Code"
-// @Param request body approveBudgetRequest false "Approval info"
 // @Success 204
 // @Router /client/service-orders/{code}/budget/approve [post]
 func (h *ClientServiceOrderController) ApproveBudget(c *gin.Context) {
@@ -64,10 +59,7 @@ func (h *ClientServiceOrderController) ApproveBudget(c *gin.Context) {
 		return
 	}
 
-	var req approveBudgetRequest
-	_ = c.ShouldBindJSON(&req)
-
-	if err := h.svc.ClientApproveBudget(c.Request.Context(), code, doc, req.ApprovedByName); err != nil {
+	if err := h.svc.ClientApproveBudget(c.Request.Context(), code, doc); err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			shared.WriteRepoError(c, err)
 			return

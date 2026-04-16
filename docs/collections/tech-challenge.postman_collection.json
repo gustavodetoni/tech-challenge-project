@@ -613,8 +613,6 @@
           "request": {
             "method": "POST",
             "auth": { "type": "noauth" },
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"approved_by_name\": \"Gustavo\"\n}" },
             "url": {
               "raw": "{{baseUrl}}/client/service-orders/{{service_order_code}}/budget/approve?document_number={{cpf}}",
               "host": ["{{baseUrl}}"],

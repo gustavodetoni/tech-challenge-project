@@ -1,10 +1,5 @@
 basePath: /
 definitions:
-  controllers.approveBudgetRequest:
-    properties:
-      approved_by_name:
-        type: string
-    type: object
   controllers.avgExecutionResponse:
     properties:
       average_minutes:
@@ -1042,11 +1037,6 @@ paths:
         name: code
         required: true
         type: string
-      - description: Approval info
-        in: body
-        name: request
-        schema:
-          $ref: '#/definitions/controllers.approveBudgetRequest'
       responses:
         "204":
           description: No Content

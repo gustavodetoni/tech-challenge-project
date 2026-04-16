@@ -15,7 +15,9 @@ tests:
 	go tool cover -func=/tmp/coverage.out | grep total:
 
 swagger:
-	go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g cmd/api/main.go -o docs
+	mkdir -p /tmp/go-tmp /tmp/go-build-cache /tmp/go-mod-cache
+	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache \
+		go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g cmd/api/main.go -o docs
 
 migrate-up:
 	docker compose run --rm migrate

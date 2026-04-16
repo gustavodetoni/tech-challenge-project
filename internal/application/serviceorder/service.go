@@ -249,8 +249,18 @@ func (s *Service) ClientGetByCode(ctx context.Context, code string, documentNumb
 	return s.flow.GetClientViewByCode(ctx, code, document.Normalize(documentNumber))
 }
 
-func (s *Service) ClientApproveBudget(ctx context.Context, code string, documentNumber string, approvedByName *string) error {
-	return s.flow.ApproveLatestBudgetByCode(ctx, code, document.Normalize(documentNumber), approvedByName)
+func (s *Service) ClientApproveBudget(ctx context.Context, code string, documentNumber string) error {
+	normalizedDoc := document.Normalize(documentNumber)
+	existing, err := s.clients.FindByDocument(ctx, normalizedDoc)
+	if err != nil {
+		return err
+	}
+
+	var approvedByName *string
+	if strings.TrimSpace(existing.Name) != "" {
+		approvedByName = &existing.Name
+	}
+	return s.flow.ApproveLatestBudgetByCode(ctx, code, normalizedDoc, approvedByName)
 }
 
 func (s *Service) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {

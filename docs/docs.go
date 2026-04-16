@@ -970,14 +970,6 @@ const docTemplate = `{
                         "name": "code",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Approval info",
-                        "name": "request",
-                        "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.approveBudgetRequest"
-                        }
                     }
                 ],
                 "responses": {
@@ -1062,14 +1054,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controllers.approveBudgetRequest": {
-            "type": "object",
-            "properties": {
-                "approved_by_name": {
-                    "type": "string"
-                }
-            }
-        },
         "controllers.avgExecutionResponse": {
             "type": "object",
             "properties": {

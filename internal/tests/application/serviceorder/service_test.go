@@ -321,8 +321,9 @@ func TestServiceOrder_ClientActions_NormalizeDocument(t *testing.T) {
 	t.Parallel()
 
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	clientRepo := new(repomocks.ClientRepository)
 	svc := serviceorder.NewService(
-		new(repomocks.ClientRepository),
+		clientRepo,
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
 		new(repomocks.PartRepository),
@@ -330,13 +331,19 @@ func TestServiceOrder_ClientActions_NormalizeDocument(t *testing.T) {
 	)
 
 	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return(&repository.ClientServiceOrderView{Code: "C-1"}, nil).Once()
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
+		ID:             "cl-1",
+		DocumentNumber: "46420082412",
+		Name:           "",
+	}, nil).Once()
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", (*string)(nil)).Return(nil).Once()
 	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(nil).Once()
 
 	_, err := svc.ClientGetByCode(context.Background(), "C-1", "464.200.824-12")
 	require.NoError(t, err)
-	require.NoError(t, svc.ClientApproveBudget(context.Background(), "C-1", "464.200.824-12", nil))
+	require.NoError(t, svc.ClientApproveBudget(context.Background(), "C-1", "464.200.824-12"))
 	require.NoError(t, svc.ClientRejectBudget(context.Background(), "C-1", "464.200.824-12", "too expensive"))
+	clientRepo.AssertExpectations(t)
 	flowRepo.AssertExpectations(t)
 }
 

@@ -50,6 +50,12 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 
+	rateLimitMW, err := config.NewRateLimitMiddleware(cfg.RateLimit)
+	if err != nil {
+		log.Fatal(err)
+	}
+	router.Use(rateLimitMW)
+
 	jwtManager := auth.NewManager(cfg.JWTSecret, cfg.JWTIssuer, cfg.JWTAudience, time.Duration(cfg.JWTExpiryMinutes)*time.Minute)
 	authMW := middlewares.NewAuthMiddleware(jwtManager)
 	userRepo := repositories.NewUserRepository(gormDB)

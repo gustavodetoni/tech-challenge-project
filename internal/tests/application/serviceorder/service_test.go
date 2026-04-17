@@ -132,6 +132,107 @@ func TestServiceOrder_CreateDraft_BuildsLinesAndCallsFlow(t *testing.T) {
 	flowRepo.AssertExpectations(t)
 }
 
+func TestServiceOrder_CreateDraft_UpdatesClientContact(t *testing.T) {
+	t.Parallel()
+
+	clientRepo := new(repomocks.ClientRepository)
+	vehicleRepo := new(repomocks.VehicleRepository)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+
+	svc := serviceorder.NewService(
+		clientRepo,
+		vehicleRepo,
+		new(repomocks.ServiceRepository),
+		new(repomocks.PartRepository),
+		flowRepo,
+	)
+
+	existingClient := &client.Client{ID: "c1", DocumentNumber: "46420082412"}
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(existingClient, nil).Once()
+
+	email := "email@example.com"
+	phone := "+5511999999999"
+	clientRepo.On("Update", mock.Anything, mock.MatchedBy(func(c *client.Client) bool {
+		return c.ID == "c1" &&
+			c.Email != nil && *c.Email == email &&
+			c.Phone != nil && *c.Phone == phone &&
+			!c.UpdatedAt.IsZero()
+	})).Return(nil).Once()
+
+	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return(&vehicle.Vehicle{ID: "v1", ClientID: "c1", Plate: "ABC1D23"}, nil).Once()
+
+	flowRepo.On("CreateDraft", mock.Anything, mock.MatchedBy(func(p repository.CreateServiceOrderDraftParams) bool {
+		return p.ServiceOrder.ClientID == "c1" &&
+			p.ServiceOrder.VehicleID == "v1" &&
+			p.Budget.TotalAmountCents == 0 &&
+			len(p.BudgetServices) == 0 &&
+			len(p.BudgetParts) == 0
+	})).Return(&order.ServiceOrder{ID: "so1", Code: "OS-ANY"}, &order.Budget{ID: "b1", TotalAmountCents: 0, Status: order.BudgetStatusDraft}, nil).Once()
+
+	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
+		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentNumber: "464.200.824-12",
+		ClientEmail:          &email,
+		ClientPhone:          &phone,
+		VehiclePlate:         "ABC1D23",
+	})
+	require.NoError(t, err)
+
+	vehicleRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	clientRepo.AssertExpectations(t)
+	vehicleRepo.AssertExpectations(t)
+	flowRepo.AssertExpectations(t)
+}
+
+func TestServiceOrder_CreateDraft_UpdatesVehicleDetails(t *testing.T) {
+	t.Parallel()
+
+	clientRepo := new(repomocks.ClientRepository)
+	vehicleRepo := new(repomocks.VehicleRepository)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+
+	svc := serviceorder.NewService(
+		clientRepo,
+		vehicleRepo,
+		new(repomocks.ServiceRepository),
+		new(repomocks.PartRepository),
+		flowRepo,
+	)
+
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{ID: "c1", DocumentNumber: "46420082412"}, nil).Once()
+
+	existingVehicle := &vehicle.Vehicle{ID: "v1", ClientID: "c1", Plate: "ABC1D23"}
+	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return(existingVehicle, nil).Once()
+
+	year := 2020
+	color := "Preto"
+	vehicleRepo.On("Update", mock.Anything, mock.MatchedBy(func(v *vehicle.Vehicle) bool {
+		return v.ID == "v1" &&
+			v.ManufactureYear != nil && *v.ManufactureYear == year &&
+			v.Color != nil && *v.Color == color &&
+			!v.UpdatedAt.IsZero()
+	})).Return(nil).Once()
+
+	flowRepo.On("CreateDraft", mock.Anything, mock.MatchedBy(func(p repository.CreateServiceOrderDraftParams) bool {
+		return p.ServiceOrder.ClientID == "c1" &&
+			p.ServiceOrder.VehicleID == "v1"
+	})).Return(&order.ServiceOrder{ID: "so1", Code: "OS-ANY"}, &order.Budget{ID: "b1", TotalAmountCents: 0, Status: order.BudgetStatusDraft}, nil).Once()
+
+	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
+		ClientDocumentType:     client.DocumentTypeCPF,
+		ClientDocumentNumber:   "46420082412",
+		VehiclePlate:           "ABC1D23",
+		VehicleManufactureYear: &year,
+		VehicleColor:           &color,
+	})
+	require.NoError(t, err)
+
+	clientRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	clientRepo.AssertExpectations(t)
+	vehicleRepo.AssertExpectations(t)
+	flowRepo.AssertExpectations(t)
+}
+
 func TestServiceOrder_ReviseBudget_RequiresItems(t *testing.T) {
 	t.Parallel()
 

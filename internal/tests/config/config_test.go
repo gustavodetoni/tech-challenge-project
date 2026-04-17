@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"testing"
+	"time"
 
 	config2 "github.com/soat-architecture/tech-challenge-project/internal/config"
 	"github.com/spf13/viper"
@@ -23,6 +24,11 @@ func TestLoad_DefaultsAndEnv(t *testing.T) {
 	require.Equal(t, "tech-challenge-project", cfg.JWTIssuer)
 	require.Equal(t, "", cfg.JWTAudience)
 	require.Equal(t, 60, cfg.JWTExpiryMinutes)
+	require.True(t, cfg.RateLimit.Enabled)
+	require.Equal(t, 10.0, cfg.RateLimit.RPS)
+	require.Equal(t, 20, cfg.RateLimit.Burst)
+	require.Equal(t, 10*time.Minute, cfg.RateLimit.TTL)
+	require.Equal(t, 1*time.Minute, cfg.RateLimit.CleanupInterval)
 }
 
 func TestLoad_InvalidPort(t *testing.T) {

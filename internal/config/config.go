@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -16,6 +17,8 @@ type Config struct {
 	JWTIssuer        string
 	JWTAudience      string
 	JWTExpiryMinutes int
+
+	RateLimit RateLimitConfig
 }
 
 func Load() (Config, error) {
@@ -24,6 +27,11 @@ func Load() (Config, error) {
 	viper.SetDefault("JWT_ISSUER", "tech-challenge-project")
 	viper.SetDefault("JWT_AUDIENCE", "")
 	viper.SetDefault("JWT_EXPIRY_MINUTES", "60")
+	viper.SetDefault("RATE_LIMIT_ENABLED", true)
+	viper.SetDefault("RATE_LIMIT_RPS", 10.0)
+	viper.SetDefault("RATE_LIMIT_BURST", 20)
+	viper.SetDefault("RATE_LIMIT_TTL_SECONDS", int((10 * time.Minute).Seconds()))
+	viper.SetDefault("RATE_LIMIT_CLEANUP_INTERVAL_SECONDS", int((1 * time.Minute).Seconds()))
 	viper.AutomaticEnv()
 
 	portStr := viper.GetString("PORT")
@@ -38,6 +46,26 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("invalid JWT_EXPIRY_MINUTES %q", jwtExpiryStr)
 	}
 
+	rateLimitEnabled := viper.GetBool("RATE_LIMIT_ENABLED")
+	rateLimitRPS := viper.GetFloat64("RATE_LIMIT_RPS")
+	rateLimitBurst := viper.GetInt("RATE_LIMIT_BURST")
+	rateLimitTTLSeconds := viper.GetInt("RATE_LIMIT_TTL_SECONDS")
+	rateLimitCleanupIntervalSeconds := viper.GetInt("RATE_LIMIT_CLEANUP_INTERVAL_SECONDS")
+	if rateLimitEnabled {
+		if rateLimitRPS <= 0 {
+			return Config{}, fmt.Errorf("invalid RATE_LIMIT_RPS %v", rateLimitRPS)
+		}
+		if rateLimitBurst < 1 {
+			return Config{}, fmt.Errorf("invalid RATE_LIMIT_BURST %d", rateLimitBurst)
+		}
+		if rateLimitTTLSeconds < 1 {
+			return Config{}, fmt.Errorf("invalid RATE_LIMIT_TTL_SECONDS %d", rateLimitTTLSeconds)
+		}
+		if rateLimitCleanupIntervalSeconds < 1 {
+			return Config{}, fmt.Errorf("invalid RATE_LIMIT_CLEANUP_INTERVAL_SECONDS %d", rateLimitCleanupIntervalSeconds)
+		}
+	}
+
 	return Config{
 		Port:             port,
 		DatabaseURL:      viper.GetString("DATABASE_URL"),
@@ -45,5 +73,12 @@ func Load() (Config, error) {
 		JWTIssuer:        viper.GetString("JWT_ISSUER"),
 		JWTAudience:      viper.GetString("JWT_AUDIENCE"),
 		JWTExpiryMinutes: jwtExpiryMinutes,
+		RateLimit: RateLimitConfig{
+			Enabled:         rateLimitEnabled,
+			RPS:             rateLimitRPS,
+			Burst:           rateLimitBurst,
+			TTL:             time.Duration(rateLimitTTLSeconds) * time.Second,
+			CleanupInterval: time.Duration(rateLimitCleanupIntervalSeconds) * time.Second,
+		},
 	}, nil
 }

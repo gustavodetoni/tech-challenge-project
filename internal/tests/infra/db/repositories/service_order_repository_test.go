@@ -350,3 +350,28 @@ func TestServiceOrderRepository_AverageExecutionMinutes_QueryError(t *testing.T)
 	_, err := repo.AverageExecutionMinutes(context.Background(), nil, nil)
 	require.Error(t, err)
 }
+
+func TestServiceOrderRepository_AverageServiceExecutionMinutes_WithFilters(t *testing.T) {
+	from := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2026, 4, 10, 0, 0, 0, 0, time.UTC)
+	svcID := "s1"
+
+	gdb := newTestGormDB(t, []dbOp{
+		{
+			kind:         dbOpQuery,
+			wantContains: []string{`FROM service_order_services`, `join service_orders`, `avg_minutes`, `sample_count`},
+			columns:      []string{"service_id", "description", "avg_minutes", "sample_count"},
+			rows: [][]any{
+				{svcID, "Alinhamento", 30.5, int64(2)},
+			},
+		},
+	})
+	repo := repositories2.NewServiceOrderRepository(gdb)
+
+	out, err := repo.AverageServiceExecutionMinutes(context.Background(), &svcID, &from, &to)
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.NotNil(t, out[0].ServiceID)
+	require.Equal(t, svcID, *out[0].ServiceID)
+	require.Equal(t, int64(2), out[0].SampleCount)
+}

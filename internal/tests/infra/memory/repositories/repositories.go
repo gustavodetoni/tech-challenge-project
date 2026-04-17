@@ -710,6 +710,12 @@ func (r *ServiceOrderRepository) AverageExecutionMinutes(ctx context.Context, fr
 	return total / count, nil
 }
 
+func (r *ServiceOrderRepository) AverageServiceExecutionMinutes(ctx context.Context, serviceID *string, from, to *time.Time) ([]repository.ServiceExecutionAverage, error) {
+	// In-memory repo doesn't track per-service execution timestamps (started/completed per service).
+	// Returning empty data keeps this repo lightweight for unit tests that don't cover this metric.
+	return []repository.ServiceExecutionAverage{}, nil
+}
+
 // -------------------- Service Order Flow --------------------
 
 type ServiceOrderFlowRepository struct {

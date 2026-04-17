@@ -78,6 +78,7 @@ func Register(router *gin.Engine, deps Deps) {
 	adminGroup.POST("/service-orders/:id/deliver", deps.AdminServiceOrderFlow.Deliver)
 
 	adminGroup.GET("/metrics/avg-execution-time", deps.AdminMetrics.AverageExecutionTime)
+	adminGroup.GET("/metrics/avg-service-execution-time", deps.AdminMetrics.AverageServiceExecutionTime)
 
 	adminOnly := router.Group("/admin")
 	adminOnly.Use(deps.AuthMW.RequireRoles("ADMIN"))

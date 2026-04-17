@@ -31,3 +31,7 @@ func (s *ServiceOrderService) GetDetailByID(ctx context.Context, id string) (*or
 func (s *ServiceOrderService) AverageExecutionMinutes(ctx context.Context, from, to *time.Time) (float64, error) {
 	return s.repo.AverageExecutionMinutes(ctx, from, to)
 }
+
+func (s *ServiceOrderService) AverageServiceExecutionMinutes(ctx context.Context, serviceID *string, from, to *time.Time) ([]repository.ServiceExecutionAverage, error) {
+	return s.repo.AverageServiceExecutionMinutes(ctx, serviceID, from, to)
+}

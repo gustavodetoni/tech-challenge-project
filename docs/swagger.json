@@ -245,6 +245,42 @@
                 }
             }
         },
+        "/admin/metrics/avg-service-execution-time": {
+            "get": {
+                "tags": [
+                    "admin-metrics"
+                ],
+                "summary": "Average execution time by service",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "service_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "From (RFC3339)",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To (RFC3339)",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.avgServiceExecutionResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/parts": {
             "get": {
                 "tags": [
@@ -1052,6 +1088,34 @@
             "properties": {
                 "average_minutes": {
                     "type": "number"
+                }
+            }
+        },
+        "controllers.avgServiceExecutionItem": {
+            "type": "object",
+            "properties": {
+                "average_minutes": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "sample_count": {
+                    "type": "integer"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.avgServiceExecutionResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.avgServiceExecutionItem"
+                    }
                 }
             }
         },

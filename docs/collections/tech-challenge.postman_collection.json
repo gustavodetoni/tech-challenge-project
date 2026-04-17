@@ -587,6 +587,22 @@
                   ]
                 }
               }
+            },
+            {
+              "name": "Average service execution time",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/metrics/avg-service-execution-time?service_id={{service_id}}&from=2026-04-07T00:00:00Z&to=2026-04-14T23:59:59Z",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "metrics", "avg-service-execution-time"],
+                  "query": [
+                    { "key": "service_id", "value": "{{service_id}}" },
+                    { "key": "from", "value": "2026-04-07T00:00:00Z" },
+                    { "key": "to", "value": "2026-04-14T23:59:59Z" }
+                  ]
+                }
+              }
             }
           ]
         }

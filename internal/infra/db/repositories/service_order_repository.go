@@ -308,3 +308,46 @@ func (r *ServiceOrderRepository) AverageExecutionMinutes(ctx context.Context, fr
 	}
 	return avg, nil
 }
+
+func (r *ServiceOrderRepository) AverageServiceExecutionMinutes(ctx context.Context, serviceID *string, from, to *time.Time) ([]repository.ServiceExecutionAverage, error) {
+	type row struct {
+		ServiceID   *string `gorm:"column:service_id"`
+		Description string  `gorm:"column:description"`
+		AvgMinutes  float64 `gorm:"column:avg_minutes"`
+		SampleCount int64   `gorm:"column:sample_count"`
+	}
+
+	q := r.db.WithContext(ctx).
+		Table("service_order_services sos").
+		Joins("join service_orders so on so.id = sos.service_order_id and so.deleted_at is null").
+		Select("sos.service_id, sos.description, coalesce(avg(extract(epoch from (sos.completed_at - sos.started_at)))/60.0, 0) as avg_minutes, count(*) as sample_count").
+		Where("sos.deleted_at is null").
+		Where("sos.started_at is not null").
+		Where("sos.completed_at is not null")
+	if serviceID != nil && *serviceID != "" {
+		q = q.Where("sos.service_id = ?", *serviceID)
+	}
+	if from != nil {
+		q = q.Where("sos.completed_at >= ?", *from)
+	}
+	if to != nil {
+		q = q.Where("sos.completed_at <= ?", *to)
+	}
+	q = q.Group("sos.service_id, sos.description").Order("avg_minutes desc")
+
+	var rows []row
+	if err := q.Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	out := make([]repository.ServiceExecutionAverage, 0, len(rows))
+	for _, it := range rows {
+		out = append(out, repository.ServiceExecutionAverage{
+			ServiceID:      it.ServiceID,
+			Description:    it.Description,
+			AverageMinutes: it.AvgMinutes,
+			SampleCount:    it.SampleCount,
+		})
+	}
+	return out, nil
+}

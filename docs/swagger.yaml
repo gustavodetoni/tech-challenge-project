@@ -5,6 +5,24 @@ definitions:
       average_minutes:
         type: number
     type: object
+  controllers.avgServiceExecutionItem:
+    properties:
+      average_minutes:
+        type: number
+      description:
+        type: string
+      sample_count:
+        type: integer
+      service_id:
+        type: string
+    type: object
+  controllers.avgServiceExecutionResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/controllers.avgServiceExecutionItem'
+        type: array
+    type: object
   controllers.rejectBudgetRequest:
     properties:
       reason:
@@ -594,6 +612,29 @@ paths:
           schema:
             $ref: '#/definitions/controllers.avgExecutionResponse'
       summary: Average execution time (service orders)
+      tags:
+      - admin-metrics
+  /admin/metrics/avg-service-execution-time:
+    get:
+      parameters:
+      - description: Service ID
+        in: query
+        name: service_id
+        type: string
+      - description: From (RFC3339)
+        in: query
+        name: from
+        type: string
+      - description: To (RFC3339)
+        in: query
+        name: to
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.avgServiceExecutionResponse'
+      summary: Average execution time by service
       tags:
       - admin-metrics
   /admin/parts:

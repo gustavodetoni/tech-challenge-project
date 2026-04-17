@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type ServiceOrderRepository struct {
@@ -47,6 +48,15 @@ func (m *ServiceOrderRepository) AverageExecutionMinutes(ctx context.Context, fr
 	var out float64
 	if v := args.Get(0); v != nil {
 		out = v.(float64)
+	}
+	return out, args.Error(1)
+}
+
+func (m *ServiceOrderRepository) AverageServiceExecutionMinutes(ctx context.Context, serviceID *string, from, to *time.Time) ([]repository.ServiceExecutionAverage, error) {
+	args := m.Called(ctx, serviceID, from, to)
+	var out []repository.ServiceExecutionAverage
+	if v := args.Get(0); v != nil {
+		out = v.([]repository.ServiceExecutionAverage)
 	}
 	return out, args.Error(1)
 }

@@ -12,4 +12,12 @@ type ServiceOrderRepository interface {
 	FindByID(ctx context.Context, id string) (*order.ServiceOrder, error)
 	GetDetailByID(ctx context.Context, id string) (*order.ServiceOrderDetail, error)
 	AverageExecutionMinutes(ctx context.Context, from, to *time.Time) (float64, error)
+	AverageServiceExecutionMinutes(ctx context.Context, serviceID *string, from, to *time.Time) ([]ServiceExecutionAverage, error)
+}
+
+type ServiceExecutionAverage struct {
+	ServiceID      *string
+	Description    string
+	AverageMinutes float64
+	SampleCount    int64
 }

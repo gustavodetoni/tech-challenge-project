@@ -50,7 +50,7 @@ func TestAdminServiceOrderFlowController_CreateDraft_BadRequest_InvalidDocument(
 	r := gin.New()
 	r.POST("/admin/service-orders", h.CreateDraft)
 
-	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"123","client_name":"Maria","vehicle_plate":"ABC1D23","vehicle_brand":"Fiat","vehicle_model":"Uno","vehicle_model_year":2015}`))
+	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"123","vehicle_plate":"ABC1D23"}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -77,7 +77,7 @@ func TestAdminServiceOrderFlowController_CreateDraft_BadRequest_ServiceNotFound(
 	r := gin.New()
 	r.POST("/admin/service-orders", h.CreateDraft)
 
-	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","client_name":"Maria","vehicle_plate":"ABC1D23","vehicle_brand":"Fiat","vehicle_model":"Uno","vehicle_model_year":2015,"services":[{"id":"s1","quantity":1}]}`))
+	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","vehicle_plate":"ABC1D23","services":[{"id":"s1","quantity":1}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -112,7 +112,7 @@ func TestAdminServiceOrderFlowController_CreateDraft_Conflict(t *testing.T) {
 	r := gin.New()
 	r.POST("/admin/service-orders", h.CreateDraft)
 
-	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","client_name":"Maria","vehicle_plate":"ABC1D23","vehicle_brand":"Fiat","vehicle_model":"Uno","vehicle_model_year":2015,"services":[{"id":"s1","quantity":1}]}`))
+	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","vehicle_plate":"ABC1D23","services":[{"id":"s1","quantity":1}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -145,7 +145,7 @@ func TestAdminServiceOrderFlowController_CreateDraft_Success(t *testing.T) {
 	r := gin.New()
 	r.POST("/admin/service-orders", h.CreateDraft)
 
-	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","client_name":"Maria","vehicle_plate":"ABC1D23","vehicle_brand":"Fiat","vehicle_model":"Uno","vehicle_model_year":2015,"services":[{"id":"s1","quantity":1}]}`))
+	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","vehicle_plate":"ABC1D23","services":[{"id":"s1","quantity":1}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -183,7 +183,7 @@ func TestAdminServiceOrderFlowController_CreateDraft_InternalError(t *testing.T)
 	r := gin.New()
 	r.POST("/admin/service-orders", h.CreateDraft)
 
-	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","client_name":"Maria","vehicle_plate":"ABC1D23","vehicle_brand":"Fiat","vehicle_model":"Uno","vehicle_model_year":2015,"services":[{"id":"s1","quantity":1}]}`))
+	req := httptest.NewRequest(http.MethodPost, "/admin/service-orders", bytes.NewBufferString(`{"client_document_type":"CPF","client_document_number":"46420082412","vehicle_plate":"ABC1D23","services":[{"id":"s1","quantity":1}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)

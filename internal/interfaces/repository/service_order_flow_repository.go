@@ -14,13 +14,33 @@ type CreateServiceOrderDraftParams struct {
 }
 
 type ClientServiceOrderView struct {
-	Code             string
-	Status           order.Status
-	ClientID         string
-	VehicleID        string
-	OpenedAt         string
-	BudgetStatus     order.BudgetStatus
-	BudgetTotalCents int64
+	Code              string
+	Status            order.Status
+	ClientID          string
+	VehicleID         string
+	OpenedAt          string
+	CustomerComplaint *string
+
+	VehiclePlate           string
+	VehicleBrand           string
+	VehicleModel           string
+	VehicleManufactureYear *int
+	VehicleModelYear       int
+	VehicleColor           *string
+
+	BudgetID              string
+	BudgetVersion         int
+	BudgetStatus          order.BudgetStatus
+	BudgetTotalCents      int64
+	BudgetSentAt          *string
+	BudgetApprovedAt      *string
+	BudgetRejectedAt      *string
+	BudgetApprovedByName  *string
+	BudgetRejectionReason *string
+
+	BudgetServices []order.BudgetServiceItem
+	BudgetParts    []order.BudgetPartItem
+	StatusHistory  []order.StatusHistoryEntry
 }
 
 type CreateBudgetRevisionParams struct {

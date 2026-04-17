@@ -1137,6 +1137,18 @@ const docTemplate = `{
         "dto.ClientServiceOrderResponse": {
             "type": "object",
             "properties": {
+                "budget_parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderLineResponse"
+                    }
+                },
+                "budget_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderLineResponse"
+                    }
+                },
                 "budget_status": {
                     "type": "string"
                 },
@@ -1146,10 +1158,48 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
+                "customer_complaint": {
+                    "type": "string"
+                },
+                "latest_budget": {
+                    "$ref": "#/definitions/dto.ServiceOrderBudgetResponse"
+                },
                 "opened_at": {
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                },
+                "status_history": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ServiceOrderStatusHistory"
+                    }
+                },
+                "vehicle": {
+                    "$ref": "#/definitions/dto.ClientServiceOrderVehicleResponse"
+                }
+            }
+        },
+        "dto.ClientServiceOrderVehicleResponse": {
+            "type": "object",
+            "properties": {
+                "brand": {
+                    "type": "string"
+                },
+                "color": {
+                    "type": "string"
+                },
+                "manufacture_year": {
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "model_year": {
+                    "type": "integer"
+                },
+                "plate": {
                     "type": "string"
                 }
             }
@@ -1211,10 +1261,6 @@ const docTemplate = `{
             "required": [
                 "client_document_number",
                 "client_document_type",
-                "client_name",
-                "vehicle_brand",
-                "vehicle_model",
-                "vehicle_model_year",
                 "vehicle_plate"
             ],
             "properties": {
@@ -1225,9 +1271,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "client_email": {
-                    "type": "string"
-                },
-                "client_name": {
                     "type": "string"
                 },
                 "client_phone": {
@@ -1248,19 +1291,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/dto.ServiceOrderItemRequest"
                     }
                 },
-                "vehicle_brand": {
-                    "type": "string"
-                },
                 "vehicle_color": {
                     "type": "string"
                 },
                 "vehicle_manufacture_year": {
-                    "type": "integer"
-                },
-                "vehicle_model": {
-                    "type": "string"
-                },
-                "vehicle_model_year": {
                     "type": "integer"
                 },
                 "vehicle_plate": {

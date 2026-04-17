@@ -46,11 +46,25 @@ func TestClientServiceOrderController_Get_Success(t *testing.T) {
 	h := controllers.NewClientServiceOrderController(svc)
 
 	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return(&repository.ClientServiceOrderView{
-		Code:             "C-1",
-		Status:           order.StatusReceived,
-		OpenedAt:         "2026-04-01T10:00:00Z",
-		BudgetStatus:     order.BudgetStatusDraft,
-		BudgetTotalCents: 100,
+		Code:              "C-1",
+		Status:            order.StatusReceived,
+		OpenedAt:          "2026-04-01T10:00:00Z",
+		CustomerComplaint: func() *string { s := "Barulho no motor"; return &s }(),
+		VehiclePlate:      "ABC1D23",
+		VehicleBrand:      "Fiat",
+		VehicleModel:      "Uno",
+		VehicleModelYear:  2015,
+		BudgetID:          "b1",
+		BudgetVersion:     1,
+		BudgetStatus:      order.BudgetStatusDraft,
+		BudgetTotalCents:  100,
+		BudgetServices: []order.BudgetServiceItem{{
+			ServiceID:       "s1",
+			Description:     "Alinhamento",
+			Quantity:        1,
+			UnitPriceCents:  100,
+			TotalPriceCents: 100,
+		}},
 	}, nil).Once()
 
 	r := gin.New()
@@ -62,6 +76,9 @@ func TestClientServiceOrderController_Get_Success(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"code":"C-1"`)
+	assert.Contains(t, w.Body.String(), `"vehicle":{"plate":"ABC1D23"`)
+	assert.Contains(t, w.Body.String(), `"latest_budget":{"id":"b1"`)
+	assert.Contains(t, w.Body.String(), `"budget_services"`)
 	flowRepo.AssertExpectations(t)
 }
 

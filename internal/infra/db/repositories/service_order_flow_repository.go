@@ -392,43 +392,190 @@ func (r *ServiceOrderFlowRepository) Deliver(ctx context.Context, serviceOrderID
 }
 
 func (r *ServiceOrderFlowRepository) GetClientViewByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
-	type row struct {
-		Code         string
-		Status       string
-		ClientID     string
-		VehicleID    string
-		OpenedAt     time.Time
-		BudgetStatus string
-		BudgetTotal  int64
+	timePtrRFC3339 := func(t *time.Time) *string {
+		if t == nil {
+			return nil
+		}
+		s := t.UTC().Format(time.RFC3339)
+		return &s
 	}
 
-	var out row
+	type soRow struct {
+		ID                string
+		Code              string
+		Status            string
+		ClientID          string
+		VehicleID         string
+		OpenedAt          time.Time
+		CustomerComplaint *string
+
+		Plate           string
+		Brand           string
+		Model           string
+		ManufactureYear *int
+		ModelYear       int
+		Color           *string
+	}
+
+	var so soRow
 	err := r.db.WithContext(ctx).
 		Table("service_orders so").
-		Select("so.code, so.status, so.client_id, so.vehicle_id, so.opened_at, b.status as budget_status, b.total_amount_cents as budget_total").
+		Select("so.id, so.code, so.status, so.client_id, so.vehicle_id, so.opened_at, so.customer_complaint, v.plate, v.brand, v.model, v.manufacture_year, v.model_year, v.color").
 		Joins("join clients c on c.id = so.client_id and c.deleted_at is null").
-		Joins("join budgets b on b.service_order_id = so.id and b.deleted_at is null").
+		Joins("join vehicles v on v.id = so.vehicle_id and v.deleted_at is null").
 		Where("so.deleted_at is null").
 		Where("so.code = ?", code).
 		Where("c.document_number = ?", documentNumber).
-		Order("b.version desc").
 		Limit(1).
-		Scan(&out).Error
+		Scan(&so).Error
 	if err != nil {
 		return nil, err
 	}
-	if out.Code == "" {
+	if so.ID == "" {
 		return nil, repository.ErrNotFound
 	}
 
+	var b budgetRow
+	budgetErr := r.db.WithContext(ctx).
+		Table("budgets").
+		Select("id, service_order_id, version, status, total_amount_cents, sent_at, approved_at, rejected_at, approved_by_name, rejection_reason").
+		Where("deleted_at is null").
+		Where("service_order_id = ?", so.ID).
+		Order("version desc").
+		Limit(1).
+		Scan(&b).Error
+	if budgetErr != nil {
+		return nil, budgetErr
+	}
+	if b.ID == "" {
+		return nil, repository.ErrNotFound
+	}
+
+	type budgetServiceLineRow struct {
+		ServiceID       *string
+		Description     string
+		Quantity        int
+		UnitPriceCents  int64
+		TotalPriceCents int64
+	}
+	var bs []budgetServiceLineRow
+	if err := r.db.WithContext(ctx).
+		Table("budget_services").
+		Select("service_id, description, quantity, unit_price_cents, total_price_cents").
+		Where("deleted_at is null").
+		Where("budget_id = ?", b.ID).
+		Order("created_at asc").
+		Scan(&bs).Error; err != nil {
+		return nil, err
+	}
+	budgetServices := make([]order.BudgetServiceItem, 0, len(bs))
+	for _, it := range bs {
+		serviceID := ""
+		if it.ServiceID != nil {
+			serviceID = *it.ServiceID
+		}
+		budgetServices = append(budgetServices, order.BudgetServiceItem{
+			ServiceID:       serviceID,
+			Description:     it.Description,
+			Quantity:        it.Quantity,
+			UnitPriceCents:  it.UnitPriceCents,
+			TotalPriceCents: it.TotalPriceCents,
+		})
+	}
+
+	type budgetPartLineRow struct {
+		PartID          *string
+		Description     string
+		Quantity        int
+		UnitPriceCents  int64
+		TotalPriceCents int64
+	}
+	var bp []budgetPartLineRow
+	if err := r.db.WithContext(ctx).
+		Table("budget_parts").
+		Select("part_id, description, quantity, unit_price_cents, total_price_cents").
+		Where("deleted_at is null").
+		Where("budget_id = ?", b.ID).
+		Order("created_at asc").
+		Scan(&bp).Error; err != nil {
+		return nil, err
+	}
+	budgetParts := make([]order.BudgetPartItem, 0, len(bp))
+	for _, it := range bp {
+		partID := ""
+		if it.PartID != nil {
+			partID = *it.PartID
+		}
+		budgetParts = append(budgetParts, order.BudgetPartItem{
+			PartID:          partID,
+			Description:     it.Description,
+			Quantity:        it.Quantity,
+			UnitPriceCents:  it.UnitPriceCents,
+			TotalPriceCents: it.TotalPriceCents,
+		})
+	}
+
+	type histRow struct {
+		FromStatus      *string
+		ToStatus        string
+		ChangedAt       time.Time
+		ChangedByUserID *string
+		Reason          *string
+	}
+	var histRows []histRow
+	if err := r.db.WithContext(ctx).
+		Table("service_order_status_history").
+		Select("from_status, to_status, changed_at, changed_by_user_id, reason").
+		Where("deleted_at is null").
+		Where("service_order_id = ?", so.ID).
+		Order("changed_at asc").
+		Scan(&histRows).Error; err != nil {
+		return nil, err
+	}
+	hist := make([]order.StatusHistoryEntry, 0, len(histRows))
+	for _, it := range histRows {
+		var from *order.Status
+		if it.FromStatus != nil {
+			s := order.Status(*it.FromStatus)
+			from = &s
+		}
+		hist = append(hist, order.StatusHistoryEntry{
+			FromStatus:      from,
+			ToStatus:        order.Status(it.ToStatus),
+			ChangedAt:       it.ChangedAt,
+			ChangedByUserID: it.ChangedByUserID,
+			Reason:          it.Reason,
+		})
+	}
+
 	return &repository.ClientServiceOrderView{
-		Code:             out.Code,
-		Status:           order.Status(out.Status),
-		ClientID:         out.ClientID,
-		VehicleID:        out.VehicleID,
-		OpenedAt:         out.OpenedAt.Format(time.RFC3339),
-		BudgetStatus:     order.BudgetStatus(out.BudgetStatus),
-		BudgetTotalCents: out.BudgetTotal,
+		Code:              so.Code,
+		Status:            order.Status(so.Status),
+		ClientID:          so.ClientID,
+		VehicleID:         so.VehicleID,
+		OpenedAt:          so.OpenedAt.UTC().Format(time.RFC3339),
+		CustomerComplaint: so.CustomerComplaint,
+
+		VehiclePlate:           so.Plate,
+		VehicleBrand:           so.Brand,
+		VehicleModel:           so.Model,
+		VehicleManufactureYear: so.ManufactureYear,
+		VehicleModelYear:       so.ModelYear,
+		VehicleColor:           so.Color,
+
+		BudgetID:              b.ID,
+		BudgetVersion:         b.Version,
+		BudgetStatus:          order.BudgetStatus(b.Status),
+		BudgetTotalCents:      b.TotalAmountCents,
+		BudgetSentAt:          timePtrRFC3339(b.SentAt),
+		BudgetApprovedAt:      timePtrRFC3339(b.ApprovedAt),
+		BudgetRejectedAt:      timePtrRFC3339(b.RejectedAt),
+		BudgetApprovedByName:  b.ApprovedByName,
+		BudgetRejectionReason: b.RejectionReason,
+
+		BudgetServices: budgetServices,
+		BudgetParts:    budgetParts,
+		StatusHistory:  hist,
 	}, nil
 }
 

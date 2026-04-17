@@ -864,6 +864,14 @@ func (r *ServiceOrderFlowRepository) GetClientViewByCode(ctx context.Context, co
 	r.s.mu.Lock()
 	defer r.s.mu.Unlock()
 
+	timePtrRFC3339 := func(t *time.Time) *string {
+		if t == nil {
+			return nil
+		}
+		s := t.UTC().Format(time.RFC3339)
+		return &s
+	}
+
 	so := r.s.serviceOrdersByCode[code]
 	if so == nil {
 		return nil, repository.ErrNotFound
@@ -872,18 +880,45 @@ func (r *ServiceOrderFlowRepository) GetClientViewByCode(ctx context.Context, co
 	if cl == nil || cl.DocumentNumber != documentNumber {
 		return nil, repository.ErrNotFound
 	}
+	v := r.s.vehiclesByID[so.VehicleID]
+	if v == nil {
+		return nil, repository.ErrNotFound
+	}
 	b := latestBudget(r.s.budgetsByServiceOrder[so.ID])
 	if b == nil {
 		return nil, repository.ErrNotFound
 	}
+	bs := r.s.budgetServicesByBudget[b.ID]
+	bp := r.s.budgetPartsByBudget[b.ID]
+	hist := r.s.statusHistoryBySO[so.ID]
 	return &repository.ClientServiceOrderView{
-		Code:             so.Code,
-		Status:           so.Status,
-		ClientID:         so.ClientID,
-		VehicleID:        so.VehicleID,
-		OpenedAt:         so.OpenedAt.Format(time.RFC3339),
-		BudgetStatus:     b.Status,
-		BudgetTotalCents: b.TotalAmountCents,
+		Code:              so.Code,
+		Status:            so.Status,
+		ClientID:          so.ClientID,
+		VehicleID:         so.VehicleID,
+		OpenedAt:          so.OpenedAt.Format(time.RFC3339),
+		CustomerComplaint: so.CustomerComplaint,
+
+		VehiclePlate:           v.Plate,
+		VehicleBrand:           v.Brand,
+		VehicleModel:           v.Model,
+		VehicleManufactureYear: v.ManufactureYear,
+		VehicleModelYear:       v.ModelYear,
+		VehicleColor:           v.Color,
+
+		BudgetID:              b.ID,
+		BudgetVersion:         b.Version,
+		BudgetStatus:          b.Status,
+		BudgetTotalCents:      b.TotalAmountCents,
+		BudgetSentAt:          timePtrRFC3339(b.SentAt),
+		BudgetApprovedAt:      timePtrRFC3339(b.ApprovedAt),
+		BudgetRejectedAt:      timePtrRFC3339(b.RejectedAt),
+		BudgetApprovedByName:  b.ApprovedByName,
+		BudgetRejectionReason: b.RejectionReason,
+
+		BudgetServices: bs,
+		BudgetParts:    bp,
+		StatusHistory:  hist,
 	}, nil
 }
 

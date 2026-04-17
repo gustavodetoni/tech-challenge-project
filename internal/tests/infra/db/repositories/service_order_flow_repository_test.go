@@ -824,8 +824,8 @@ func TestServiceOrderFlowRepository_GetClientViewByCode_NotFound(t *testing.T) {
 	gdb := newTestGormDB(t, []dbOp{
 		{
 			kind:         dbOpQuery,
-			wantContains: []string{`FROM service_orders so`, `join clients`, `join budgets`},
-			columns:      []string{"code"},
+			wantContains: []string{`FROM service_orders so`, `join clients`, `join vehicles`},
+			columns:      []string{"id"},
 			rows:         [][]any{},
 		},
 	})
@@ -840,11 +840,35 @@ func TestServiceOrderFlowRepository_GetClientViewByCode_Success(t *testing.T) {
 	gdb := newTestGormDB(t, []dbOp{
 		{
 			kind:         dbOpQuery,
-			wantContains: []string{`FROM service_orders so`, `join clients`, `join budgets`},
-			columns:      []string{"code", "status", "client_id", "vehicle_id", "opened_at", "budget_status", "budget_total"},
+			wantContains: []string{`FROM service_orders so`, `join clients`, `join vehicles`},
+			columns:      []string{"id", "code", "status", "client_id", "vehicle_id", "opened_at", "customer_complaint", "plate", "brand", "model", "manufacture_year", "model_year", "color"},
 			rows: [][]any{
-				{"C-1", "RECEIVED", "c1", "v1", openedAt, "DRAFT", int64(110)},
+				{"so1", "C-1", "RECEIVED", "c1", "v1", openedAt, nil, "ABC1D23", "Fiat", "Uno", nil, int64(2015), nil},
 			},
+		},
+		{
+			kind:         dbOpQuery,
+			wantContains: []string{`FROM "budgets"`},
+			columns:      []string{"id", "service_order_id", "version", "status", "total_amount_cents", "sent_at", "approved_at", "rejected_at", "approved_by_name", "rejection_reason"},
+			rows:         [][]any{{"b1", "so1", int64(1), "DRAFT", int64(110), nil, nil, nil, nil, nil}},
+		},
+		{
+			kind:         dbOpQuery,
+			wantContains: []string{`FROM "budget_services"`},
+			columns:      []string{"service_id", "description", "quantity", "unit_price_cents", "total_price_cents"},
+			rows:         [][]any{},
+		},
+		{
+			kind:         dbOpQuery,
+			wantContains: []string{`FROM "budget_parts"`},
+			columns:      []string{"part_id", "description", "quantity", "unit_price_cents", "total_price_cents"},
+			rows:         [][]any{},
+		},
+		{
+			kind:         dbOpQuery,
+			wantContains: []string{`FROM "service_order_status_history"`},
+			columns:      []string{"from_status", "to_status", "changed_at", "changed_by_user_id", "reason"},
+			rows:         [][]any{},
 		},
 	})
 	repo := repositories2.NewServiceOrderFlowRepository(gdb)

@@ -33,11 +33,7 @@ func TestServiceOrder_CreateDraft_InvalidDocument(t *testing.T) {
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "123",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, serviceorder.ErrInvalidInput)
@@ -57,11 +53,7 @@ func TestServiceOrder_CreateDraft_InvalidPlate(t *testing.T) {
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
 		VehiclePlate:         "INVALID",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, serviceorder.ErrInvalidInput)
@@ -78,16 +70,8 @@ func TestServiceOrder_CreateDraft_BuildsLinesAndCallsFlow(t *testing.T) {
 
 	svc := serviceorder.NewService(clientRepo, vehicleRepo, serviceRepo, partRepo, flowRepo)
 
-	cl := &client.Client{ID: "c1", DocumentNumber: "46420082412", DocumentType: client.DocumentTypeCPF, Name: "Maria"}
-	v := &vehicle.Vehicle{ID: "v1", ClientID: "c1", Plate: "ABC1D23", Brand: "Fiat", Model: "Uno", ModelYear: 2015}
-
-	// No client found -> create.
-	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return((*client.Client)(nil), repository.ErrNotFound).Once()
-	clientRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
-	// No vehicle found -> create.
-	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
-	vehicleRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
-	// When flow is called, it will use the created IDs from the service's generated objects.
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{ID: "c1", DocumentNumber: "46420082412"}, nil).Once()
+	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return(&vehicle.Vehicle{ID: "v1", ClientID: "c1", Plate: "ABC1D23"}, nil).Once()
 
 	serviceRepo.On("FindByIDs", mock.Anything, []string{"s1", "s1"}).Return([]service.Service{
 		{ID: "s1", Name: "Troca", BasePriceCents: 1000},
@@ -97,8 +81,8 @@ func TestServiceOrder_CreateDraft_BuildsLinesAndCallsFlow(t *testing.T) {
 	}, nil).Once()
 
 	flowRepo.On("CreateDraft", mock.Anything, mock.MatchedBy(func(p repository.CreateServiceOrderDraftParams) bool {
-		return p.ServiceOrder.ClientID != "" &&
-			p.ServiceOrder.VehicleID != "" &&
+		return p.ServiceOrder.ClientID == "c1" &&
+			p.ServiceOrder.VehicleID == "v1" &&
 			p.ServiceOrder.Status == order.StatusReceived &&
 			p.Budget.Status == order.BudgetStatusDraft &&
 			p.Budget.TotalAmountCents == 1000*2+5000*1 &&
@@ -109,8 +93,8 @@ func TestServiceOrder_CreateDraft_BuildsLinesAndCallsFlow(t *testing.T) {
 	})).Return(&order.ServiceOrder{
 		ID:        "so1",
 		Code:      "OS-20260414-ABCDEF",
-		ClientID:  cl.ID,
-		VehicleID: v.ID,
+		ClientID:  "c1",
+		VehicleID: "v1",
 		Status:    order.StatusReceived,
 		OpenedAt:  time.Now().UTC(),
 	}, &order.Budget{
@@ -126,11 +110,7 @@ func TestServiceOrder_CreateDraft_BuildsLinesAndCallsFlow(t *testing.T) {
 	out, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "464.200.824-12",
-		ClientName:           "Maria",
 		VehiclePlate:         "abc1d23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 		Services: []serviceorder.ItemInput{
 			{ID: "s1", Quantity: 1},
 			{ID: "s1", Quantity: 1},
@@ -221,52 +201,55 @@ func TestServiceOrder_ReviseBudget_CallsRepo(t *testing.T) {
 	flowRepo.AssertExpectations(t)
 }
 
-func TestServiceOrder_CreateDraft_MissingRequiredFields(t *testing.T) {
+func TestServiceOrder_CreateDraft_ClientNotFound_ReturnsInvalidInput(t *testing.T) {
 	t.Parallel()
 
+	clientRepo := new(repomocks.ClientRepository)
 	svc := serviceorder.NewService(
-		new(repomocks.ClientRepository),
+		clientRepo,
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
 		new(repomocks.PartRepository),
 		new(repomocks.ServiceOrderFlowRepository),
 	)
 
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return((*client.Client)(nil), repository.ErrNotFound).Once()
+
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "46420082412",
-		ClientName:           "   ",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, serviceorder.ErrInvalidInput)
+	clientRepo.AssertExpectations(t)
 }
 
-func TestServiceOrder_CreateDraft_InvalidModelYear(t *testing.T) {
+func TestServiceOrder_CreateDraft_VehicleNotFound_ReturnsInvalidInput(t *testing.T) {
 	t.Parallel()
 
+	clientRepo := new(repomocks.ClientRepository)
+	vehicleRepo := new(repomocks.VehicleRepository)
 	svc := serviceorder.NewService(
-		new(repomocks.ClientRepository),
-		new(repomocks.VehicleRepository),
+		clientRepo,
+		vehicleRepo,
 		new(repomocks.ServiceRepository),
 		new(repomocks.PartRepository),
 		new(repomocks.ServiceOrderFlowRepository),
 	)
 
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{ID: "c1"}, nil).Once()
+	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
+
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     1800,
 	})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, serviceorder.ErrInvalidInput)
+	clientRepo.AssertExpectations(t)
+	vehicleRepo.AssertExpectations(t)
 }
 
 func TestServiceOrder_CreateDraft_VehicleBelongsToAnotherClient_Conflict(t *testing.T) {
@@ -288,11 +271,7 @@ func TestServiceOrder_CreateDraft_VehicleBelongsToAnotherClient_Conflict(t *test
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.ErrorIs(t, err, repository.ErrConflict)
 	clientRepo.AssertExpectations(t)
@@ -446,11 +425,7 @@ func TestServiceOrder_CreateDraft_UsesExistingClientAndVehicle(t *testing.T) {
 	out, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "464.200.824-12",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, out)
@@ -476,11 +451,7 @@ func TestServiceOrder_CreateDraft_InvalidCNPJ(t *testing.T) {
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCNPJ,
 		ClientDocumentNumber: "123",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, serviceorder.ErrInvalidInput)
@@ -500,11 +471,7 @@ func TestServiceOrder_CreateDraft_InvalidDocumentType(t *testing.T) {
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentType("NOPE"),
 		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, serviceorder.ErrInvalidInput)
@@ -527,81 +494,7 @@ func TestServiceOrder_CreateDraft_ClientFindError_Propagates(t *testing.T) {
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
-	})
-	require.Error(t, err)
-	clientRepo.AssertExpectations(t)
-}
-
-func TestServiceOrder_CreateDraft_ClientCreateConflict_Refetches(t *testing.T) {
-	t.Parallel()
-
-	clientRepo := new(repomocks.ClientRepository)
-	vehicleRepo := new(repomocks.VehicleRepository)
-	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(
-		clientRepo,
-		vehicleRepo,
-		new(repomocks.ServiceRepository),
-		new(repomocks.PartRepository),
-		flowRepo,
-	)
-
-	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return((*client.Client)(nil), repository.ErrNotFound).Once()
-	clientRepo.On("Create", mock.Anything, mock.Anything).Return(repository.ErrConflict).Once()
-	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{ID: "c1"}, nil).Once()
-
-	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
-	vehicleRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
-
-	flowRepo.On("CreateDraft", mock.Anything, mock.Anything).Return(
-		&order.ServiceOrder{ID: "so1", Code: "C-1", Status: order.StatusReceived, OpenedAt: time.Now().UTC()},
-		&order.Budget{ID: "b1", ServiceOrderID: "so1", Version: 1, Status: order.BudgetStatusDraft, TotalAmountCents: 0, CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()},
-		nil,
-	).Once()
-
-	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
-		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
-		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
-	})
-	require.NoError(t, err)
-	clientRepo.AssertExpectations(t)
-	vehicleRepo.AssertExpectations(t)
-	flowRepo.AssertExpectations(t)
-}
-
-func TestServiceOrder_CreateDraft_ClientCreateError_Propagates(t *testing.T) {
-	t.Parallel()
-
-	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(
-		clientRepo,
-		new(repomocks.VehicleRepository),
-		new(repomocks.ServiceRepository),
-		new(repomocks.PartRepository),
-		new(repomocks.ServiceOrderFlowRepository),
-	)
-
-	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return((*client.Client)(nil), repository.ErrNotFound).Once()
-	clientRepo.On("Create", mock.Anything, mock.Anything).Return(assert.AnError).Once()
-
-	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
-		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
-		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.Error(t, err)
 	clientRepo.AssertExpectations(t)
@@ -626,82 +519,7 @@ func TestServiceOrder_CreateDraft_VehicleFindError_Propagates(t *testing.T) {
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
 		ClientDocumentType:   client.DocumentTypeCPF,
 		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
 		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
-	})
-	require.Error(t, err)
-	clientRepo.AssertExpectations(t)
-	vehicleRepo.AssertExpectations(t)
-}
-
-func TestServiceOrder_CreateDraft_VehicleCreateConflict_Refetches(t *testing.T) {
-	t.Parallel()
-
-	clientRepo := new(repomocks.ClientRepository)
-	vehicleRepo := new(repomocks.VehicleRepository)
-	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(
-		clientRepo,
-		vehicleRepo,
-		new(repomocks.ServiceRepository),
-		new(repomocks.PartRepository),
-		flowRepo,
-	)
-
-	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{ID: "c1"}, nil).Once()
-
-	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
-	vehicleRepo.On("Create", mock.Anything, mock.Anything).Return(repository.ErrConflict).Once()
-	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return(&vehicle.Vehicle{ID: "v1", ClientID: "c1"}, nil).Once()
-
-	flowRepo.On("CreateDraft", mock.Anything, mock.Anything).Return(
-		&order.ServiceOrder{ID: "so1", Code: "C-1", Status: order.StatusReceived, OpenedAt: time.Now().UTC()},
-		&order.Budget{ID: "b1", ServiceOrderID: "so1", Version: 1, Status: order.BudgetStatusDraft, TotalAmountCents: 0, CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()},
-		nil,
-	).Once()
-
-	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
-		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
-		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
-	})
-	require.NoError(t, err)
-	vehicleRepo.AssertExpectations(t)
-	flowRepo.AssertExpectations(t)
-}
-
-func TestServiceOrder_CreateDraft_VehicleCreateError_Propagates(t *testing.T) {
-	t.Parallel()
-
-	clientRepo := new(repomocks.ClientRepository)
-	vehicleRepo := new(repomocks.VehicleRepository)
-	svc := serviceorder.NewService(
-		clientRepo,
-		vehicleRepo,
-		new(repomocks.ServiceRepository),
-		new(repomocks.PartRepository),
-		new(repomocks.ServiceOrderFlowRepository),
-	)
-
-	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{ID: "c1"}, nil).Once()
-	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
-	vehicleRepo.On("Create", mock.Anything, mock.Anything).Return(assert.AnError).Once()
-
-	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
-		ClientDocumentNumber: "46420082412",
-		ClientName:           "Maria",
-		VehiclePlate:         "ABC1D23",
-		VehicleBrand:         "Fiat",
-		VehicleModel:         "Uno",
-		VehicleModelYear:     2015,
 	})
 	require.Error(t, err)
 	clientRepo.AssertExpectations(t)

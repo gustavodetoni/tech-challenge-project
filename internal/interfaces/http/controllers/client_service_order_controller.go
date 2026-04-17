@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -38,10 +39,84 @@ func (h *ClientServiceOrderController) Get(c *gin.Context) {
 		return
 	}
 
+	statusHistory := make([]dto.ServiceOrderStatusHistory, 0, len(view.StatusHistory))
+	for _, it := range view.StatusHistory {
+		var from *string
+		if it.FromStatus != nil {
+			s := string(*it.FromStatus)
+			from = &s
+		}
+		statusHistory = append(statusHistory, dto.ServiceOrderStatusHistory{
+			FromStatus:      from,
+			ToStatus:        string(it.ToStatus),
+			ChangedAt:       it.ChangedAt.UTC().Format(time.RFC3339),
+			ChangedByUserID: it.ChangedByUserID,
+			Reason:          it.Reason,
+		})
+	}
+
+	budgetServices := make([]dto.ServiceOrderLineResponse, 0, len(view.BudgetServices))
+	for _, it := range view.BudgetServices {
+		var refID *string
+		if it.ServiceID != "" {
+			s := it.ServiceID
+			refID = &s
+		}
+		budgetServices = append(budgetServices, dto.ServiceOrderLineResponse{
+			RefID:           refID,
+			Description:     it.Description,
+			Quantity:        it.Quantity,
+			UnitPriceCents:  it.UnitPriceCents,
+			TotalPriceCents: it.TotalPriceCents,
+		})
+	}
+
+	budgetParts := make([]dto.ServiceOrderLineResponse, 0, len(view.BudgetParts))
+	for _, it := range view.BudgetParts {
+		var refID *string
+		if it.PartID != "" {
+			s := it.PartID
+			refID = &s
+		}
+		budgetParts = append(budgetParts, dto.ServiceOrderLineResponse{
+			RefID:           refID,
+			Description:     it.Description,
+			Quantity:        it.Quantity,
+			UnitPriceCents:  it.UnitPriceCents,
+			TotalPriceCents: it.TotalPriceCents,
+		})
+	}
+
+	latestBudget := dto.ServiceOrderBudgetResponse{
+		ID:         view.BudgetID,
+		Version:    view.BudgetVersion,
+		Status:     string(view.BudgetStatus),
+		TotalCents: view.BudgetTotalCents,
+		SentAt:     view.BudgetSentAt,
+		ApprovedAt: view.BudgetApprovedAt,
+		RejectedAt: view.BudgetRejectedAt,
+
+		ApprovedByName:  view.BudgetApprovedByName,
+		RejectionReason: view.BudgetRejectionReason,
+	}
+
 	c.JSON(http.StatusOK, dto.ClientServiceOrderResponse{
-		Code:             view.Code,
-		Status:           string(view.Status),
-		OpenedAt:         view.OpenedAt,
+		Code:              view.Code,
+		Status:            string(view.Status),
+		OpenedAt:          view.OpenedAt,
+		CustomerComplaint: view.CustomerComplaint,
+		Vehicle: dto.ClientServiceOrderVehicleResponse{
+			Plate:           view.VehiclePlate,
+			Brand:           view.VehicleBrand,
+			Model:           view.VehicleModel,
+			ManufactureYear: view.VehicleManufactureYear,
+			ModelYear:       view.VehicleModelYear,
+			Color:           view.VehicleColor,
+		},
+		LatestBudget:     latestBudget,
+		BudgetServices:   budgetServices,
+		BudgetParts:      budgetParts,
+		StatusHistory:    statusHistory,
 		BudgetStatus:     string(view.BudgetStatus),
 		BudgetTotalCents: view.BudgetTotalCents,
 	})

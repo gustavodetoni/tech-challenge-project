@@ -8,15 +8,11 @@ type ServiceOrderItemRequest struct {
 type CreateServiceOrderRequest struct {
 	ClientDocumentType   string  `json:"client_document_type" binding:"required"`
 	ClientDocumentNumber string  `json:"client_document_number" binding:"required"`
-	ClientName           string  `json:"client_name" binding:"required"`
 	ClientEmail          *string `json:"client_email"`
 	ClientPhone          *string `json:"client_phone"`
 
 	VehiclePlate           string  `json:"vehicle_plate" binding:"required"`
-	VehicleBrand           string  `json:"vehicle_brand" binding:"required"`
-	VehicleModel           string  `json:"vehicle_model" binding:"required"`
 	VehicleManufactureYear *int    `json:"vehicle_manufacture_year"`
-	VehicleModelYear       int     `json:"vehicle_model_year" binding:"required"`
 	VehicleColor           *string `json:"vehicle_color"`
 
 	CustomerComplaint *string `json:"customer_complaint"`
@@ -88,11 +84,30 @@ type ServiceOrderStatusHistory struct {
 }
 
 type ClientServiceOrderResponse struct {
-	Code             string `json:"code"`
-	Status           string `json:"status"`
-	OpenedAt         string `json:"opened_at"`
+	Code              string  `json:"code"`
+	Status            string  `json:"status"`
+	OpenedAt          string  `json:"opened_at"`
+	CustomerComplaint *string `json:"customer_complaint,omitempty"`
+
+	Vehicle ClientServiceOrderVehicleResponse `json:"vehicle"`
+
+	LatestBudget ServiceOrderBudgetResponse `json:"latest_budget"`
+
+	BudgetServices []ServiceOrderLineResponse  `json:"budget_services"`
+	BudgetParts    []ServiceOrderLineResponse  `json:"budget_parts"`
+	StatusHistory  []ServiceOrderStatusHistory `json:"status_history"`
+
 	BudgetStatus     string `json:"budget_status"`
 	BudgetTotalCents int64  `json:"budget_total_cents"`
+}
+
+type ClientServiceOrderVehicleResponse struct {
+	Plate           string  `json:"plate"`
+	Brand           string  `json:"brand"`
+	Model           string  `json:"model"`
+	ManufactureYear *int    `json:"manufacture_year,omitempty"`
+	ModelYear       int     `json:"model_year"`
+	Color           *string `json:"color,omitempty"`
 }
 
 type ReviseBudgetRequest struct {

@@ -16,7 +16,6 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/part"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/document"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/plate"
@@ -53,15 +52,11 @@ func NewService(
 type CreateDraftInput struct {
 	ClientDocumentType   client.DocumentType
 	ClientDocumentNumber string
-	ClientName           string
 	ClientEmail          *string
 	ClientPhone          *string
 
 	VehiclePlate           string
-	VehicleBrand           string
-	VehicleModel           string
 	VehicleManufactureYear *int
-	VehicleModelYear       int
 	VehicleColor           *string
 
 	CustomerComplaint *string
@@ -107,24 +102,59 @@ func (s *Service) CreateDraft(ctx context.Context, in CreateDraftInput) (*Create
 		return nil, fmt.Errorf("%w: invalid plate", ErrInvalidInput)
 	}
 
-	in.ClientName = strings.TrimSpace(in.ClientName)
-	in.VehicleBrand = strings.TrimSpace(in.VehicleBrand)
-	in.VehicleModel = strings.TrimSpace(in.VehicleModel)
-	if in.ClientName == "" || in.VehicleBrand == "" || in.VehicleModel == "" {
-		return nil, fmt.Errorf("%w: missing required fields", ErrInvalidInput)
-	}
-	if in.VehicleModelYear < 1900 || in.VehicleModelYear > 2100 {
-		return nil, fmt.Errorf("%w: invalid model_year", ErrInvalidInput)
-	}
-
-	cl, err := s.findOrCreateClient(ctx, in.ClientDocumentType, doc, in.ClientName, in.ClientEmail, in.ClientPhone)
+	cl, err := s.clients.FindByDocument(ctx, doc)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, fmt.Errorf("%w: client not found", ErrInvalidInput)
+		}
 		return nil, err
 	}
 
-	v, err := s.findOrCreateVehicle(ctx, cl.ID, vehiclePlate, in.VehicleBrand, in.VehicleModel, in.VehicleManufactureYear, in.VehicleModelYear, in.VehicleColor)
+	if in.ClientEmail != nil || in.ClientPhone != nil {
+		updated := false
+		if in.ClientEmail != nil {
+			cl.Email = in.ClientEmail
+			updated = true
+		}
+		if in.ClientPhone != nil {
+			cl.Phone = in.ClientPhone
+			updated = true
+		}
+		if updated {
+			cl.UpdatedAt = time.Now().UTC()
+			if err := s.clients.Update(ctx, cl); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	v, err := s.vehicles.FindByPlate(ctx, vehiclePlate)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, fmt.Errorf("%w: vehicle not found", ErrInvalidInput)
+		}
 		return nil, err
+	}
+	if v.ClientID != cl.ID {
+		return nil, fmt.Errorf("%w: vehicle already belongs to another client", repository.ErrConflict)
+	}
+
+	if in.VehicleManufactureYear != nil || in.VehicleColor != nil {
+		updated := false
+		if in.VehicleManufactureYear != nil {
+			v.ManufactureYear = in.VehicleManufactureYear
+			updated = true
+		}
+		if in.VehicleColor != nil {
+			v.Color = in.VehicleColor
+			updated = true
+		}
+		if updated {
+			v.UpdatedAt = time.Now().UTC()
+			if err := s.vehicles.Update(ctx, v); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	serviceLines, serviceTotal, err := s.buildServiceLines(ctx, in.Services)
@@ -265,69 +295,6 @@ func (s *Service) ClientApproveBudget(ctx context.Context, code string, document
 
 func (s *Service) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {
 	return s.flow.RejectLatestBudgetByCode(ctx, code, document.Normalize(documentNumber), reason)
-}
-
-func (s *Service) findOrCreateClient(ctx context.Context, docType client.DocumentType, docNumber, name string, email, phone *string) (*client.Client, error) {
-	existing, err := s.clients.FindByDocument(ctx, docNumber)
-	if err == nil {
-		return existing, nil
-	}
-	if !errors.Is(err, repository.ErrNotFound) {
-		return nil, err
-	}
-
-	now := time.Now().UTC()
-	cl := &client.Client{
-		ID:             uuid.NewString(),
-		DocumentType:   docType,
-		DocumentNumber: docNumber,
-		Name:           name,
-		Email:          email,
-		Phone:          phone,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-	if err := s.clients.Create(ctx, cl); err != nil {
-		if errors.Is(err, repository.ErrConflict) {
-			return s.clients.FindByDocument(ctx, docNumber)
-		}
-		return nil, err
-	}
-	return cl, nil
-}
-
-func (s *Service) findOrCreateVehicle(ctx context.Context, clientID string, plate string, brand, model string, manufactureYear *int, modelYear int, color *string) (*vehicle.Vehicle, error) {
-	existing, err := s.vehicles.FindByPlate(ctx, plate)
-	if err == nil {
-		if existing.ClientID != clientID {
-			return nil, fmt.Errorf("%w: vehicle already belongs to another client", repository.ErrConflict)
-		}
-		return existing, nil
-	}
-	if !errors.Is(err, repository.ErrNotFound) {
-		return nil, err
-	}
-
-	now := time.Now().UTC()
-	v := &vehicle.Vehicle{
-		ID:              uuid.NewString(),
-		ClientID:        clientID,
-		Plate:           plate,
-		Brand:           brand,
-		Model:           model,
-		ManufactureYear: manufactureYear,
-		ModelYear:       modelYear,
-		Color:           color,
-		CreatedAt:       now,
-		UpdatedAt:       now,
-	}
-	if err := s.vehicles.Create(ctx, v); err != nil {
-		if errors.Is(err, repository.ErrConflict) {
-			return s.vehicles.FindByPlate(ctx, plate)
-		}
-		return nil, err
-	}
-	return v, nil
 }
 
 func (s *Service) buildServiceLines(ctx context.Context, items []ItemInput) ([]order.BudgetServiceItem, int64, error) {

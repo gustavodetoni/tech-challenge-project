@@ -54,15 +54,48 @@ definitions:
     type: object
   dto.ClientServiceOrderResponse:
     properties:
+      budget_parts:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderLineResponse'
+        type: array
+      budget_services:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderLineResponse'
+        type: array
       budget_status:
         type: string
       budget_total_cents:
         type: integer
       code:
         type: string
+      customer_complaint:
+        type: string
+      latest_budget:
+        $ref: '#/definitions/dto.ServiceOrderBudgetResponse'
       opened_at:
         type: string
       status:
+        type: string
+      status_history:
+        items:
+          $ref: '#/definitions/dto.ServiceOrderStatusHistory'
+        type: array
+      vehicle:
+        $ref: '#/definitions/dto.ClientServiceOrderVehicleResponse'
+    type: object
+  dto.ClientServiceOrderVehicleResponse:
+    properties:
+      brand:
+        type: string
+      color:
+        type: string
+      manufacture_year:
+        type: integer
+      model:
+        type: string
+      model_year:
+        type: integer
+      plate:
         type: string
     type: object
   dto.CreateClientRequest:
@@ -108,8 +141,6 @@ definitions:
         type: string
       client_email:
         type: string
-      client_name:
-        type: string
       client_phone:
         type: string
       customer_complaint:
@@ -122,25 +153,15 @@ definitions:
         items:
           $ref: '#/definitions/dto.ServiceOrderItemRequest'
         type: array
-      vehicle_brand:
-        type: string
       vehicle_color:
         type: string
       vehicle_manufacture_year:
-        type: integer
-      vehicle_model:
-        type: string
-      vehicle_model_year:
         type: integer
       vehicle_plate:
         type: string
     required:
     - client_document_number
     - client_document_type
-    - client_name
-    - vehicle_brand
-    - vehicle_model
-    - vehicle_model_year
     - vehicle_plate
     type: object
   dto.CreateServiceOrderResponse:

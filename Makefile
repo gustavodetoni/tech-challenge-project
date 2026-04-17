@@ -12,7 +12,8 @@ tests:
 	mkdir -p /tmp/go-tmp /tmp/go-build-cache /tmp/go-mod-cache
 	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache \
 		go test ./... -coverpkg=./... -coverprofile=/tmp/coverage.out -count=1
-	go tool cover -func=/tmp/coverage.out | grep total:
+	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache \
+		go tool cover -func=/tmp/coverage.out | grep total:
 
 swagger:
 	mkdir -p /tmp/go-tmp /tmp/go-build-cache /tmp/go-mod-cache

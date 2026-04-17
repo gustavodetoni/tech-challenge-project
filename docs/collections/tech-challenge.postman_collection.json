@@ -502,7 +502,7 @@
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"client_document_type\": \"CPF\",\n  \"client_document_number\": \"{{cpf}}\",\n  \"client_name\": \"Gustavo\",\n  \"vehicle_plate\": \"{{plate}}\",\n  \"vehicle_brand\": \"Mitsubishi\",\n  \"vehicle_model\": \"Lancer\",\n  \"vehicle_model_year\": 2015,\n  \"customer_complaint\": \"Barulho no motor ao ligar\",\n  \"services\": [\n    { \"id\": \"{{service_id}}\", \"quantity\": 1 }\n  ],\n  \"parts\": [\n    { \"id\": \"{{part_id}}\", \"quantity\": 1 }\n  ]\n}"
+                  "raw": "{\n  \"client_document_type\": \"CPF\",\n  \"client_document_number\": \"{{cpf}}\",\n  \"vehicle_plate\": \"{{plate}}\",\n  \"customer_complaint\": \"Barulho no motor ao ligar\",\n  \"services\": [\n    { \"id\": \"{{service_id}}\", \"quantity\": 1 }\n  ],\n  \"parts\": [\n    { \"id\": \"{{part_id}}\", \"quantity\": 1 }\n  ]\n}"
                 },
                 "url": { "raw": "{{baseUrl}}/admin/service-orders", "host": ["{{baseUrl}}"], "path": ["admin", "service-orders"] }
               }
@@ -596,7 +596,7 @@
       "name": "Client (no auth)",
       "item": [
         {
-          "name": "Get service order by code",
+          "name": "Get service order details by code",
           "request": {
             "method": "GET",
             "auth": { "type": "noauth" },

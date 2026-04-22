@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -18,6 +19,7 @@ type Config struct {
 	JWTAudience      string
 	JWTExpiryMinutes int
 
+	CORS      CORSConfig
 	RateLimit RateLimitConfig
 }
 
@@ -27,6 +29,9 @@ func Load() (Config, error) {
 	viper.SetDefault("JWT_ISSUER", "tech-challenge-project")
 	viper.SetDefault("JWT_AUDIENCE", "")
 	viper.SetDefault("JWT_EXPIRY_MINUTES", "60")
+	viper.SetDefault("CORS_ENABLED", true)
+	viper.SetDefault("CORS_ALLOW_CREDENTIALS", false)
+	viper.SetDefault("CORS_ALLOWED_ORIGINS", "")
 	viper.SetDefault("RATE_LIMIT_ENABLED", true)
 	viper.SetDefault("RATE_LIMIT_RPS", 10.0)
 	viper.SetDefault("RATE_LIMIT_BURST", 20)
@@ -44,6 +49,18 @@ func Load() (Config, error) {
 	jwtExpiryMinutes, err := strconv.Atoi(jwtExpiryStr)
 	if err != nil || jwtExpiryMinutes < 1 {
 		return Config{}, fmt.Errorf("invalid JWT_EXPIRY_MINUTES %q", jwtExpiryStr)
+	}
+
+	corsEnabled := viper.GetBool("CORS_ENABLED")
+	corsAllowCredentials := viper.GetBool("CORS_ALLOW_CREDENTIALS")
+	corsAllowedOriginsStr := viper.GetString("CORS_ALLOWED_ORIGINS")
+	corsAllowedOrigins := parseCommaList(corsAllowedOriginsStr)
+	corsCfg := DefaultCORSConfig()
+	corsCfg.Enabled = corsEnabled
+	corsCfg.AllowCredentials = corsAllowCredentials
+	if len(corsAllowedOrigins) > 0 {
+		corsCfg.AllowAllOrigins = false
+		corsCfg.AllowOrigins = corsAllowedOrigins
 	}
 
 	rateLimitEnabled := viper.GetBool("RATE_LIMIT_ENABLED")
@@ -73,6 +90,7 @@ func Load() (Config, error) {
 		JWTIssuer:        viper.GetString("JWT_ISSUER"),
 		JWTAudience:      viper.GetString("JWT_AUDIENCE"),
 		JWTExpiryMinutes: jwtExpiryMinutes,
+		CORS: corsCfg,
 		RateLimit: RateLimitConfig{
 			Enabled:         rateLimitEnabled,
 			RPS:             rateLimitRPS,
@@ -81,4 +99,14 @@ func Load() (Config, error) {
 			CleanupInterval: time.Duration(rateLimitCleanupIntervalSeconds) * time.Second,
 		},
 	}, nil
+}
+
+func parseCommaList(value string) []string {
+	var out []string
+	for _, p := range strings.Split(value, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }

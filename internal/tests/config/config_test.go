@@ -24,6 +24,12 @@ func TestLoad_DefaultsAndEnv(t *testing.T) {
 	require.Equal(t, "tech-challenge-project", cfg.JWTIssuer)
 	require.Equal(t, "", cfg.JWTAudience)
 	require.Equal(t, 60, cfg.JWTExpiryMinutes)
+	require.True(t, cfg.CORS.Enabled)
+	require.True(t, cfg.CORS.AllowAllOrigins)
+	require.False(t, cfg.CORS.AllowCredentials)
+	require.Equal(t, 12*time.Hour, cfg.CORS.MaxAge)
+	require.Contains(t, cfg.CORS.AllowMethods, "GET")
+	require.Contains(t, cfg.CORS.AllowHeaders, "Authorization")
 	require.True(t, cfg.RateLimit.Enabled)
 	require.Equal(t, 10.0, cfg.RateLimit.RPS)
 	require.Equal(t, 20, cfg.RateLimit.Burst)
@@ -49,4 +55,19 @@ func TestLoad_InvalidJWTExpiryMinutes(t *testing.T) {
 
 	_, err := config2.Load()
 	require.Error(t, err)
+}
+
+func TestLoad_CORSAllowedOrigins_DisablesAllowAllOrigins(t *testing.T) {
+	viper.Reset()
+	t.Cleanup(viper.Reset)
+
+	t.Setenv("JWT_SECRET", "secret")
+	t.Setenv("DATABASE_URL", "postgres://example")
+	t.Setenv("CORS_ALLOWED_ORIGINS", "https://front.example, https://front2.example")
+
+	cfg, err := config2.Load()
+	require.NoError(t, err)
+	require.True(t, cfg.CORS.Enabled)
+	require.False(t, cfg.CORS.AllowAllOrigins)
+	require.Equal(t, []string{"https://front.example", "https://front2.example"}, cfg.CORS.AllowOrigins)
 }

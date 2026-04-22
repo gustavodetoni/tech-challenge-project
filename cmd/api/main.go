@@ -50,6 +50,12 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 
+	corsMW, err := config.NewCORSMiddleware(cfg.CORS)
+	if err != nil {
+		log.Fatal(err)
+	}
+	router.Use(corsMW)
+
 	rateLimitMW, err := config.NewRateLimitMiddleware(cfg.RateLimit)
 	if err != nil {
 		log.Fatal(err)

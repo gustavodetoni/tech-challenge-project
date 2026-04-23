@@ -26,5 +26,3 @@ coverage.*
 
 # Docs extras (não usados no build)
 docs/collections
-
-.DS_Store

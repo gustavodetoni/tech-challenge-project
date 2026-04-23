@@ -11,13 +11,6 @@ build:
 tests:
 	mkdir -p /tmp/go-tmp /tmp/go-build-cache /tmp/go-mod-cache
 	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache \
-		go test ./... -coverpkg=./... -coverprofile=/tmp/coverage.out -count=1
-	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache \
-		go tool cover -func=/tmp/coverage.out | grep total:
-
-coverage:
-	mkdir -p /tmp/go-tmp /tmp/go-build-cache /tmp/go-mod-cache
-	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache \
 		go test ./... -coverpkg=./... -covermode=atomic -coverprofile=coverage.out -count=1
 	env GOCACHE=/tmp/go-build-cache GOTMPDIR=/tmp/go-tmp GOMODCACHE=/tmp/go-mod-cache \
 		go tool cover -func=coverage.out | grep total:

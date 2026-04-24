@@ -21,6 +21,15 @@ docker compose up --build
 
 Pronto: o banco e a API sobem juntos, e as migrações/initialização do banco são executadas automaticamente na inicialização.
 
+## Seed (dados iniciais)
+
+Ao subir com `docker compose up --build`, um serviço `seed` popula o banco automaticamente (se o banco estiver vazio).
+
+Credenciais de acesso padrão:
+
+- Email: `admin@tech.local`
+- Senha: `Senha@123`
+
 ## Swagger (clique para abrir)
 
 http://localhost:8080/swagger/index.html

@@ -61,6 +61,7 @@ func (a *AuthController) Register(c *gin.Context) {
 
 // @Summary Login with email/password
 // @Tags auth
+// @Param request body dto.LoginRequest true "Login request"
 // @Success 200 {object} dto.AuthResponse
 // @Router /auth/login [post]
 func (a *AuthController) Login(c *gin.Context) {

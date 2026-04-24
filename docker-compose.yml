@@ -40,7 +40,27 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      seed:
+        condition: service_completed_successfully
     restart: unless-stopped
+
+  seed:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-tech_challenge}:${POSTGRES_PASSWORD:-tech_challenge}@postgres:5432/${POSTGRES_DB:-tech_challenge}?sslmode=disable"
+      SEED_RANDOM_SEED: ${SEED_RANDOM_SEED:-123}
+      SEED_USERS: ${SEED_USERS:-8}
+      SEED_CLIENTS: ${SEED_CLIENTS:-12}
+      SEED_SERVICES: ${SEED_SERVICES:-8}
+      SEED_PARTS: ${SEED_PARTS:-24}
+      SEED_ORDERS: ${SEED_ORDERS:-12}
+      SEED_FORCE: ${SEED_FORCE:-false}
+    command: ["/seed"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   pgdata:

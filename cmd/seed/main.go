@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -11,12 +12,23 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/internal/infra/db/seed"
 )
 
-func main() {
-	ctx := context.Background()
+var (
+	connectDB                     = db.Connect
+	initAndCheck                  = db.InitAndCheckMigration
+	runSeed                       = seed.Run
+	nowUTC       func() time.Time = func() time.Time { return time.Now().UTC() }
+)
 
+func main() {
+	if err := run(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run(ctx context.Context) error {
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		log.Fatal("DATABASE_URL is required")
+		return errors.New("DATABASE_URL is required")
 	}
 
 	opts := seed.Options{
@@ -28,22 +40,24 @@ func main() {
 		Services: envInt("SEED_SERVICES", 8),
 		Parts:    envInt("SEED_PARTS", 24),
 		Orders:   envInt("SEED_ORDERS", 12),
-		Now:      time.Now().UTC(),
+		Now:      nowUTC(),
 	}
 
-	gormDB, err := db.Connect(ctx, databaseURL)
+	gormDB, err := connectDB(ctx, databaseURL)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	log.Println("Connected to database")
 
-	if err := db.InitAndCheckMigration(ctx, gormDB); err != nil {
-		log.Fatal(err)
+	if err := initAndCheck(ctx, gormDB); err != nil {
+		return err
 	}
 
-	if err := seed.Run(ctx, gormDB, opts); err != nil {
-		log.Fatal(err)
+	if err := runSeed(ctx, gormDB, opts); err != nil {
+		return err
 	}
+
+	return nil
 }
 
 func envBool(key string, fallback bool) bool {

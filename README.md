@@ -33,3 +33,7 @@ Credenciais de acesso padrão:
 ## Swagger (clique para abrir)
 
 http://localhost:8080/swagger/index.html
+
+## Por que PostgreSQL?
+
+Foi escolhido por ser um banco relacional, adequado para este tipo de aplicação transacional (cadastros, ordens de serviço e controle de estoque) e também por familiaridade pois já trabalho com PostgreSQL no dia a dia, o que reduz curva de aprendizado e aumenta a produtividade.

@@ -30,9 +30,11 @@ Credenciais de acesso padrão:
 - Email: `admin@tech.local`
 - Senha: `Senha@123`
 
-## Swagger (clique para abrir)
+## Documentação & Análise
 
-http://localhost:8080/swagger/index.html
+- **Swagger UI (local):** http://localhost:8080/swagger/index.html
+- **OpenAPI (arquivo):** [docs/swagger.yaml](docs/swagger.yaml)
+- **Relatório SonarCloud:** https://sonarcloud.io/dashboard?id=gustavodetoni_tech-challenge-project
 
 ## Por que PostgreSQL?
 

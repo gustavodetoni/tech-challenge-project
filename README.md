@@ -33,8 +33,8 @@ Credenciais de acesso padrão:
 ## Documentação & Análise
 
 - **Swagger UI (local):** http://localhost:8080/swagger/index.html
-- **OpenAPI (arquivo):** [docs/swagger.yaml](docs/swagger.yaml)
-- **Relatório SonarCloud:** https://sonarcloud.io/dashboard?id=gustavodetoni_tech-challenge-project
+- **Documentação (local):** [docs/documentation](docs/documentation)
+- **Arquivos Sonar (local):** [docs/sonar](docs/sonar)
 
 ## Por que PostgreSQL?
 

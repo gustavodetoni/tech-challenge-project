@@ -29,7 +29,7 @@ func (h *AdminServicesController) List(c *gin.Context) {
 	limit, offset := shared.ParseLimitOffset(c)
 	services, err := h.svc.List(c.Request.Context(), limit, offset)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	out := make([]dto.ServiceResponse, 0, len(services))
@@ -73,7 +73,7 @@ func (h *AdminServicesController) Get(c *gin.Context) {
 	id := c.Param("id")
 	svc, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.ServiceResponseFromDomain(*svc))
@@ -100,7 +100,7 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 		Active:           req.Active,
 	})
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.ServiceResponseFromDomain(*svc))
@@ -114,7 +114,7 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 func (h *AdminServicesController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)

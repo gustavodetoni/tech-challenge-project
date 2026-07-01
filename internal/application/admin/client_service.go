@@ -13,13 +13,19 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/document"
 )
 
-type ClientService struct {
+type ClientAdminUseCase struct {
 	repo repository.ClientRepository
 }
 
-func NewClientService(repo repository.ClientRepository) *ClientService {
-	return &ClientService{repo: repo}
+func NewClientAdminUseCase(repo repository.ClientRepository) *ClientAdminUseCase {
+	return &ClientAdminUseCase{repo: repo}
 }
+
+func NewClientService(repo repository.ClientRepository) *ClientAdminUseCase {
+	return NewClientAdminUseCase(repo)
+}
+
+type ClientService = ClientAdminUseCase
 
 type CreateClientInput struct {
 	DocumentType   string
@@ -31,15 +37,15 @@ type CreateClientInput struct {
 
 type UpdateClientInput = CreateClientInput
 
-func (s *ClientService) CreateFromInput(ctx context.Context, input CreateClientInput) (*client.Client, error) {
+func (s *ClientAdminUseCase) CreateFromInput(ctx context.Context, input CreateClientInput) (*client.Client, error) {
 	return s.Create(ctx, clientFromInput(input))
 }
 
-func (s *ClientService) UpdateFromInput(ctx context.Context, id string, input UpdateClientInput) (*client.Client, error) {
+func (s *ClientAdminUseCase) UpdateFromInput(ctx context.Context, id string, input UpdateClientInput) (*client.Client, error) {
 	return s.Update(ctx, id, clientFromInput(input))
 }
 
-func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.Client, error) {
+func (s *ClientAdminUseCase) Create(ctx context.Context, in client.Client) (*client.Client, error) {
 	err := verifyClient(&in)
 	if err != nil {
 		return nil, err
@@ -55,7 +61,7 @@ func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.C
 	return &in, nil
 }
 
-func (s *ClientService) Update(ctx context.Context, id string, in client.Client) (*client.Client, error) {
+func (s *ClientAdminUseCase) Update(ctx context.Context, id string, in client.Client) (*client.Client, error) {
 	err := verifyClient(&in)
 	if err != nil {
 		return nil, err
@@ -69,15 +75,15 @@ func (s *ClientService) Update(ctx context.Context, id string, in client.Client)
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *ClientService) Delete(ctx context.Context, id string) error {
+func (s *ClientAdminUseCase) Delete(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *ClientService) FindByID(ctx context.Context, id string) (*client.Client, error) {
+func (s *ClientAdminUseCase) FindByID(ctx context.Context, id string) (*client.Client, error) {
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *ClientService) List(ctx context.Context, limit, offset int) ([]client.Client, error) {
+func (s *ClientAdminUseCase) List(ctx context.Context, limit, offset int) ([]client.Client, error) {
 	return s.repo.List(ctx, limit, offset)
 }
 

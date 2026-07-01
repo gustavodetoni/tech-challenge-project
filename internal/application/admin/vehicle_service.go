@@ -14,13 +14,19 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/plate"
 )
 
-type VehicleService struct {
+type VehicleAdminUseCase struct {
 	repo repository.VehicleRepository
 }
 
-func NewVehicleService(repo repository.VehicleRepository) *VehicleService {
-	return &VehicleService{repo: repo}
+func NewVehicleAdminUseCase(repo repository.VehicleRepository) *VehicleAdminUseCase {
+	return &VehicleAdminUseCase{repo: repo}
 }
+
+func NewVehicleService(repo repository.VehicleRepository) *VehicleAdminUseCase {
+	return NewVehicleAdminUseCase(repo)
+}
+
+type VehicleService = VehicleAdminUseCase
 
 type CreateVehicleInput struct {
 	ClientID        string
@@ -37,15 +43,15 @@ type CreateVehicleInput struct {
 
 type UpdateVehicleInput = CreateVehicleInput
 
-func (s *VehicleService) CreateFromInput(ctx context.Context, input CreateVehicleInput) (*vehicle.Vehicle, error) {
+func (s *VehicleAdminUseCase) CreateFromInput(ctx context.Context, input CreateVehicleInput) (*vehicle.Vehicle, error) {
 	return s.Create(ctx, vehicleFromInput(input))
 }
 
-func (s *VehicleService) UpdateFromInput(ctx context.Context, id string, input UpdateVehicleInput) (*vehicle.Vehicle, error) {
+func (s *VehicleAdminUseCase) UpdateFromInput(ctx context.Context, id string, input UpdateVehicleInput) (*vehicle.Vehicle, error) {
 	return s.Update(ctx, id, vehicleFromInput(input))
 }
 
-func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
+func (s *VehicleAdminUseCase) Create(ctx context.Context, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
 	err := verifyVehicle(&in)
 	if err != nil {
 		return nil, err
@@ -61,7 +67,7 @@ func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehic
 	return &in, nil
 }
 
-func (s *VehicleService) Update(ctx context.Context, id string, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
+func (s *VehicleAdminUseCase) Update(ctx context.Context, id string, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
 	err := verifyVehicle(&in)
 	if err != nil {
 		return nil, err
@@ -74,15 +80,15 @@ func (s *VehicleService) Update(ctx context.Context, id string, in vehicle.Vehic
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *VehicleService) Delete(ctx context.Context, id string) error {
+func (s *VehicleAdminUseCase) Delete(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *VehicleService) FindByID(ctx context.Context, id string) (*vehicle.Vehicle, error) {
+func (s *VehicleAdminUseCase) FindByID(ctx context.Context, id string) (*vehicle.Vehicle, error) {
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *VehicleService) ListByClientID(ctx context.Context, clientID string, limit, offset int) ([]vehicle.Vehicle, error) {
+func (s *VehicleAdminUseCase) ListByClientID(ctx context.Context, clientID string, limit, offset int) ([]vehicle.Vehicle, error) {
 	return s.repo.ListByClientID(ctx, clientID, limit, offset)
 }
 

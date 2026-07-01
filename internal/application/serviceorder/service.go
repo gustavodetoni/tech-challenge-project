@@ -17,12 +17,13 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/part"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
+	"github.com/soat-architecture/tech-challenge-project/internal/infra/expections"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/document"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/plate"
 )
 
 var (
-	ErrInvalidInput = errors.New("invalid input")
+	ErrInvalidInput = expections.New(expections.CodeValidation, "invalid input")
 )
 
 type FlowUseCase struct {
@@ -62,7 +63,7 @@ func NewService(
 type Service = FlowUseCase
 
 type CreateDraftInput struct {
-	ClientDocumentType   client.DocumentType
+	ClientDocumentType   string
 	ClientDocumentNumber string
 	ClientEmail          *string
 	ClientPhone          *string
@@ -105,7 +106,7 @@ type ReviseBudgetOutput struct {
 func (s *FlowUseCase) CreateDraft(ctx context.Context, in CreateDraftInput) (*CreateDraftOutput, error) {
 	doc := strings.TrimSpace(in.ClientDocumentNumber)
 	doc = document.Normalize(doc)
-	if !isValidDocument(in.ClientDocumentType, doc) {
+	if !isValidDocument(client.DocumentType(in.ClientDocumentType), doc) {
 		return nil, fmt.Errorf("%w: invalid document", ErrInvalidInput)
 	}
 

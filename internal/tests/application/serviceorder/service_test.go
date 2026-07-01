@@ -31,7 +31,7 @@ func TestServiceOrder_CreateDraft_InvalidDocument(t *testing.T) {
 	)
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "123",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -51,7 +51,7 @@ func TestServiceOrder_CreateDraft_InvalidPlate(t *testing.T) {
 	)
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "46420082412",
 		VehiclePlate:         "INVALID",
 	})
@@ -108,7 +108,7 @@ func TestServiceOrder_CreateDraft_BuildsLinesAndCallsFlow(t *testing.T) {
 	}, nil).Once()
 
 	out, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "464.200.824-12",
 		VehiclePlate:         "abc1d23",
 		Services: []serviceorder.ItemInput{
@@ -170,7 +170,7 @@ func TestServiceOrder_CreateDraft_UpdatesClientContact(t *testing.T) {
 	})).Return(&order.ServiceOrder{ID: "so1", Code: "OS-ANY"}, &order.Budget{ID: "b1", TotalAmountCents: 0, Status: order.BudgetStatusDraft}, nil).Once()
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "464.200.824-12",
 		ClientEmail:          &email,
 		ClientPhone:          &phone,
@@ -219,7 +219,7 @@ func TestServiceOrder_CreateDraft_UpdatesVehicleDetails(t *testing.T) {
 	})).Return(&order.ServiceOrder{ID: "so1", Code: "OS-ANY"}, &order.Budget{ID: "b1", TotalAmountCents: 0, Status: order.BudgetStatusDraft}, nil).Once()
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:     client.DocumentTypeCPF,
+		ClientDocumentType:     string(client.DocumentTypeCPF),
 		ClientDocumentNumber:   "46420082412",
 		VehiclePlate:           "ABC1D23",
 		VehicleManufactureYear: &year,
@@ -317,7 +317,7 @@ func TestServiceOrder_CreateDraft_ClientNotFound_ReturnsInvalidInput(t *testing.
 	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return((*client.Client)(nil), repository.ErrNotFound).Once()
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "46420082412",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -343,7 +343,7 @@ func TestServiceOrder_CreateDraft_VehicleNotFound_ReturnsInvalidInput(t *testing
 	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "46420082412",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -370,7 +370,7 @@ func TestServiceOrder_CreateDraft_VehicleBelongsToAnotherClient_Conflict(t *test
 	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return(&vehicle.Vehicle{ID: "v1", ClientID: "c2"}, nil).Once()
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "46420082412",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -524,7 +524,7 @@ func TestServiceOrder_CreateDraft_UsesExistingClientAndVehicle(t *testing.T) {
 	).Once()
 
 	out, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "464.200.824-12",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -550,7 +550,7 @@ func TestServiceOrder_CreateDraft_InvalidCNPJ(t *testing.T) {
 	)
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCNPJ,
+		ClientDocumentType:   string(client.DocumentTypeCNPJ),
 		ClientDocumentNumber: "123",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -570,7 +570,7 @@ func TestServiceOrder_CreateDraft_InvalidDocumentType(t *testing.T) {
 	)
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentType("NOPE"),
+		ClientDocumentType:   "NOPE",
 		ClientDocumentNumber: "46420082412",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -593,7 +593,7 @@ func TestServiceOrder_CreateDraft_ClientFindError_Propagates(t *testing.T) {
 	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return((*client.Client)(nil), assert.AnError).Once()
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "46420082412",
 		VehiclePlate:         "ABC1D23",
 	})
@@ -618,7 +618,7 @@ func TestServiceOrder_CreateDraft_VehicleFindError_Propagates(t *testing.T) {
 	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return((*vehicle.Vehicle)(nil), assert.AnError).Once()
 
 	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
-		ClientDocumentType:   client.DocumentTypeCPF,
+		ClientDocumentType:   string(client.DocumentTypeCPF),
 		ClientDocumentNumber: "46420082412",
 		VehiclePlate:         "ABC1D23",
 	})

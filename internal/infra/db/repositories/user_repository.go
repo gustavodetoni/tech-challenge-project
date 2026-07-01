@@ -76,7 +76,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 		return nil, err
 	}
 
-	return mapUser(row), nil
+	return mapUserRowToDomain(row), nil
 }
 
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*user.User, error) {
@@ -92,7 +92,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*user.User, e
 		return nil, err
 	}
 
-	return mapUser(row), nil
+	return mapUserRowToDomain(row), nil
 }
 
 func (r *UserRepository) UpdateRole(ctx context.Context, id string, role user.Role) error {
@@ -114,7 +114,7 @@ func (r *UserRepository) UpdateRole(ctx context.Context, id string, role user.Ro
 	return nil
 }
 
-func mapUser(row userRow) *user.User {
+func mapUserRowToDomain(row userRow) *user.User {
 	return &user.User{
 		ID:           row.ID,
 		Name:         row.Name,

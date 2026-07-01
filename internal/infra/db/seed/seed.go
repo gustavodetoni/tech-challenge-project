@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"strings"
 	"time"
 
@@ -40,8 +39,6 @@ func Run(ctx context.Context, gormDB *gorm.DB, opts Options) error {
 	if err := validate(opts); err != nil {
 		return err
 	}
-
-	rand.Seed(opts.RandomSeed)
 
 	return gormDB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if opts.Force {

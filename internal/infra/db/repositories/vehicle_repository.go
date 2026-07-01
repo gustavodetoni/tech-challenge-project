@@ -129,7 +129,7 @@ func (r *VehicleRepository) FindByID(ctx context.Context, id string) (*vehicle.V
 		return nil, err
 	}
 
-	return mapVehicle(row), nil
+	return mapVehicleRowToDomain(row), nil
 }
 
 func (r *VehicleRepository) FindByPlate(ctx context.Context, plate string) (*vehicle.Vehicle, error) {
@@ -144,7 +144,7 @@ func (r *VehicleRepository) FindByPlate(ctx context.Context, plate string) (*veh
 		}
 		return nil, err
 	}
-	return mapVehicle(row), nil
+	return mapVehicleRowToDomain(row), nil
 }
 
 func (r *VehicleRepository) ListByClientID(ctx context.Context, clientID string, limit, offset int) ([]vehicle.Vehicle, error) {
@@ -169,12 +169,12 @@ func (r *VehicleRepository) ListByClientID(ctx context.Context, clientID string,
 
 	out := make([]vehicle.Vehicle, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, *mapVehicle(row))
+		out = append(out, *mapVehicleRowToDomain(row))
 	}
 	return out, nil
 }
 
-func mapVehicle(row vehicleRow) *vehicle.Vehicle {
+func mapVehicleRowToDomain(row vehicleRow) *vehicle.Vehicle {
 	return &vehicle.Vehicle{
 		ID:              row.ID,
 		ClientID:        row.ClientID,

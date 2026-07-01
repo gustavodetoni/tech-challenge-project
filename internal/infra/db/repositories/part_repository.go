@@ -134,7 +134,7 @@ func (r *PartRepository) FindByID(ctx context.Context, id string) (*part.Part, e
 		return nil, err
 	}
 
-	return mapPart(row), nil
+	return mapPartRowToDomain(row), nil
 }
 
 func (r *PartRepository) FindByIDs(ctx context.Context, ids []string) ([]part.Part, error) {
@@ -153,7 +153,7 @@ func (r *PartRepository) FindByIDs(ctx context.Context, ids []string) ([]part.Pa
 
 	out := make([]part.Part, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, *mapPart(row))
+		out = append(out, *mapPartRowToDomain(row))
 	}
 	return out, nil
 }
@@ -179,7 +179,7 @@ func (r *PartRepository) List(ctx context.Context, limit, offset int) ([]part.Pa
 
 	out := make([]part.Part, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, *mapPart(row))
+		out = append(out, *mapPartRowToDomain(row))
 	}
 	return out, nil
 }
@@ -239,7 +239,7 @@ func (r *PartRepository) AdjustStock(ctx context.Context, partID string, movemen
 
 		p.StockQuantity = newQty
 		p.UpdatedAt = now
-		updated = mapPart(p)
+		updated = mapPartRowToDomain(p)
 		return nil
 	})
 	if err != nil {
@@ -248,7 +248,7 @@ func (r *PartRepository) AdjustStock(ctx context.Context, partID string, movemen
 	return updated, nil
 }
 
-func mapPart(row partRow) *part.Part {
+func mapPartRowToDomain(row partRow) *part.Part {
 	return &part.Part{
 		ID:             row.ID,
 		SKU:            row.SKU,

@@ -65,7 +65,7 @@ func main() {
 	jwtManager := auth.NewManager(cfg.JWTSecret, cfg.JWTIssuer, cfg.JWTAudience, time.Duration(cfg.JWTExpiryMinutes)*time.Minute)
 	authMW := middlewares.NewAuthMiddleware(jwtManager)
 	userRepo := repositories.NewUserRepository(gormDB)
-	authService := appAuth.NewService(userRepo, jwtManager)
+	authService := appAuth.NewAuthUseCase(userRepo, jwtManager)
 
 	clientRepo := repositories.NewClientRepository(gormDB)
 	vehicleRepo := repositories.NewVehicleRepository(gormDB)
@@ -74,12 +74,12 @@ func main() {
 	serviceOrderRepo := repositories.NewServiceOrderRepository(gormDB)
 	serviceOrderFlowRepo := repositories.NewServiceOrderFlowRepository(gormDB)
 
-	clientSvc := adminApp.NewClientService(clientRepo)
-	vehicleSvc := adminApp.NewVehicleService(vehicleRepo)
+	clientSvc := adminApp.NewClientAdminUseCase(clientRepo)
+	vehicleSvc := adminApp.NewVehicleAdminUseCase(vehicleRepo)
 	serviceSvc := adminApp.NewServiceCatalogUseCase(serviceRepo)
-	partSvc := adminApp.NewPartService(partRepo)
-	serviceOrderSvc := adminApp.NewServiceOrderService(serviceOrderRepo)
-	userSvc := adminApp.NewUserService(userRepo)
+	partSvc := adminApp.NewPartInventoryUseCase(partRepo)
+	serviceOrderSvc := adminApp.NewServiceOrderAdminUseCase(serviceOrderRepo)
+	userSvc := adminApp.NewUserAdminUseCase(userRepo)
 	serviceOrderFlowSvc := serviceorder.NewFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
 
 	routes.Register(router, routes.Deps{

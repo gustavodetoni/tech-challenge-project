@@ -12,10 +12,10 @@ import (
 )
 
 type AdminVehiclesController struct {
-	svc *admin.VehicleService
+	svc *admin.VehicleAdminUseCase
 }
 
-func NewAdminVehiclesController(svc *admin.VehicleService) *AdminVehiclesController {
+func NewAdminVehiclesController(svc *admin.VehicleAdminUseCase) *AdminVehiclesController {
 	return &AdminVehiclesController{svc: svc}
 }
 
@@ -31,7 +31,7 @@ func (h *AdminVehiclesController) ListByClient(c *gin.Context) {
 	limit, offset := shared.ParseLimitOffset(c)
 	vehicles, err := h.svc.ListByClientID(c.Request.Context(), clientID, limit, offset)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *AdminVehiclesController) Get(c *gin.Context) {
 	id := c.Param("id")
 	v, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.VehicleResponseFromDomain(*v))
@@ -106,7 +106,7 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 
 	current, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
@@ -123,7 +123,7 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 		Notes:           req.Notes,
 	})
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.VehicleResponseFromDomain(*v))
@@ -137,7 +137,7 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 func (h *AdminVehiclesController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)

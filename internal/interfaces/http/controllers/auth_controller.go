@@ -13,11 +13,11 @@ import (
 )
 
 type AuthController struct {
-	auth  *appAuth.Service
+	auth  *appAuth.AuthUseCase
 	users repository.UserRepository
 }
 
-func NewAuthController(auth *appAuth.Service, users repository.UserRepository) *AuthController {
+func NewAuthController(auth *appAuth.AuthUseCase, users repository.UserRepository) *AuthController {
 	return &AuthController{auth: auth, users: users}
 }
 

@@ -758,7 +758,7 @@ func (r *ServiceOrderFlowRepository) transitionStatusTx(tx *gorm.DB, serviceOrde
 	if current.Status == string(to) {
 		return nil
 	}
-	if !IsAllowedTransition(order.Status(current.Status), to) {
+	if !order.IsAllowedTransition(order.Status(current.Status), to) {
 		return fmt.Errorf("invalid status transition %s -> %s", current.Status, to)
 	}
 
@@ -787,20 +787,7 @@ func (r *ServiceOrderFlowRepository) transitionStatusTx(tx *gorm.DB, serviceOrde
 }
 
 func IsAllowedTransition(from, to order.Status) bool {
-	switch from {
-	case order.StatusReceived:
-		return to == order.StatusInDiagnosis || to == order.StatusWaitingApproval
-	case order.StatusInDiagnosis:
-		return to == order.StatusWaitingApproval
-	case order.StatusWaitingApproval:
-		return to == order.StatusInProgress || to == order.StatusInDiagnosis
-	case order.StatusInProgress:
-		return to == order.StatusFinished
-	case order.StatusFinished:
-		return to == order.StatusDelivered
-	default:
-		return false
-	}
+	return order.IsAllowedTransition(from, to)
 }
 
 func cloneUpdates(m map[string]any) map[string]any {

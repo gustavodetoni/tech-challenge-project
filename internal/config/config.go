@@ -90,7 +90,7 @@ func Load() (Config, error) {
 		JWTIssuer:        viper.GetString("JWT_ISSUER"),
 		JWTAudience:      viper.GetString("JWT_AUDIENCE"),
 		JWTExpiryMinutes: jwtExpiryMinutes,
-		CORS: corsCfg,
+		CORS:             corsCfg,
 		RateLimit: RateLimitConfig{
 			Enabled:         rateLimitEnabled,
 			RPS:             rateLimitRPS,

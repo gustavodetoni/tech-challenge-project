@@ -29,7 +29,7 @@ func ParseLimitOffset(c *gin.Context) (limit, offset int) {
 	return limit, offset
 }
 
-func WriteRepoError(c *gin.Context, err error) {
+func WriteError(c *gin.Context, err error) {
 	switch {
 	case expections.IsCode(err, expections.CodeValidation):
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -48,4 +48,8 @@ func WriteRepoError(c *gin.Context, err error) {
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
 	}
+}
+
+func WriteRepoError(c *gin.Context, err error) {
+	WriteError(c, err)
 }

@@ -2,23 +2,40 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/user"
+	"github.com/soat-architecture/tech-challenge-project/internal/infra/expections"
 )
 
-var ErrInvalidInput = errors.New("invalid input")
+var ErrInvalidInput = expections.New(expections.CodeValidation, "invalid input")
 
-type UserService struct {
+type UserAdminUseCase struct {
 	repo repository.UserRepository
 }
 
-func NewUserService(repo repository.UserRepository) *UserService { return &UserService{repo: repo} }
+func NewUserAdminUseCase(repo repository.UserRepository) *UserAdminUseCase {
+	return &UserAdminUseCase{repo: repo}
+}
 
-func (s *UserService) UpdateRole(ctx context.Context, id string, role user.Role) error {
+func NewUserService(repo repository.UserRepository) *UserAdminUseCase {
+	return NewUserAdminUseCase(repo)
+}
+
+type UserService = UserAdminUseCase
+
+type UpdateUserRoleInput struct {
+	UserID string
+	Role   string
+}
+
+func (s *UserAdminUseCase) UpdateRoleFromInput(ctx context.Context, input UpdateUserRoleInput) error {
+	return s.UpdateRole(ctx, input.UserID, user.Role(input.Role))
+}
+
+func (s *UserAdminUseCase) UpdateRole(ctx context.Context, id string, role user.Role) error {
 	id = strings.TrimSpace(id)
 	if id == "" {
 		return fmt.Errorf("%w: id is required", ErrInvalidInput)

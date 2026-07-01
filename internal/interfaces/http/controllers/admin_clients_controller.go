@@ -12,10 +12,10 @@ import (
 )
 
 type AdminClientsController struct {
-	svc *admin.ClientService
+	svc *admin.ClientAdminUseCase
 }
 
-func NewAdminClientsController(svc *admin.ClientService) *AdminClientsController {
+func NewAdminClientsController(svc *admin.ClientAdminUseCase) *AdminClientsController {
 	return &AdminClientsController{svc: svc}
 }
 
@@ -29,7 +29,7 @@ func (h *AdminClientsController) List(c *gin.Context) {
 	limit, offset := shared.ParseLimitOffset(c)
 	clients, err := h.svc.List(c.Request.Context(), limit, offset)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *AdminClientsController) Get(c *gin.Context) {
 	id := c.Param("id")
 	cl, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.ClientResponseFromDomain(*cl))
@@ -104,7 +104,7 @@ func (h *AdminClientsController) Update(c *gin.Context) {
 		Phone:          req.Phone,
 	})
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (h *AdminClientsController) Update(c *gin.Context) {
 func (h *AdminClientsController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)

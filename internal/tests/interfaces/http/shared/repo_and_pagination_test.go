@@ -63,13 +63,13 @@ func TestWriteRepoError_MapsNotFoundAndConflict(t *testing.T) {
 	{
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		shared.WriteRepoError(c, repository.ErrNotFound)
+		shared.WriteError(c, repository.ErrNotFound)
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	}
 	{
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		shared.WriteRepoError(c, repository.ErrConflict)
+		shared.WriteError(c, repository.ErrConflict)
 		assert.Equal(t, http.StatusConflict, w.Code)
 	}
 }
@@ -81,7 +81,7 @@ func TestWriteRepoError_DefaultsToInternalError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	shared.WriteRepoError(c, assert.AnError)
+	shared.WriteError(c, assert.AnError)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
@@ -109,7 +109,7 @@ func TestWriteRepoError_MapsApplicationErrors(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			shared.WriteRepoError(c, tt.err)
+			shared.WriteError(c, tt.err)
 			assert.Equal(t, tt.want, w.Code)
 		})
 	}

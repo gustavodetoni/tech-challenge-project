@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/controllers"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 	repomocks "github.com/soat-architecture/tech-challenge-project/internal/tests/interfaces/repository/mocks"
 )
 
@@ -24,7 +24,7 @@ func TestAdminServiceOrdersController_List_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminServiceOrdersController(svc)
 
 	openedAt := time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC)
@@ -57,7 +57,7 @@ func TestAdminServiceOrdersController_List_Success_NoStatusFilter(t *testing.T) 
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminServiceOrdersController(svc)
 
 	repo.On("List", mock.Anything, 50, 0, (*order.Status)(nil)).Return([]order.ServiceOrderSummary{}, nil).Once()
@@ -78,7 +78,7 @@ func TestAdminServiceOrdersController_Get_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminServiceOrdersController(svc)
 
 	repo.On("GetDetailByID", mock.Anything, "so1").Return((*order.ServiceOrderDetail)(nil), repository.ErrNotFound).Once()
@@ -99,7 +99,7 @@ func TestAdminServiceOrdersController_Get_Success_WithBudgetAndHistory(t *testin
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminServiceOrdersController(svc)
 
 	openedAt := time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC)
@@ -152,7 +152,7 @@ func TestAdminServiceOrdersController_Get_Success_Minimal(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminServiceOrdersController(svc)
 
 	openedAt := time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC)

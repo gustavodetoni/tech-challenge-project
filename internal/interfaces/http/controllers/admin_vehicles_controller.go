@@ -6,17 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 )
 
 type AdminVehiclesController struct {
-	svc *admin.VehicleService
+	svc *admin.VehicleAdminUseCase
 }
 
-func NewAdminVehiclesController(svc *admin.VehicleService) *AdminVehiclesController {
+func NewAdminVehiclesController(svc *admin.VehicleAdminUseCase) *AdminVehiclesController {
 	return &AdminVehiclesController{svc: svc}
 }
 
@@ -32,7 +31,7 @@ func (h *AdminVehiclesController) ListByClient(c *gin.Context) {
 	limit, offset := shared.ParseLimitOffset(c)
 	vehicles, err := h.svc.ListByClientID(c.Request.Context(), clientID, limit, offset)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
@@ -57,7 +56,7 @@ func (h *AdminVehiclesController) CreateForClient(c *gin.Context) {
 		return
 	}
 
-	v, err := h.svc.Create(c.Request.Context(), vehicle.Vehicle{
+	v, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreateVehicleInput{
 		ClientID:        clientID,
 		Plate:           req.Plate,
 		Brand:           req.Brand,
@@ -85,7 +84,7 @@ func (h *AdminVehiclesController) Get(c *gin.Context) {
 	id := c.Param("id")
 	v, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.VehicleResponseFromDomain(*v))
@@ -107,11 +106,11 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 
 	current, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
-	v, err := h.svc.Update(c.Request.Context(), id, vehicle.Vehicle{
+	v, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdateVehicleInput{
 		ClientID:        current.ClientID,
 		Plate:           req.Plate,
 		Brand:           req.Brand,
@@ -124,7 +123,7 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 		Notes:           req.Notes,
 	})
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.VehicleResponseFromDomain(*v))
@@ -138,7 +137,7 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 func (h *AdminVehiclesController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)

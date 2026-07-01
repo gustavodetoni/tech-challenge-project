@@ -7,19 +7,18 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/part"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type AdminPartsController struct {
-	svc *admin.PartService
+	svc *admin.PartInventoryUseCase
 }
 
-func NewAdminPartsController(svc *admin.PartService) *AdminPartsController {
+func NewAdminPartsController(svc *admin.PartInventoryUseCase) *AdminPartsController {
 	return &AdminPartsController{svc: svc}
 }
 
@@ -33,7 +32,7 @@ func (h *AdminPartsController) List(c *gin.Context) {
 	limit, offset := shared.ParseLimitOffset(c)
 	parts, err := h.svc.List(c.Request.Context(), limit, offset)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	out := make([]dto.PartResponse, 0, len(parts))
@@ -54,7 +53,7 @@ func (h *AdminPartsController) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	p, err := h.svc.Create(c.Request.Context(), part.Part{
+	p, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreatePartInput{
 		SKU:            req.SKU,
 		Name:           req.Name,
 		Description:    req.Description,
@@ -78,7 +77,7 @@ func (h *AdminPartsController) Get(c *gin.Context) {
 	id := c.Param("id")
 	p, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.PartResponseFromDomain(*p))
@@ -97,7 +96,7 @@ func (h *AdminPartsController) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	p, err := h.svc.Update(c.Request.Context(), id, part.Part{
+	p, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdatePartInput{
 		SKU:            req.SKU,
 		Name:           req.Name,
 		Description:    req.Description,
@@ -105,7 +104,7 @@ func (h *AdminPartsController) Update(c *gin.Context) {
 		Active:         req.Active,
 	})
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.PartResponseFromDomain(*p))
@@ -119,7 +118,7 @@ func (h *AdminPartsController) Update(c *gin.Context) {
 func (h *AdminPartsController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -145,10 +144,16 @@ func (h *AdminPartsController) AdjustStock(c *gin.Context) {
 		createdBy = &claims.Subject
 	}
 
-	p, err := h.svc.AdjustStock(c.Request.Context(), id, part.StockMovementType(req.MovementType), req.Quantity, req.Notes, createdBy)
+	p, err := h.svc.AdjustStockFromInput(c.Request.Context(), admin.AdjustStockInput{
+		PartID:          id,
+		MovementType:    req.MovementType,
+		Quantity:        req.Quantity,
+		Notes:           req.Notes,
+		CreatedByUserID: createdBy,
+	})
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) || errors.Is(err, repository.ErrConflict) {
-			shared.WriteRepoError(c, err)
+			shared.WriteError(c, err)
 			return
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

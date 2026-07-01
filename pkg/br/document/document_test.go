@@ -26,4 +26,3 @@ func TestIsValidCNPJ(t *testing.T) {
 		t.Fatal("expected CNPJ to be invalid")
 	}
 }
-

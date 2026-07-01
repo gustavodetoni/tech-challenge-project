@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/controllers"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 	repomocks "github.com/soat-architecture/tech-challenge-project/internal/tests/interfaces/repository/mocks"
 )
 
@@ -22,7 +22,7 @@ func TestAdminMetricsController_AverageExecutionTime_BadRequest_InvalidFrom(t *t
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminMetricsController(svc)
 
 	r := gin.New()
@@ -40,7 +40,7 @@ func TestAdminMetricsController_AverageExecutionTime_BadRequest_InvalidTo(t *tes
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminMetricsController(svc)
 
 	r := gin.New()
@@ -58,7 +58,7 @@ func TestAdminMetricsController_AverageExecutionTime_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminMetricsController(svc)
 
 	repo.On("AverageExecutionMinutes", mock.Anything, (*time.Time)(nil), (*time.Time)(nil)).Return(12.5, nil).Once()
@@ -80,7 +80,7 @@ func TestAdminMetricsController_AverageServiceExecutionTime_Success(t *testing.T
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminMetricsController(svc)
 
 	repo.On("AverageServiceExecutionMinutes", mock.Anything, (*string)(nil), (*time.Time)(nil), (*time.Time)(nil)).
@@ -110,7 +110,7 @@ func TestAdminMetricsController_AverageServiceExecutionTime_BadRequest_InvalidFr
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminMetricsController(svc)
 
 	r := gin.New()
@@ -128,7 +128,7 @@ func TestAdminMetricsController_AverageServiceExecutionTime_FilterByServiceID(t 
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 	h := controllers.NewAdminMetricsController(svc)
 
 	serviceID := "s1"

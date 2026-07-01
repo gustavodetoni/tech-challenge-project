@@ -9,8 +9,8 @@ import (
 	"github.com/jackc/pgconn"
 	"gorm.io/gorm"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type ClientRepository struct {
@@ -113,7 +113,7 @@ func (r *ClientRepository) FindByID(ctx context.Context, id string) (*client.Cli
 		}
 		return nil, err
 	}
-	return mapClient(row), nil
+	return mapClientRowToDomain(row), nil
 }
 
 func (r *ClientRepository) FindByDocument(ctx context.Context, documentNumber string) (*client.Client, error) {
@@ -128,7 +128,7 @@ func (r *ClientRepository) FindByDocument(ctx context.Context, documentNumber st
 		}
 		return nil, err
 	}
-	return mapClient(row), nil
+	return mapClientRowToDomain(row), nil
 }
 
 func (r *ClientRepository) List(ctx context.Context, limit, offset int) ([]client.Client, error) {
@@ -152,12 +152,12 @@ func (r *ClientRepository) List(ctx context.Context, limit, offset int) ([]clien
 
 	out := make([]client.Client, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, *mapClient(row))
+		out = append(out, *mapClientRowToDomain(row))
 	}
 	return out, nil
 }
 
-func mapClient(row clientRow) *client.Client {
+func mapClientRowToDomain(row clientRow) *client.Client {
 	return &client.Client{
 		ID:             row.ID,
 		DocumentType:   client.DocumentType(strings.ToUpper(row.DocumentType)),

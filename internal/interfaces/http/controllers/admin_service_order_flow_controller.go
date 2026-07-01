@@ -6,19 +6,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type AdminServiceOrderFlowController struct {
-	svc *serviceorder.Service
+	svc *serviceorder.ServiceOrderFlowUseCase
 }
 
-func NewAdminServiceOrderFlowController(svc *serviceorder.Service) *AdminServiceOrderFlowController {
+func NewAdminServiceOrderFlowController(svc *serviceorder.ServiceOrderFlowUseCase) *AdminServiceOrderFlowController {
 	return &AdminServiceOrderFlowController{svc: svc}
 }
 
@@ -44,7 +43,7 @@ func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 	}
 
 	out, err := h.svc.CreateDraft(c.Request.Context(), serviceorder.CreateDraftInput{
-		ClientDocumentType:     client.DocumentType(req.ClientDocumentType),
+		ClientDocumentType:     req.ClientDocumentType,
 		ClientDocumentNumber:   req.ClientDocumentNumber,
 		ClientEmail:            req.ClientEmail,
 		ClientPhone:            req.ClientPhone,
@@ -117,7 +116,7 @@ func (h *AdminServiceOrderFlowController) ReviseBudget(c *gin.Context) {
 		case errors.Is(err, serviceorder.ErrInvalidInput):
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		case errors.Is(err, repository.ErrNotFound):
-			shared.WriteRepoError(c, err)
+			shared.WriteError(c, err)
 		case errors.Is(err, repository.ErrConflict):
 			c.JSON(http.StatusConflict, gin.H{"error": "conflict"})
 		default:
@@ -147,7 +146,7 @@ func (h *AdminServiceOrderFlowController) StartDiagnosis(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.StartDiagnosis(c.Request.Context(), id, userID); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -166,7 +165,7 @@ func (h *AdminServiceOrderFlowController) SendBudget(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.SendBudget(c.Request.Context(), id, userID); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -185,7 +184,7 @@ func (h *AdminServiceOrderFlowController) Finish(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.Finish(c.Request.Context(), id, userID); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -204,7 +203,7 @@ func (h *AdminServiceOrderFlowController) Deliver(c *gin.Context) {
 		userID = &claims.Subject
 	}
 	if err := h.svc.Deliver(c.Request.Context(), id, userID); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)

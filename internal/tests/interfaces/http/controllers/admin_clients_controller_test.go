@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/controllers"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 	repomocks "github.com/soat-architecture/tech-challenge-project/internal/tests/interfaces/repository/mocks"
 )
 
@@ -24,7 +24,7 @@ func TestAdminClientsController_List_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	repo.On("List", mock.Anything, 50, 0).Return([]client.Client{{
@@ -51,7 +51,7 @@ func TestAdminClientsController_List_InternalError(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	repo.On("List", mock.Anything, 50, 0).Return(([]client.Client)(nil), assert.AnError).Once()
@@ -72,7 +72,7 @@ func TestAdminClientsController_Create_BadRequest_InvalidBody(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	r := gin.New()
@@ -91,7 +91,7 @@ func TestAdminClientsController_Create_BadRequest_InvalidDocument(t *testing.T) 
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	r := gin.New()
@@ -110,7 +110,7 @@ func TestAdminClientsController_Create_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	repo.On("Create", mock.Anything, mock.AnythingOfType("*client.Client")).Return(nil).Once()
@@ -139,7 +139,7 @@ func TestAdminClientsController_Get_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	repo.On("FindByID", mock.Anything, "c1").Return((*client.Client)(nil), repository.ErrNotFound).Once()
@@ -160,7 +160,7 @@ func TestAdminClientsController_Update_BadRequest_InvalidBody(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	r := gin.New()
@@ -179,7 +179,7 @@ func TestAdminClientsController_Update_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*client.Client")).Return(nil).Once()
@@ -208,7 +208,7 @@ func TestAdminClientsController_Delete_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	repo.On("Delete", mock.Anything, "c1").Return(nil).Once()
@@ -229,7 +229,7 @@ func TestAdminClientsController_Delete_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 	h := controllers.NewAdminClientsController(svc)
 
 	repo.On("Delete", mock.Anything, "c1").Return(repository.ErrNotFound).Once()

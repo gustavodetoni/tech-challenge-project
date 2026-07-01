@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 func TestServiceOrderRepository_FindByID_NotFound(t *testing.T) {

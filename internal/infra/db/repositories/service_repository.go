@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgconn"
 	"gorm.io/gorm"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type ServiceRepository struct {
@@ -112,7 +112,7 @@ func (r *ServiceRepository) FindByID(ctx context.Context, id string) (*service.S
 		}
 		return nil, err
 	}
-	return mapService(row), nil
+	return mapServiceRowToDomain(row), nil
 }
 
 func (r *ServiceRepository) FindByIDs(ctx context.Context, ids []string) ([]service.Service, error) {
@@ -131,7 +131,7 @@ func (r *ServiceRepository) FindByIDs(ctx context.Context, ids []string) ([]serv
 
 	out := make([]service.Service, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, *mapService(row))
+		out = append(out, *mapServiceRowToDomain(row))
 	}
 	return out, nil
 }
@@ -157,12 +157,12 @@ func (r *ServiceRepository) List(ctx context.Context, limit, offset int) ([]serv
 
 	out := make([]service.Service, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, *mapService(row))
+		out = append(out, *mapServiceRowToDomain(row))
 	}
 	return out, nil
 }
 
-func mapService(row serviceRow) *service.Service {
+func mapServiceRowToDomain(row serviceRow) *service.Service {
 	return &service.Service{
 		ID:               row.ID,
 		Name:             row.Name,

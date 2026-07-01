@@ -7,17 +7,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type ClientServiceOrderController struct {
-	svc *serviceorder.Service
+	svc *serviceorder.ServiceOrderFlowUseCase
 }
 
-func NewClientServiceOrderController(svc *serviceorder.Service) *ClientServiceOrderController {
+func NewClientServiceOrderController(svc *serviceorder.ServiceOrderFlowUseCase) *ClientServiceOrderController {
 	return &ClientServiceOrderController{svc: svc}
 }
 
@@ -35,7 +35,7 @@ func (h *ClientServiceOrderController) Get(c *gin.Context) {
 
 	view, err := h.svc.ClientGetByCode(c.Request.Context(), code, doc)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
@@ -136,7 +136,7 @@ func (h *ClientServiceOrderController) ApproveBudget(c *gin.Context) {
 
 	if err := h.svc.ClientApproveBudget(c.Request.Context(), code, doc); err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			shared.WriteRepoError(c, err)
+			shared.WriteError(c, err)
 			return
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -170,7 +170,7 @@ func (h *ClientServiceOrderController) RejectBudget(c *gin.Context) {
 
 	if err := h.svc.ClientRejectBudget(c.Request.Context(), code, doc, req.Reason); err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			shared.WriteRepoError(c, err)
+			shared.WriteError(c, err)
 			return
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

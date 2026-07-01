@@ -13,10 +13,10 @@ import (
 )
 
 type AdminServiceOrdersController struct {
-	svc *admin.ServiceOrderService
+	svc *admin.ServiceOrderAdminUseCase
 }
 
-func NewAdminServiceOrdersController(svc *admin.ServiceOrderService) *AdminServiceOrdersController {
+func NewAdminServiceOrdersController(svc *admin.ServiceOrderAdminUseCase) *AdminServiceOrdersController {
 	return &AdminServiceOrdersController{svc: svc}
 }
 
@@ -37,7 +37,7 @@ func (h *AdminServiceOrdersController) List(c *gin.Context) {
 
 	items, err := h.svc.List(c.Request.Context(), limit, offset, status)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (h *AdminServiceOrdersController) Get(c *gin.Context) {
 	id := c.Param("id")
 	detail, err := h.svc.GetDetailByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 

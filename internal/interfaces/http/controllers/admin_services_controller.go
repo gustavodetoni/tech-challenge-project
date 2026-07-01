@@ -6,17 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 )
 
 type AdminServicesController struct {
-	svc *admin.ServiceService
+	svc *admin.ServiceCatalogUseCase
 }
 
-func NewAdminServicesController(svc *admin.ServiceService) *AdminServicesController {
+func NewAdminServicesController(svc *admin.ServiceCatalogUseCase) *AdminServicesController {
 	return &AdminServicesController{svc: svc}
 }
 
@@ -30,7 +29,7 @@ func (h *AdminServicesController) List(c *gin.Context) {
 	limit, offset := shared.ParseLimitOffset(c)
 	services, err := h.svc.List(c.Request.Context(), limit, offset)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	out := make([]dto.ServiceResponse, 0, len(services))
@@ -51,7 +50,7 @@ func (h *AdminServicesController) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	svc, err := h.svc.Create(c.Request.Context(), service.Service{
+	svc, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreateServiceInput{
 		Name:             req.Name,
 		Description:      req.Description,
 		BasePriceCents:   req.BasePriceCents,
@@ -74,7 +73,7 @@ func (h *AdminServicesController) Get(c *gin.Context) {
 	id := c.Param("id")
 	svc, err := h.svc.FindByID(c.Request.Context(), id)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.ServiceResponseFromDomain(*svc))
@@ -93,7 +92,7 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	svc, err := h.svc.Update(c.Request.Context(), id, service.Service{
+	svc, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdateServiceInput{
 		Name:             req.Name,
 		Description:      req.Description,
 		BasePriceCents:   req.BasePriceCents,
@@ -101,7 +100,7 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 		Active:           req.Active,
 	})
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, mapper.ServiceResponseFromDomain(*svc))
@@ -115,7 +114,7 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 func (h *AdminServicesController) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)

@@ -17,7 +17,7 @@ func TestClientService_Create_NormalizesAndValidates(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(c *client.Client) bool {
 		return c != nil &&
@@ -39,11 +39,33 @@ func TestClientService_Create_NormalizesAndValidates(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestClientService_CreateFromInput_MapsInput(t *testing.T) {
+	t.Parallel()
+
+	repo := new(repomocks.ClientRepository)
+	svc := admin.NewClientAdminUseCase(repo)
+
+	repo.On("Create", mock.Anything, mock.MatchedBy(func(c *client.Client) bool {
+		return c != nil &&
+			c.Name == "Maria" &&
+			c.DocumentType == client.DocumentTypeCPF &&
+			c.DocumentNumber == "46420082412"
+	})).Return(nil).Once()
+
+	_, err := svc.CreateFromInput(context.Background(), admin.CreateClientInput{
+		DocumentType:   "CPF",
+		DocumentNumber: "464.200.824-12",
+		Name:           "Maria",
+	})
+	require.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
 func TestClientService_Create_InvalidDocument(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 
 	_, err := svc.Create(context.Background(), client.Client{
 		DocumentType:   client.DocumentTypeCPF,
@@ -57,7 +79,7 @@ func TestClientService_Create_InvalidCNPJ(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 
 	_, err := svc.Create(context.Background(), client.Client{
 		DocumentType:   client.DocumentTypeCNPJ,
@@ -71,7 +93,7 @@ func TestClientService_Create_InvalidDocumentType(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 
 	_, err := svc.Create(context.Background(), client.Client{
 		DocumentType:   client.DocumentType("NOPE"),
@@ -85,7 +107,7 @@ func TestClientService_Update_CallsRepoAndFetches(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 
 	repo.On("Update", mock.Anything, mock.MatchedBy(func(c *client.Client) bool {
 		return c != nil && c.ID == "c1" && c.Name == "Maria"
@@ -107,7 +129,7 @@ func TestClientService_Update_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ClientRepository)
-	svc := admin.NewClientService(repo)
+	svc := admin.NewClientAdminUseCase(repo)
 
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*client.Client")).Return(assert.AnError).Once()
 

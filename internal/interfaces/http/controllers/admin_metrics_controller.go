@@ -11,10 +11,10 @@ import (
 )
 
 type AdminMetricsController struct {
-	svc *admin.ServiceOrderService
+	svc *admin.ServiceOrderAdminUseCase
 }
 
-func NewAdminMetricsController(svc *admin.ServiceOrderService) *AdminMetricsController {
+func NewAdminMetricsController(svc *admin.ServiceOrderAdminUseCase) *AdminMetricsController {
 	return &AdminMetricsController{svc: svc}
 }
 
@@ -47,7 +47,7 @@ func (h *AdminMetricsController) AverageExecutionTime(c *gin.Context) {
 
 	avg, err := h.svc.AverageExecutionMinutes(c.Request.Context(), fromPtr, toPtr)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, avgExecutionResponse{AverageMinutes: avg})
@@ -73,7 +73,7 @@ func (h *AdminMetricsController) AverageServiceExecutionTime(c *gin.Context) {
 
 	rows, err := h.svc.AverageServiceExecutionMinutes(c.Request.Context(), serviceIDPtr, fromPtr, toPtr)
 	if err != nil {
-		shared.WriteRepoError(c, err)
+		shared.WriteError(c, err)
 		return
 	}
 	items := make([]avgServiceExecutionItem, 0, len(rows))

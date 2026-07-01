@@ -12,20 +12,21 @@ import (
 	"github.com/brazilian-utils/go/licenseplate"
 	"github.com/google/uuid"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/part"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
+	"github.com/soat-architecture/tech-challenge-project/internal/infra/expections"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/document"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/plate"
 )
 
 var (
-	ErrInvalidInput = errors.New("invalid input")
+	ErrInvalidInput = expections.New(expections.CodeValidation, "invalid input")
 )
 
-type Service struct {
+type ServiceOrderFlowUseCase struct {
 	clients  repository.ClientRepository
 	vehicles repository.VehicleRepository
 	services repository.ServiceRepository
@@ -33,14 +34,14 @@ type Service struct {
 	flow     repository.ServiceOrderFlowRepository
 }
 
-func NewService(
+func NewServiceOrderFlowUseCase(
 	clients repository.ClientRepository,
 	vehicles repository.VehicleRepository,
 	services repository.ServiceRepository,
 	parts repository.PartRepository,
 	flow repository.ServiceOrderFlowRepository,
-) *Service {
-	return &Service{
+) *ServiceOrderFlowUseCase {
+	return &ServiceOrderFlowUseCase{
 		clients:  clients,
 		vehicles: vehicles,
 		services: services,
@@ -50,7 +51,7 @@ func NewService(
 }
 
 type CreateDraftInput struct {
-	ClientDocumentType   client.DocumentType
+	ClientDocumentType   string
 	ClientDocumentNumber string
 	ClientEmail          *string
 	ClientPhone          *string
@@ -90,10 +91,10 @@ type ReviseBudgetOutput struct {
 	TotalCents   int64
 }
 
-func (s *Service) CreateDraft(ctx context.Context, in CreateDraftInput) (*CreateDraftOutput, error) {
+func (s *ServiceOrderFlowUseCase) CreateDraft(ctx context.Context, in CreateDraftInput) (*CreateDraftOutput, error) {
 	doc := strings.TrimSpace(in.ClientDocumentNumber)
 	doc = document.Normalize(doc)
-	if !isValidDocument(in.ClientDocumentType, doc) {
+	if !isValidDocument(client.DocumentType(in.ClientDocumentType), doc) {
 		return nil, fmt.Errorf("%w: invalid document", ErrInvalidInput)
 	}
 
@@ -210,7 +211,7 @@ func (s *Service) CreateDraft(ctx context.Context, in CreateDraftInput) (*Create
 	}, nil
 }
 
-func (s *Service) ReviseBudget(ctx context.Context, serviceOrderID string, in ReviseBudgetInput, changedByUserID *string) (*ReviseBudgetOutput, error) {
+func (s *ServiceOrderFlowUseCase) ReviseBudget(ctx context.Context, serviceOrderID string, in ReviseBudgetInput, changedByUserID *string) (*ReviseBudgetOutput, error) {
 	if serviceOrderID == "" {
 		return nil, fmt.Errorf("%w: missing service_order_id", ErrInvalidInput)
 	}
@@ -259,27 +260,27 @@ func (s *Service) ReviseBudget(ctx context.Context, serviceOrderID string, in Re
 	}, nil
 }
 
-func (s *Service) StartDiagnosis(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) StartDiagnosis(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.StartDiagnosis(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *Service) SendBudget(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) SendBudget(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.SendLatestBudget(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *Service) Finish(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) Finish(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.Finish(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *Service) Deliver(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) Deliver(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.Deliver(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *Service) ClientGetByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
+func (s *ServiceOrderFlowUseCase) ClientGetByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
 	return s.flow.GetClientViewByCode(ctx, code, document.Normalize(documentNumber))
 }
 
-func (s *Service) ClientApproveBudget(ctx context.Context, code string, documentNumber string) error {
+func (s *ServiceOrderFlowUseCase) ClientApproveBudget(ctx context.Context, code string, documentNumber string) error {
 	normalizedDoc := document.Normalize(documentNumber)
 	existing, err := s.clients.FindByDocument(ctx, normalizedDoc)
 	if err != nil {
@@ -293,11 +294,11 @@ func (s *Service) ClientApproveBudget(ctx context.Context, code string, document
 	return s.flow.ApproveLatestBudgetByCode(ctx, code, normalizedDoc, approvedByName)
 }
 
-func (s *Service) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {
+func (s *ServiceOrderFlowUseCase) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {
 	return s.flow.RejectLatestBudgetByCode(ctx, code, document.Normalize(documentNumber), reason)
 }
 
-func (s *Service) buildServiceLines(ctx context.Context, items []ItemInput) ([]order.BudgetServiceItem, int64, error) {
+func (s *ServiceOrderFlowUseCase) buildServiceLines(ctx context.Context, items []ItemInput) ([]order.BudgetServiceItem, int64, error) {
 	if len(items) == 0 {
 		return []order.BudgetServiceItem{}, 0, nil
 	}
@@ -337,7 +338,7 @@ func (s *Service) buildServiceLines(ctx context.Context, items []ItemInput) ([]o
 	return lines, total, nil
 }
 
-func (s *Service) buildPartLines(ctx context.Context, items []ItemInput) ([]order.BudgetPartItem, int64, error) {
+func (s *ServiceOrderFlowUseCase) buildPartLines(ctx context.Context, items []ItemInput) ([]order.BudgetPartItem, int64, error) {
 	if len(items) == 0 {
 		return []order.BudgetPartItem{}, 0, nil
 	}

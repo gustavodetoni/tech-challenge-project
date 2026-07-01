@@ -7,17 +7,17 @@ import (
 	"github.com/gin-gonic/gin"
 
 	appAuth "github.com/soat-architecture/tech-challenge-project/internal/application/auth"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type AuthController struct {
-	auth  *appAuth.Service
+	auth  *appAuth.AuthUseCase
 	users repository.UserRepository
 }
 
-func NewAuthController(auth *appAuth.Service, users repository.UserRepository) *AuthController {
+func NewAuthController(auth *appAuth.AuthUseCase, users repository.UserRepository) *AuthController {
 	return &AuthController{auth: auth, users: users}
 }
 

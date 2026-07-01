@@ -16,7 +16,7 @@ func TestServiceService_Create_ValidatesAndSetsActive(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(s *service.Service) bool {
 		return s != nil &&
@@ -34,11 +34,33 @@ func TestServiceService_Create_ValidatesAndSetsActive(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestServiceService_CreateFromInput_MapsInput(t *testing.T) {
+	t.Parallel()
+
+	repo := new(repomocks.ServiceRepository)
+	svc := admin.NewServiceCatalogUseCase(repo)
+
+	repo.On("Create", mock.Anything, mock.MatchedBy(func(s *service.Service) bool {
+		return s != nil &&
+			s.Name == "Troca de óleo" &&
+			s.BasePriceCents == 10000 &&
+			s.EstimatedMinutes == 30
+	})).Return(nil).Once()
+
+	_, err := svc.CreateFromInput(context.Background(), admin.CreateServiceInput{
+		Name:             "Troca de óleo",
+		BasePriceCents:   10000,
+		EstimatedMinutes: 30,
+	})
+	require.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
 func TestServiceService_Create_InvalidName(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 
 	_, err := svc.Create(context.Background(), service.Service{
 		Name:             "   ",

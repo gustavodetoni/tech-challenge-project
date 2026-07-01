@@ -11,24 +11,24 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	domainUser "github.com/soat-architecture/tech-challenge-project/internal/domain/user"
-	jwtAuth "github.com/soat-architecture/tech-challenge-project/internal/infra/auth"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
+	"github.com/soat-architecture/tech-challenge-project/internal/infra/expections"
 )
 
 var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrEmailInUse         = errors.New("email already in use")
-	ErrInvalidInput       = errors.New("invalid input")
+	ErrInvalidCredentials = expections.New(expections.CodeUnauthorized, "invalid credentials")
+	ErrEmailInUse         = expections.New(expections.CodeConflict, "email already in use")
+	ErrInvalidInput       = expections.New(expections.CodeValidation, "invalid input")
 )
 
-type Service struct {
+type AuthUseCase struct {
 	users repository.UserRepository
-	jwt   *jwtAuth.Manager
+	jwt   repository.TokenIssuer
 }
 
-func NewService(users repository.UserRepository, jwt *jwtAuth.Manager) *Service {
-	return &Service{users: users, jwt: jwt}
+func NewAuthUseCase(users repository.UserRepository, jwt repository.TokenIssuer) *AuthUseCase {
+	return &AuthUseCase{users: users, jwt: jwt}
 }
 
 type RegisterInput struct {
@@ -49,7 +49,7 @@ type TokenOutput struct {
 	Role        domainUser.Role
 }
 
-func (s *Service) Register(ctx context.Context, in RegisterInput) (*TokenOutput, error) {
+func (s *AuthUseCase) Register(ctx context.Context, in RegisterInput) (*TokenOutput, error) {
 	name := strings.TrimSpace(in.Name)
 	email := normalizeEmail(in.Email)
 	if name == "" || email == "" || !looksLikeEmail(email) {
@@ -85,7 +85,7 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (*TokenOutput,
 	return s.issueToken(u.ID, u.Role)
 }
 
-func (s *Service) Login(ctx context.Context, in LoginInput) (*TokenOutput, error) {
+func (s *AuthUseCase) Login(ctx context.Context, in LoginInput) (*TokenOutput, error) {
 	email := normalizeEmail(in.Email)
 	if email == "" || !looksLikeEmail(email) {
 		return nil, fmt.Errorf("%w: invalid email", ErrInvalidInput)
@@ -106,7 +106,7 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*TokenOutput, error
 	return s.issueToken(u.ID, u.Role)
 }
 
-func (s *Service) issueToken(userID string, role domainUser.Role) (*TokenOutput, error) {
+func (s *AuthUseCase) issueToken(userID string, role domainUser.Role) (*TokenOutput, error) {
 	token, expiresAt, err := s.jwt.NewToken(userID, string(role))
 	if err != nil {
 		return nil, err

@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/controllers"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 	repomocks "github.com/soat-architecture/tech-challenge-project/internal/tests/interfaces/repository/mocks"
 )
 
@@ -24,7 +24,7 @@ func TestAdminVehiclesController_ListByClient_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("ListByClientID", mock.Anything, "c1", 50, 0).Return([]vehicle.Vehicle{{
@@ -53,7 +53,7 @@ func TestAdminVehiclesController_ListByClient_InternalError(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("ListByClientID", mock.Anything, "c1", 50, 0).Return(([]vehicle.Vehicle)(nil), assert.AnError).Once()
@@ -74,7 +74,7 @@ func TestAdminVehiclesController_CreateForClient_BadRequest_InvalidBody(t *testi
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	r := gin.New()
@@ -93,7 +93,7 @@ func TestAdminVehiclesController_CreateForClient_BadRequest_InvalidPlate(t *test
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	r := gin.New()
@@ -112,7 +112,7 @@ func TestAdminVehiclesController_CreateForClient_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("Create", mock.Anything, mock.AnythingOfType("*vehicle.Vehicle")).Return(nil).Once()
@@ -140,7 +140,7 @@ func TestAdminVehiclesController_Get_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("FindByID", mock.Anything, "v1").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
@@ -161,7 +161,7 @@ func TestAdminVehiclesController_Update_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("FindByID", mock.Anything, "v1").Return(&vehicle.Vehicle{
@@ -200,7 +200,7 @@ func TestAdminVehiclesController_Update_NotFound_WhenCurrentMissing(t *testing.T
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("FindByID", mock.Anything, "v1").Return((*vehicle.Vehicle)(nil), repository.ErrNotFound).Once()
@@ -222,7 +222,7 @@ func TestAdminVehiclesController_Update_BadRequest_InvalidBody(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	r := gin.New()
@@ -241,7 +241,7 @@ func TestAdminVehiclesController_Delete_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("Delete", mock.Anything, "v1").Return(nil).Once()
@@ -262,7 +262,7 @@ func TestAdminVehiclesController_Delete_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.VehicleRepository)
-	svc := admin.NewVehicleService(repo)
+	svc := admin.NewVehicleAdminUseCase(repo)
 	h := controllers.NewAdminVehiclesController(svc)
 
 	repo.On("Delete", mock.Anything, "v1").Return(repository.ErrNotFound).Once()

@@ -9,8 +9,8 @@ import (
 	repositories2 "github.com/soat-architecture/tech-challenge-project/internal/infra/db/repositories"
 	"github.com/stretchr/testify/require"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 func TestVehicleRepository_Create_NilVehicle(t *testing.T) {

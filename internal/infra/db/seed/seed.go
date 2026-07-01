@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	mathrand "math/rand"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -41,7 +41,7 @@ func Run(ctx context.Context, gormDB *gorm.DB, opts Options) error {
 		return err
 	}
 
-	faker.SetRandomSource(faker.NewSafeSource(mathrand.NewSource(opts.RandomSeed)))
+	rand.Seed(opts.RandomSeed)
 
 	return gormDB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if opts.Force {

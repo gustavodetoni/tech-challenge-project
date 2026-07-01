@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgconn"
 	"gorm.io/gorm"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type VehicleRepository struct {

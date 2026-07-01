@@ -9,8 +9,8 @@ import (
 	"github.com/brazilian-utils/go/licenseplate"
 	"github.com/google/uuid"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/plate"
 )
 
@@ -20,6 +20,29 @@ type VehicleService struct {
 
 func NewVehicleService(repo repository.VehicleRepository) *VehicleService {
 	return &VehicleService{repo: repo}
+}
+
+type CreateVehicleInput struct {
+	ClientID        string
+	Plate           string
+	Brand           string
+	Model           string
+	ManufactureYear *int
+	ModelYear       int
+	Color           *string
+	Mileage         *int
+	Chassis         *string
+	Notes           *string
+}
+
+type UpdateVehicleInput = CreateVehicleInput
+
+func (s *VehicleService) CreateFromInput(ctx context.Context, input CreateVehicleInput) (*vehicle.Vehicle, error) {
+	return s.Create(ctx, vehicleFromInput(input))
+}
+
+func (s *VehicleService) UpdateFromInput(ctx context.Context, id string, input UpdateVehicleInput) (*vehicle.Vehicle, error) {
+	return s.Update(ctx, id, vehicleFromInput(input))
 }
 
 func (s *VehicleService) Create(ctx context.Context, in vehicle.Vehicle) (*vehicle.Vehicle, error) {
@@ -61,6 +84,21 @@ func (s *VehicleService) FindByID(ctx context.Context, id string) (*vehicle.Vehi
 
 func (s *VehicleService) ListByClientID(ctx context.Context, clientID string, limit, offset int) ([]vehicle.Vehicle, error) {
 	return s.repo.ListByClientID(ctx, clientID, limit, offset)
+}
+
+func vehicleFromInput(input CreateVehicleInput) vehicle.Vehicle {
+	return vehicle.Vehicle{
+		ClientID:        input.ClientID,
+		Plate:           input.Plate,
+		Brand:           input.Brand,
+		Model:           input.Model,
+		ManufactureYear: input.ManufactureYear,
+		ModelYear:       input.ModelYear,
+		Color:           input.Color,
+		Mileage:         input.Mileage,
+		Chassis:         input.Chassis,
+		Notes:           input.Notes,
+	}
 }
 
 func verifyVehicle(in *vehicle.Vehicle) error {

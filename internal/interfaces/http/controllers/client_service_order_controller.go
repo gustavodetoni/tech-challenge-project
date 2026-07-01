@@ -7,17 +7,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type ClientServiceOrderController struct {
-	svc *serviceorder.Service
+	svc *serviceorder.FlowUseCase
 }
 
-func NewClientServiceOrderController(svc *serviceorder.Service) *ClientServiceOrderController {
+func NewClientServiceOrderController(svc *serviceorder.FlowUseCase) *ClientServiceOrderController {
 	return &ClientServiceOrderController{svc: svc}
 }
 

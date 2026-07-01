@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type ServiceOrderService struct {

@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/part"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type PartRepository struct {

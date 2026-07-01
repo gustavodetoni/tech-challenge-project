@@ -38,11 +38,11 @@ func TestAdminCRUD_Flow(t *testing.T) {
 
 	clientSvc := adminApp.NewClientService(clientRepo)
 	vehicleSvc := adminApp.NewVehicleService(vehicleRepo)
-	serviceSvc := adminApp.NewServiceService(serviceRepo)
+	serviceSvc := adminApp.NewServiceCatalogUseCase(serviceRepo)
 	partSvc := adminApp.NewPartService(partRepo)
 	serviceOrderSvc := adminApp.NewServiceOrderService(soRepo)
 	userSvc := adminApp.NewUserService(userRepo)
-	serviceOrderFlowSvc := serviceorder.NewService(clientRepo, vehicleRepo, serviceRepo, partRepo, flowRepo)
+	serviceOrderFlowSvc := serviceorder.NewFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, flowRepo)
 
 	router := gin.New()
 	router.Use(gin.Recovery())

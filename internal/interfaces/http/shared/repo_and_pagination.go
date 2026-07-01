@@ -7,7 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
+	"github.com/soat-architecture/tech-challenge-project/internal/infra/expections"
 )
 
 func ParseLimitOffset(c *gin.Context) (limit, offset int) {
@@ -30,6 +31,16 @@ func ParseLimitOffset(c *gin.Context) (limit, offset int) {
 
 func WriteRepoError(c *gin.Context, err error) {
 	switch {
+	case expections.IsCode(err, expections.CodeValidation):
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	case expections.IsCode(err, expections.CodeNotFound):
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+	case expections.IsCode(err, expections.CodeConflict):
+		c.JSON(http.StatusConflict, gin.H{"error": "conflict"})
+	case expections.IsCode(err, expections.CodeUnauthorized):
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	case expections.IsCode(err, expections.CodeForbidden):
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 	case errors.Is(err, repository.ErrNotFound):
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 	case errors.Is(err, repository.ErrConflict):

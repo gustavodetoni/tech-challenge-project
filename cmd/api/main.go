@@ -76,11 +76,11 @@ func main() {
 
 	clientSvc := adminApp.NewClientService(clientRepo)
 	vehicleSvc := adminApp.NewVehicleService(vehicleRepo)
-	serviceSvc := adminApp.NewServiceService(serviceRepo)
+	serviceSvc := adminApp.NewServiceCatalogUseCase(serviceRepo)
 	partSvc := adminApp.NewPartService(partRepo)
 	serviceOrderSvc := adminApp.NewServiceOrderService(serviceOrderRepo)
 	userSvc := adminApp.NewUserService(userRepo)
-	serviceOrderFlowSvc := serviceorder.NewService(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
+	serviceOrderFlowSvc := serviceorder.NewFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
 
 	routes.Register(router, routes.Deps{
 		Health: controllers.NewHealthController(),

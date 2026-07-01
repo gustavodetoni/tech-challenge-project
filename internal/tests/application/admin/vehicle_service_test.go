@@ -37,6 +37,31 @@ func TestVehicleService_Create_ValidatesPlateAndYears(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestVehicleService_CreateFromInput_MapsInput(t *testing.T) {
+	t.Parallel()
+
+	repo := new(repomocks.VehicleRepository)
+	svc := admin.NewVehicleService(repo)
+
+	repo.On("Create", mock.Anything, mock.MatchedBy(func(v *vehicle.Vehicle) bool {
+		return v != nil &&
+			v.ClientID == "c1" &&
+			v.Plate == "ABC1D23" &&
+			v.Brand == "Fiat" &&
+			v.Model == "Uno"
+	})).Return(nil).Once()
+
+	_, err := svc.CreateFromInput(context.Background(), admin.CreateVehicleInput{
+		ClientID:  "c1",
+		Plate:     "abc1d23",
+		Brand:     "Fiat",
+		Model:     "Uno",
+		ModelYear: 2015,
+	})
+	require.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
 func TestVehicleService_Create_InvalidPlate(t *testing.T) {
 	t.Parallel()
 

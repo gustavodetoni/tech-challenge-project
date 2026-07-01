@@ -11,9 +11,8 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	domainUser "github.com/soat-architecture/tech-challenge-project/internal/domain/user"
-	jwtAuth "github.com/soat-architecture/tech-challenge-project/internal/infra/auth"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 var (
@@ -24,10 +23,10 @@ var (
 
 type Service struct {
 	users repository.UserRepository
-	jwt   *jwtAuth.Manager
+	jwt   repository.TokenIssuer
 }
 
-func NewService(users repository.UserRepository, jwt *jwtAuth.Manager) *Service {
+func NewService(users repository.UserRepository, jwt repository.TokenIssuer) *Service {
 	return &Service{users: users, jwt: jwt}
 }
 

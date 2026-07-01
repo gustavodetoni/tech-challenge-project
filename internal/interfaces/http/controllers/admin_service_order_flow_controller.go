@@ -6,19 +6,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type AdminServiceOrderFlowController struct {
-	svc *serviceorder.Service
+	svc *serviceorder.FlowUseCase
 }
 
-func NewAdminServiceOrderFlowController(svc *serviceorder.Service) *AdminServiceOrderFlowController {
+func NewAdminServiceOrderFlowController(svc *serviceorder.FlowUseCase) *AdminServiceOrderFlowController {
 	return &AdminServiceOrderFlowController{svc: svc}
 }
 

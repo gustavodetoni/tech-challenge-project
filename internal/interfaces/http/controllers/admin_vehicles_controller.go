@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/vehicle"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
@@ -57,7 +56,7 @@ func (h *AdminVehiclesController) CreateForClient(c *gin.Context) {
 		return
 	}
 
-	v, err := h.svc.Create(c.Request.Context(), vehicle.Vehicle{
+	v, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreateVehicleInput{
 		ClientID:        clientID,
 		Plate:           req.Plate,
 		Brand:           req.Brand,
@@ -111,7 +110,7 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 		return
 	}
 
-	v, err := h.svc.Update(c.Request.Context(), id, vehicle.Vehicle{
+	v, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdateVehicleInput{
 		ClientID:        current.ClientID,
 		Plate:           req.Plate,
 		Brand:           req.Brand,

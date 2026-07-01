@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 	"github.com/soat-architecture/tech-challenge-project/pkg/br/document"
 )
 
@@ -19,6 +19,24 @@ type ClientService struct {
 
 func NewClientService(repo repository.ClientRepository) *ClientService {
 	return &ClientService{repo: repo}
+}
+
+type CreateClientInput struct {
+	DocumentType   string
+	DocumentNumber string
+	Name           string
+	Email          *string
+	Phone          *string
+}
+
+type UpdateClientInput = CreateClientInput
+
+func (s *ClientService) CreateFromInput(ctx context.Context, input CreateClientInput) (*client.Client, error) {
+	return s.Create(ctx, clientFromInput(input))
+}
+
+func (s *ClientService) UpdateFromInput(ctx context.Context, id string, input UpdateClientInput) (*client.Client, error) {
+	return s.Update(ctx, id, clientFromInput(input))
 }
 
 func (s *ClientService) Create(ctx context.Context, in client.Client) (*client.Client, error) {
@@ -61,6 +79,16 @@ func (s *ClientService) FindByID(ctx context.Context, id string) (*client.Client
 
 func (s *ClientService) List(ctx context.Context, limit, offset int) ([]client.Client, error) {
 	return s.repo.List(ctx, limit, offset)
+}
+
+func clientFromInput(input CreateClientInput) client.Client {
+	return client.Client{
+		DocumentType:   client.DocumentType(input.DocumentType),
+		DocumentNumber: input.DocumentNumber,
+		Name:           input.Name,
+		Email:          input.Email,
+		Phone:          input.Phone,
+	}
 }
 
 func isValidDocument(docType client.DocumentType, doc string) bool {

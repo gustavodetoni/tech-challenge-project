@@ -7,12 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/part"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type AdminPartsController struct {
@@ -54,7 +54,7 @@ func (h *AdminPartsController) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	p, err := h.svc.Create(c.Request.Context(), part.Part{
+	p, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreatePartInput{
 		SKU:            req.SKU,
 		Name:           req.Name,
 		Description:    req.Description,
@@ -97,7 +97,7 @@ func (h *AdminPartsController) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	p, err := h.svc.Update(c.Request.Context(), id, part.Part{
+	p, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdatePartInput{
 		SKU:            req.SKU,
 		Name:           req.Name,
 		Description:    req.Description,

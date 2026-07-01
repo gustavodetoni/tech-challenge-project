@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
@@ -53,8 +52,8 @@ func (h *AdminClientsController) Create(c *gin.Context) {
 		return
 	}
 
-	cl, err := h.svc.Create(c.Request.Context(), client.Client{
-		DocumentType:   client.DocumentType(req.DocumentType),
+	cl, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreateClientInput{
+		DocumentType:   req.DocumentType,
 		DocumentNumber: req.DocumentNumber,
 		Name:           req.Name,
 		Email:          req.Email,
@@ -97,8 +96,8 @@ func (h *AdminClientsController) Update(c *gin.Context) {
 		return
 	}
 
-	cl, err := h.svc.Update(c.Request.Context(), id, client.Client{
-		DocumentType:   client.DocumentType(req.DocumentType),
+	cl, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdateClientInput{
+		DocumentType:   req.DocumentType,
 		DocumentNumber: req.DocumentNumber,
 		Name:           req.Name,
 		Email:          req.Email,

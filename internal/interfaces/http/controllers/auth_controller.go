@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	appAuth "github.com/soat-architecture/tech-challenge-project/internal/application/auth"
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 type AuthController struct {

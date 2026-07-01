@@ -6,17 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/soat-architecture/tech-challenge-project/internal/application/admin"
-	"github.com/soat-architecture/tech-challenge-project/internal/domain/service"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/mapper"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 )
 
 type AdminServicesController struct {
-	svc *admin.ServiceService
+	svc *admin.ServiceCatalogUseCase
 }
 
-func NewAdminServicesController(svc *admin.ServiceService) *AdminServicesController {
+func NewAdminServicesController(svc *admin.ServiceCatalogUseCase) *AdminServicesController {
 	return &AdminServicesController{svc: svc}
 }
 
@@ -51,7 +50,7 @@ func (h *AdminServicesController) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	svc, err := h.svc.Create(c.Request.Context(), service.Service{
+	svc, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreateServiceInput{
 		Name:             req.Name,
 		Description:      req.Description,
 		BasePriceCents:   req.BasePriceCents,
@@ -93,7 +92,7 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	svc, err := h.svc.Update(c.Request.Context(), id, service.Service{
+	svc, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdateServiceInput{
 		Name:             req.Name,
 		Description:      req.Description,
 		BasePriceCents:   req.BasePriceCents,

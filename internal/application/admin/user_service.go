@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/user"
-	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/repository"
 )
 
 var ErrInvalidInput = errors.New("invalid input")

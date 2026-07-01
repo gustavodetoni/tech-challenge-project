@@ -36,6 +36,30 @@ func TestPartService_Create_ValidatesAndSetsActive(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestPartService_CreateFromInput_MapsInput(t *testing.T) {
+	t.Parallel()
+
+	repo := new(repomocks.PartRepository)
+	svc := admin.NewPartService(repo)
+
+	repo.On("Create", mock.Anything, mock.MatchedBy(func(p *part.Part) bool {
+		return p != nil &&
+			p.SKU == "SKU1" &&
+			p.Name == "Filtro" &&
+			p.UnitPriceCents == 100 &&
+			p.StockQuantity == 10
+	})).Return(nil).Once()
+
+	_, err := svc.CreateFromInput(context.Background(), admin.CreatePartInput{
+		SKU:            "SKU1",
+		Name:           "Filtro",
+		UnitPriceCents: 100,
+		StockQuantity:  10,
+	})
+	require.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
 func TestPartService_Create_InvalidStock(t *testing.T) {
 	t.Parallel()
 

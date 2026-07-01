@@ -16,7 +16,7 @@ func TestPartService_Create_ValidatesAndSetsActive(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(p *part.Part) bool {
 		return p != nil &&
@@ -40,7 +40,7 @@ func TestPartService_CreateFromInput_MapsInput(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(p *part.Part) bool {
 		return p != nil &&
@@ -64,7 +64,7 @@ func TestPartService_Create_InvalidStock(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 
 	_, err := svc.Create(context.Background(), part.Part{
 		SKU:            "SKU1",

@@ -20,12 +20,6 @@ func NewUserAdminUseCase(repo repository.UserRepository) *UserAdminUseCase {
 	return &UserAdminUseCase{repo: repo}
 }
 
-func NewUserService(repo repository.UserRepository) *UserAdminUseCase {
-	return NewUserAdminUseCase(repo)
-}
-
-type UserService = UserAdminUseCase
-
 type UpdateUserRoleInput struct {
 	UserID string
 	Role   string

@@ -21,12 +21,6 @@ func NewClientAdminUseCase(repo repository.ClientRepository) *ClientAdminUseCase
 	return &ClientAdminUseCase{repo: repo}
 }
 
-func NewClientService(repo repository.ClientRepository) *ClientAdminUseCase {
-	return NewClientAdminUseCase(repo)
-}
-
-type ClientService = ClientAdminUseCase
-
 type CreateClientInput struct {
 	DocumentType   string
 	DocumentNumber string

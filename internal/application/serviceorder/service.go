@@ -26,7 +26,7 @@ var (
 	ErrInvalidInput = expections.New(expections.CodeValidation, "invalid input")
 )
 
-type FlowUseCase struct {
+type ServiceOrderFlowUseCase struct {
 	clients  repository.ClientRepository
 	vehicles repository.VehicleRepository
 	services repository.ServiceRepository
@@ -34,14 +34,14 @@ type FlowUseCase struct {
 	flow     repository.ServiceOrderFlowRepository
 }
 
-func NewFlowUseCase(
+func NewServiceOrderFlowUseCase(
 	clients repository.ClientRepository,
 	vehicles repository.VehicleRepository,
 	services repository.ServiceRepository,
 	parts repository.PartRepository,
 	flow repository.ServiceOrderFlowRepository,
-) *FlowUseCase {
-	return &FlowUseCase{
+) *ServiceOrderFlowUseCase {
+	return &ServiceOrderFlowUseCase{
 		clients:  clients,
 		vehicles: vehicles,
 		services: services,
@@ -49,18 +49,6 @@ func NewFlowUseCase(
 		flow:     flow,
 	}
 }
-
-func NewService(
-	clients repository.ClientRepository,
-	vehicles repository.VehicleRepository,
-	services repository.ServiceRepository,
-	parts repository.PartRepository,
-	flow repository.ServiceOrderFlowRepository,
-) *FlowUseCase {
-	return NewFlowUseCase(clients, vehicles, services, parts, flow)
-}
-
-type Service = FlowUseCase
 
 type CreateDraftInput struct {
 	ClientDocumentType   string
@@ -103,7 +91,7 @@ type ReviseBudgetOutput struct {
 	TotalCents   int64
 }
 
-func (s *FlowUseCase) CreateDraft(ctx context.Context, in CreateDraftInput) (*CreateDraftOutput, error) {
+func (s *ServiceOrderFlowUseCase) CreateDraft(ctx context.Context, in CreateDraftInput) (*CreateDraftOutput, error) {
 	doc := strings.TrimSpace(in.ClientDocumentNumber)
 	doc = document.Normalize(doc)
 	if !isValidDocument(client.DocumentType(in.ClientDocumentType), doc) {
@@ -223,7 +211,7 @@ func (s *FlowUseCase) CreateDraft(ctx context.Context, in CreateDraftInput) (*Cr
 	}, nil
 }
 
-func (s *FlowUseCase) ReviseBudget(ctx context.Context, serviceOrderID string, in ReviseBudgetInput, changedByUserID *string) (*ReviseBudgetOutput, error) {
+func (s *ServiceOrderFlowUseCase) ReviseBudget(ctx context.Context, serviceOrderID string, in ReviseBudgetInput, changedByUserID *string) (*ReviseBudgetOutput, error) {
 	if serviceOrderID == "" {
 		return nil, fmt.Errorf("%w: missing service_order_id", ErrInvalidInput)
 	}
@@ -272,27 +260,27 @@ func (s *FlowUseCase) ReviseBudget(ctx context.Context, serviceOrderID string, i
 	}, nil
 }
 
-func (s *FlowUseCase) StartDiagnosis(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) StartDiagnosis(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.StartDiagnosis(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *FlowUseCase) SendBudget(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) SendBudget(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.SendLatestBudget(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *FlowUseCase) Finish(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) Finish(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.Finish(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *FlowUseCase) Deliver(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
+func (s *ServiceOrderFlowUseCase) Deliver(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
 	return s.flow.Deliver(ctx, serviceOrderID, changedByUserID)
 }
 
-func (s *FlowUseCase) ClientGetByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
+func (s *ServiceOrderFlowUseCase) ClientGetByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
 	return s.flow.GetClientViewByCode(ctx, code, document.Normalize(documentNumber))
 }
 
-func (s *FlowUseCase) ClientApproveBudget(ctx context.Context, code string, documentNumber string) error {
+func (s *ServiceOrderFlowUseCase) ClientApproveBudget(ctx context.Context, code string, documentNumber string) error {
 	normalizedDoc := document.Normalize(documentNumber)
 	existing, err := s.clients.FindByDocument(ctx, normalizedDoc)
 	if err != nil {
@@ -306,11 +294,11 @@ func (s *FlowUseCase) ClientApproveBudget(ctx context.Context, code string, docu
 	return s.flow.ApproveLatestBudgetByCode(ctx, code, normalizedDoc, approvedByName)
 }
 
-func (s *FlowUseCase) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {
+func (s *ServiceOrderFlowUseCase) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {
 	return s.flow.RejectLatestBudgetByCode(ctx, code, document.Normalize(documentNumber), reason)
 }
 
-func (s *FlowUseCase) buildServiceLines(ctx context.Context, items []ItemInput) ([]order.BudgetServiceItem, int64, error) {
+func (s *ServiceOrderFlowUseCase) buildServiceLines(ctx context.Context, items []ItemInput) ([]order.BudgetServiceItem, int64, error) {
 	if len(items) == 0 {
 		return []order.BudgetServiceItem{}, 0, nil
 	}
@@ -350,7 +338,7 @@ func (s *FlowUseCase) buildServiceLines(ctx context.Context, items []ItemInput) 
 	return lines, total, nil
 }
 
-func (s *FlowUseCase) buildPartLines(ctx context.Context, items []ItemInput) ([]order.BudgetPartItem, int64, error) {
+func (s *ServiceOrderFlowUseCase) buildPartLines(ctx context.Context, items []ItemInput) ([]order.BudgetPartItem, int64, error) {
 	if len(items) == 0 {
 		return []order.BudgetPartItem{}, 0, nil
 	}

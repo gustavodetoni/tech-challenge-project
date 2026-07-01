@@ -28,7 +28,7 @@ func TestAuthController_Register_BadRequest_InvalidBody(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	r := gin.New()
@@ -48,7 +48,7 @@ func TestAuthController_Register_Conflict_EmailInUse(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	userRepo.On("Create", mock.Anything, mock.AnythingOfType("*user.User")).Return(repository.ErrConflict).Once()
@@ -71,7 +71,7 @@ func TestAuthController_Register_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	userRepo.On("Create", mock.Anything, mock.AnythingOfType("*user.User")).Return(nil).Once()
@@ -98,7 +98,7 @@ func TestAuthController_Register_BadRequest_InvalidInput(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	r := gin.New()
@@ -118,7 +118,7 @@ func TestAuthController_Register_InternalError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	userRepo.On("Create", mock.Anything, mock.AnythingOfType("*user.User")).Return(assert.AnError).Once()
@@ -141,7 +141,7 @@ func TestAuthController_Login_Unauthorized_InvalidCredentials(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	userRepo.On("FindByEmail", mock.Anything, "maria@example.com").Return((*user.User)(nil), repository.ErrNotFound).Once()
@@ -164,7 +164,7 @@ func TestAuthController_Login_BadRequest_InvalidInput(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	r := gin.New()
@@ -184,7 +184,7 @@ func TestAuthController_Login_InternalError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	userRepo.On("FindByEmail", mock.Anything, "maria@example.com").Return((*user.User)(nil), assert.AnError).Once()
@@ -207,7 +207,7 @@ func TestAuthController_Login_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	hash, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
@@ -242,7 +242,7 @@ func TestAuthController_Me_Unauthorized_NoClaims(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	r := gin.New()
@@ -261,7 +261,7 @@ func TestAuthController_Me_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	userRepo.On("FindByID", mock.Anything, "subject-1").Return(&user.User{
@@ -290,7 +290,7 @@ func TestAuthController_Me_Unauthorized_WhenUserNotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	userRepo := new(repomocks.UserRepository)
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
-	authSvc := appAuth.NewService(userRepo, jwtManager)
+	authSvc := appAuth.NewAuthUseCase(userRepo, jwtManager)
 	h := controllers.NewAuthController(authSvc, userRepo)
 
 	userRepo.On("FindByID", mock.Anything, "subject-1").Return((*user.User)(nil), repository.ErrNotFound).Once()

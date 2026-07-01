@@ -16,12 +16,6 @@ func NewServiceOrderAdminUseCase(repo repository.ServiceOrderRepository) *Servic
 	return &ServiceOrderAdminUseCase{repo: repo}
 }
 
-func NewServiceOrderService(repo repository.ServiceOrderRepository) *ServiceOrderAdminUseCase {
-	return NewServiceOrderAdminUseCase(repo)
-}
-
-type ServiceOrderService = ServiceOrderAdminUseCase
-
 func (s *ServiceOrderAdminUseCase) List(ctx context.Context, limit, offset int, status *order.Status) ([]order.ServiceOrderSummary, error) {
 	return s.repo.List(ctx, limit, offset, status)
 }

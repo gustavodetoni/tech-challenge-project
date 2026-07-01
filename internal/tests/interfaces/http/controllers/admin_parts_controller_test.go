@@ -24,7 +24,7 @@ func TestAdminPartsController_List_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("List", mock.Anything, 50, 0).Return([]part.Part{{
@@ -53,7 +53,7 @@ func TestAdminPartsController_List_InternalError(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("List", mock.Anything, 50, 0).Return(([]part.Part)(nil), assert.AnError).Once()
@@ -74,7 +74,7 @@ func TestAdminPartsController_Create_BadRequest_InvalidBody(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	r := gin.New()
@@ -93,7 +93,7 @@ func TestAdminPartsController_Create_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("Create", mock.Anything, mock.AnythingOfType("*part.Part")).Return(nil).Once()
@@ -119,7 +119,7 @@ func TestAdminPartsController_Create_BadRequest_InvalidInput(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	r := gin.New()
@@ -138,7 +138,7 @@ func TestAdminPartsController_Get_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("FindByID", mock.Anything, "p1").Return((*part.Part)(nil), repository.ErrNotFound).Once()
@@ -159,7 +159,7 @@ func TestAdminPartsController_Update_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*part.Part")).Return(nil).Once()
@@ -190,7 +190,7 @@ func TestAdminPartsController_Update_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*part.Part")).Return(repository.ErrNotFound).Once()
@@ -212,7 +212,7 @@ func TestAdminPartsController_Delete_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("Delete", mock.Anything, "p1").Return(nil).Once()
@@ -233,7 +233,7 @@ func TestAdminPartsController_Delete_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On("Delete", mock.Anything, "p1").Return(repository.ErrNotFound).Once()
@@ -254,7 +254,7 @@ func TestAdminPartsController_AdjustStock_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On(
@@ -285,7 +285,7 @@ func TestAdminPartsController_AdjustStock_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On(
@@ -324,7 +324,7 @@ func TestAdminPartsController_AdjustStock_Conflict(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On(
@@ -355,7 +355,7 @@ func TestAdminPartsController_AdjustStock_BadRequest_GenericError(t *testing.T) 
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.PartRepository)
-	svc := admin.NewPartService(repo)
+	svc := admin.NewPartInventoryUseCase(repo)
 	h := controllers.NewAdminPartsController(svc)
 
 	repo.On(

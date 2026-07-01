@@ -16,7 +16,7 @@ func TestServiceOrderService_FindByID_CallsRepo(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ServiceOrderRepository)
-	svc := admin.NewServiceOrderService(repo)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
 
 	repo.On("FindByID", mock.Anything, "so1").Return(&order.ServiceOrder{ID: "so1"}, nil).Once()
 

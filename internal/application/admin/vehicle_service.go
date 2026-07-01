@@ -22,12 +22,6 @@ func NewVehicleAdminUseCase(repo repository.VehicleRepository) *VehicleAdminUseC
 	return &VehicleAdminUseCase{repo: repo}
 }
 
-func NewVehicleService(repo repository.VehicleRepository) *VehicleAdminUseCase {
-	return NewVehicleAdminUseCase(repo)
-}
-
-type VehicleService = VehicleAdminUseCase
-
 type CreateVehicleInput struct {
 	ClientID        string
 	Plate           string

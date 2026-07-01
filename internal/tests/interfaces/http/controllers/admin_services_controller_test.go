@@ -24,7 +24,7 @@ func TestAdminServicesController_List_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("List", mock.Anything, 50, 0).Return([]service.Service{{
@@ -52,7 +52,7 @@ func TestAdminServicesController_List_InternalError(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("List", mock.Anything, 50, 0).Return(([]service.Service)(nil), assert.AnError).Once()
@@ -73,7 +73,7 @@ func TestAdminServicesController_Create_BadRequest_InvalidBody(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	r := gin.New()
@@ -92,7 +92,7 @@ func TestAdminServicesController_Create_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("Create", mock.Anything, mock.AnythingOfType("*service.Service")).Return(nil).Once()
@@ -118,7 +118,7 @@ func TestAdminServicesController_Create_BadRequest_InvalidInput(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	r := gin.New()
@@ -137,7 +137,7 @@ func TestAdminServicesController_Get_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("FindByID", mock.Anything, "s1").Return((*service.Service)(nil), repository.ErrNotFound).Once()
@@ -158,7 +158,7 @@ func TestAdminServicesController_Update_BadRequest_InvalidBody(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	r := gin.New()
@@ -177,7 +177,7 @@ func TestAdminServicesController_Update_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*service.Service")).Return(repository.ErrNotFound).Once()
@@ -199,7 +199,7 @@ func TestAdminServicesController_Update_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*service.Service")).Return(nil).Once()
@@ -229,7 +229,7 @@ func TestAdminServicesController_Delete_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("Delete", mock.Anything, "s1").Return(nil).Once()
@@ -250,7 +250,7 @@ func TestAdminServicesController_Delete_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 	h := controllers.NewAdminServicesController(svc)
 
 	repo.On("Delete", mock.Anything, "s1").Return(repository.ErrNotFound).Once()

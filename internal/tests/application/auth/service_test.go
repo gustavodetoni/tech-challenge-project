@@ -22,7 +22,7 @@ func TestAuthService_Register_Success(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(u *domainUser.User) bool {
 		return u != nil &&
@@ -60,7 +60,7 @@ func TestAuthService_Register_EmailInUse(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	repo.On("Create", mock.Anything, mock.Anything).Return(repository.ErrConflict).Once()
 
@@ -79,7 +79,7 @@ func TestAuthService_Register_InvalidInput(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	_, err := svc.Register(context.Background(), appAuth.RegisterInput{
 		Name:     "  ",
@@ -95,7 +95,7 @@ func TestAuthService_Register_InvalidInput_EmptyEmail(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	_, err := svc.Register(context.Background(), appAuth.RegisterInput{
 		Name:     "John",
@@ -111,7 +111,7 @@ func TestAuthService_Register_TokenIssueError(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -129,7 +129,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	pwHash, err := bcrypt.GenerateFromPassword([]byte("Senha@123"), bcrypt.DefaultCost)
 	require.NoError(t, err)
@@ -165,7 +165,7 @@ func TestAuthService_Login_InvalidCredentials_NotFound(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	repo.On("FindByEmail", mock.Anything, "john@example.com").Return((*domainUser.User)(nil), repository.ErrNotFound).Once()
 
@@ -183,7 +183,7 @@ func TestAuthService_Login_InvalidCredentials_WrongPassword(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	pwHash, err := bcrypt.GenerateFromPassword([]byte("Senha@123"), bcrypt.DefaultCost)
 	require.NoError(t, err)
@@ -212,7 +212,7 @@ func TestAuthService_Login_TokenIssueError(t *testing.T) {
 
 	jwtManager := jwtAuth.NewManager("", "issuer", "", 30*time.Minute)
 	repo := new(repomocks.UserRepository)
-	svc := appAuth.NewService(repo, jwtManager)
+	svc := appAuth.NewAuthUseCase(repo, jwtManager)
 
 	pwHash, err := bcrypt.GenerateFromPassword([]byte("Senha@123"), bcrypt.DefaultCost)
 	require.NoError(t, err)

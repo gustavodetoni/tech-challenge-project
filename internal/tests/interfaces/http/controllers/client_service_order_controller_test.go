@@ -24,7 +24,7 @@ func TestClientServiceOrderController_Get_BadRequest_NoDocumentNumber(t *testing
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	r := gin.New()
@@ -42,7 +42,7 @@ func TestClientServiceOrderController_Get_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return(&repository.ClientServiceOrderView{
@@ -87,7 +87,7 @@ func TestClientServiceOrderController_Get_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return((*repository.ClientServiceOrderView)(nil), repository.ErrNotFound).Once()
@@ -108,7 +108,7 @@ func TestClientServiceOrderController_Get_InternalError(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return((*repository.ClientServiceOrderView)(nil), assert.AnError).Once()
@@ -130,7 +130,7 @@ func TestClientServiceOrderController_ApproveBudget_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
@@ -157,7 +157,7 @@ func TestClientServiceOrderController_ApproveBudget_BadRequest_NoDocumentNumber(
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	r := gin.New()
@@ -177,7 +177,7 @@ func TestClientServiceOrderController_ApproveBudget_BadRequest_GenericError(t *t
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
@@ -205,7 +205,7 @@ func TestClientServiceOrderController_ApproveBudget_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
@@ -233,7 +233,7 @@ func TestClientServiceOrderController_ApproveBudget_Success_UsesClientName(t *te
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
@@ -262,7 +262,7 @@ func TestClientServiceOrderController_RejectBudget_BadRequest_InvalidBody(t *tes
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	r := gin.New()
@@ -281,7 +281,7 @@ func TestClientServiceOrderController_RejectBudget_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(repository.ErrNotFound).Once()
@@ -303,7 +303,7 @@ func TestClientServiceOrderController_RejectBudget_BadRequest_NoDocumentNumber(t
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	r := gin.New()
@@ -322,7 +322,7 @@ func TestClientServiceOrderController_RejectBudget_BadRequest_GenericError(t *te
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(assert.AnError).Once()
@@ -344,7 +344,7 @@ func TestClientServiceOrderController_RejectBudget_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
 	h := controllers.NewClientServiceOrderController(svc)
 
 	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(nil).Once()

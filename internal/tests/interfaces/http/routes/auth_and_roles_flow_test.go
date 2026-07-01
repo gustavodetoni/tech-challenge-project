@@ -26,8 +26,8 @@ func TestAuthAndAdminRolePromotion_Flow(t *testing.T) {
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
 	authMW := middlewares.NewAuthMiddleware(jwtManager)
 
-	authService := appAuth.NewService(userRepo, jwtManager)
-	userSvc := adminApp.NewUserService(userRepo)
+	authService := appAuth.NewAuthUseCase(userRepo, jwtManager)
+	userSvc := adminApp.NewUserAdminUseCase(userRepo)
 
 	router := gin.New()
 	router.Use(gin.Recovery())

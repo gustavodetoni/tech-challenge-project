@@ -14,10 +14,10 @@ import (
 )
 
 type AdminServiceOrderFlowController struct {
-	svc *serviceorder.FlowUseCase
+	svc *serviceorder.ServiceOrderFlowUseCase
 }
 
-func NewAdminServiceOrderFlowController(svc *serviceorder.FlowUseCase) *AdminServiceOrderFlowController {
+func NewAdminServiceOrderFlowController(svc *serviceorder.ServiceOrderFlowUseCase) *AdminServiceOrderFlowController {
 	return &AdminServiceOrderFlowController{svc: svc}
 }
 

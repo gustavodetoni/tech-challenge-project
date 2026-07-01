@@ -20,12 +20,6 @@ func NewServiceCatalogUseCase(repo repository.ServiceRepository) *ServiceCatalog
 	return &ServiceCatalogUseCase{repo: repo}
 }
 
-func NewServiceService(repo repository.ServiceRepository) *ServiceCatalogUseCase {
-	return NewServiceCatalogUseCase(repo)
-}
-
-type ServiceService = ServiceCatalogUseCase
-
 type CreateServiceInput struct {
 	Name             string
 	Description      *string

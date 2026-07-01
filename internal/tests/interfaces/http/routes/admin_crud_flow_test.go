@@ -34,7 +34,7 @@ func TestAdminCRUD_Flow(t *testing.T) {
 	jwtManager := jwtAuth.NewManager("secret", "issuer", "", 60*time.Minute)
 	authMW := middlewares.NewAuthMiddleware(jwtManager)
 
-	authService := appAuth.NewService(userRepo, jwtManager)
+	authService := appAuth.NewAuthUseCase(userRepo, jwtManager)
 
 	clientSvc := adminApp.NewClientAdminUseCase(clientRepo)
 	vehicleSvc := adminApp.NewVehicleAdminUseCase(vehicleRepo)
@@ -42,7 +42,7 @@ func TestAdminCRUD_Flow(t *testing.T) {
 	partSvc := adminApp.NewPartInventoryUseCase(partRepo)
 	serviceOrderSvc := adminApp.NewServiceOrderAdminUseCase(soRepo)
 	userSvc := adminApp.NewUserAdminUseCase(userRepo)
-	serviceOrderFlowSvc := serviceorder.NewFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, flowRepo)
+	serviceOrderFlowSvc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, flowRepo)
 
 	router := gin.New()
 	router.Use(gin.Recovery())

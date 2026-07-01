@@ -31,12 +31,6 @@ func NewAuthUseCase(users repository.UserRepository, jwt repository.TokenIssuer)
 	return &AuthUseCase{users: users, jwt: jwt}
 }
 
-func NewService(users repository.UserRepository, jwt repository.TokenIssuer) *AuthUseCase {
-	return NewAuthUseCase(users, jwt)
-}
-
-type Service = AuthUseCase
-
 type RegisterInput struct {
 	Name     string
 	Email    string

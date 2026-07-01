@@ -16,7 +16,7 @@ func TestServiceService_Create_ValidatesAndSetsActive(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(s *service.Service) bool {
 		return s != nil &&
@@ -60,7 +60,7 @@ func TestServiceService_Create_InvalidName(t *testing.T) {
 	t.Parallel()
 
 	repo := new(repomocks.ServiceRepository)
-	svc := admin.NewServiceService(repo)
+	svc := admin.NewServiceCatalogUseCase(repo)
 
 	_, err := svc.Create(context.Background(), service.Service{
 		Name:             "   ",

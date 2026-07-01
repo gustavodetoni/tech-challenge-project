@@ -22,7 +22,7 @@ import (
 func TestServiceOrder_CreateDraft_InvalidDocument(t *testing.T) {
 	t.Parallel()
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -42,7 +42,7 @@ func TestServiceOrder_CreateDraft_InvalidDocument(t *testing.T) {
 func TestServiceOrder_CreateDraft_InvalidPlate(t *testing.T) {
 	t.Parallel()
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -68,7 +68,7 @@ func TestServiceOrder_CreateDraft_BuildsLinesAndCallsFlow(t *testing.T) {
 	partRepo := new(repomocks.PartRepository)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 
-	svc := serviceorder.NewService(clientRepo, vehicleRepo, serviceRepo, partRepo, flowRepo)
+	svc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, flowRepo)
 
 	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{ID: "c1", DocumentNumber: "46420082412"}, nil).Once()
 	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return(&vehicle.Vehicle{ID: "v1", ClientID: "c1", Plate: "ABC1D23"}, nil).Once()
@@ -139,7 +139,7 @@ func TestServiceOrder_CreateDraft_UpdatesClientContact(t *testing.T) {
 	vehicleRepo := new(repomocks.VehicleRepository)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		vehicleRepo,
 		new(repomocks.ServiceRepository),
@@ -191,7 +191,7 @@ func TestServiceOrder_CreateDraft_UpdatesVehicleDetails(t *testing.T) {
 	vehicleRepo := new(repomocks.VehicleRepository)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		vehicleRepo,
 		new(repomocks.ServiceRepository),
@@ -236,7 +236,7 @@ func TestServiceOrder_CreateDraft_UpdatesVehicleDetails(t *testing.T) {
 func TestServiceOrder_ReviseBudget_RequiresItems(t *testing.T) {
 	t.Parallel()
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -256,7 +256,7 @@ func TestServiceOrder_ReviseBudget_CallsRepo(t *testing.T) {
 	partRepo := new(repomocks.PartRepository)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		serviceRepo,
@@ -306,7 +306,7 @@ func TestServiceOrder_CreateDraft_ClientNotFound_ReturnsInvalidInput(t *testing.
 	t.Parallel()
 
 	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -331,7 +331,7 @@ func TestServiceOrder_CreateDraft_VehicleNotFound_ReturnsInvalidInput(t *testing
 
 	clientRepo := new(repomocks.ClientRepository)
 	vehicleRepo := new(repomocks.VehicleRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		vehicleRepo,
 		new(repomocks.ServiceRepository),
@@ -358,7 +358,7 @@ func TestServiceOrder_CreateDraft_VehicleBelongsToAnotherClient_Conflict(t *test
 
 	clientRepo := new(repomocks.ClientRepository)
 	vehicleRepo := new(repomocks.VehicleRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		vehicleRepo,
 		new(repomocks.ServiceRepository),
@@ -382,7 +382,7 @@ func TestServiceOrder_CreateDraft_VehicleBelongsToAnotherClient_Conflict(t *test
 func TestServiceOrder_ReviseBudget_MissingServiceOrderID(t *testing.T) {
 	t.Parallel()
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -402,7 +402,7 @@ func TestServiceOrder_ClientActions_NormalizeDocument(t *testing.T) {
 
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -431,7 +431,7 @@ func TestServiceOrder_FlowPassthrough_StartSendFinishDeliver(t *testing.T) {
 	t.Parallel()
 
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -456,7 +456,7 @@ func TestServiceOrder_FlowPassthrough_StartSendFinishDeliver(t *testing.T) {
 func TestServiceOrder_ReviseBudget_InvalidItem_ReturnsInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -475,7 +475,7 @@ func TestServiceOrder_ReviseBudget_ServiceNotFound(t *testing.T) {
 	t.Parallel()
 
 	serviceRepo := new(repomocks.ServiceRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		serviceRepo,
@@ -500,7 +500,7 @@ func TestServiceOrder_CreateDraft_UsesExistingClientAndVehicle(t *testing.T) {
 	vehicleRepo := new(repomocks.VehicleRepository)
 	flowRepo := new(repomocks.ServiceOrderFlowRepository)
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		vehicleRepo,
 		new(repomocks.ServiceRepository),
@@ -541,7 +541,7 @@ func TestServiceOrder_CreateDraft_UsesExistingClientAndVehicle(t *testing.T) {
 func TestServiceOrder_CreateDraft_InvalidCNPJ(t *testing.T) {
 	t.Parallel()
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -561,7 +561,7 @@ func TestServiceOrder_CreateDraft_InvalidCNPJ(t *testing.T) {
 func TestServiceOrder_CreateDraft_InvalidDocumentType(t *testing.T) {
 	t.Parallel()
 
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		new(repomocks.ClientRepository),
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -582,7 +582,7 @@ func TestServiceOrder_CreateDraft_ClientFindError_Propagates(t *testing.T) {
 	t.Parallel()
 
 	clientRepo := new(repomocks.ClientRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		new(repomocks.VehicleRepository),
 		new(repomocks.ServiceRepository),
@@ -606,7 +606,7 @@ func TestServiceOrder_CreateDraft_VehicleFindError_Propagates(t *testing.T) {
 
 	clientRepo := new(repomocks.ClientRepository)
 	vehicleRepo := new(repomocks.VehicleRepository)
-	svc := serviceorder.NewService(
+	svc := serviceorder.NewServiceOrderFlowUseCase(
 		clientRepo,
 		vehicleRepo,
 		new(repomocks.ServiceRepository),

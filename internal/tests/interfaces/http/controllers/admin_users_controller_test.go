@@ -26,7 +26,7 @@ func TestAdminUsersController_UpdateRole_Forbidden_NoClaims(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.UserRepository)
-	svc := admin.NewUserService(repo)
+	svc := admin.NewUserAdminUseCase(repo)
 	h := controllers.NewAdminUsersController(svc)
 
 	r := gin.New()
@@ -45,7 +45,7 @@ func TestAdminUsersController_UpdateRole_Forbidden_Manager(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.UserRepository)
-	svc := admin.NewUserService(repo)
+	svc := admin.NewUserAdminUseCase(repo)
 	h := controllers.NewAdminUsersController(svc)
 
 	r := gin.New()
@@ -65,7 +65,7 @@ func TestAdminUsersController_UpdateRole_BadRequest_InvalidBody(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.UserRepository)
-	svc := admin.NewUserService(repo)
+	svc := admin.NewUserAdminUseCase(repo)
 	h := controllers.NewAdminUsersController(svc)
 
 	r := gin.New()
@@ -85,7 +85,7 @@ func TestAdminUsersController_UpdateRole_BadRequest_InvalidRole(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.UserRepository)
-	svc := admin.NewUserService(repo)
+	svc := admin.NewUserAdminUseCase(repo)
 	h := controllers.NewAdminUsersController(svc)
 
 	r := gin.New()
@@ -105,7 +105,7 @@ func TestAdminUsersController_UpdateRole_NotFound(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.UserRepository)
-	svc := admin.NewUserService(repo)
+	svc := admin.NewUserAdminUseCase(repo)
 	h := controllers.NewAdminUsersController(svc)
 
 	repo.On("UpdateRole", mock.Anything, "u1", user.RoleManager).Return(repository.ErrNotFound).Once()
@@ -128,7 +128,7 @@ func TestAdminUsersController_UpdateRole_Success(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	repo := new(repomocks.UserRepository)
-	svc := admin.NewUserService(repo)
+	svc := admin.NewUserAdminUseCase(repo)
 	h := controllers.NewAdminUsersController(svc)
 
 	repo.On("UpdateRole", mock.Anything, "u1", user.RoleManager).Return(nil).Once()

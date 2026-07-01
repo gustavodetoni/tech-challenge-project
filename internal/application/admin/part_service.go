@@ -20,12 +20,6 @@ func NewPartInventoryUseCase(repo repository.PartRepository) *PartInventoryUseCa
 	return &PartInventoryUseCase{repo: repo}
 }
 
-func NewPartService(repo repository.PartRepository) *PartInventoryUseCase {
-	return NewPartInventoryUseCase(repo)
-}
-
-type PartService = PartInventoryUseCase
-
 type CreatePartInput struct {
 	SKU            string
 	Name           string

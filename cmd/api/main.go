@@ -80,7 +80,7 @@ func main() {
 	partSvc := adminApp.NewPartInventoryUseCase(partRepo)
 	serviceOrderSvc := adminApp.NewServiceOrderAdminUseCase(serviceOrderRepo)
 	userSvc := adminApp.NewUserAdminUseCase(userRepo)
-	serviceOrderFlowSvc := serviceorder.NewFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
+	serviceOrderFlowSvc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
 
 	routes.Register(router, routes.Deps{
 		Health: controllers.NewHealthController(),

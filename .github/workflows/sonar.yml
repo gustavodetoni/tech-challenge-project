@@ -1,36 +1,36 @@
 name: Sonar
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows:
+      - Tests
+    types:
+      - completed
 
 permissions:
+  actions: read
   contents: read
   pull-requests: read
 
 jobs:
   sonar:
     name: SonarQube
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v8
         with:
-          go-version-file: go.mod
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run tests with coverage
-        run: go test ./... -count=1 -coverpkg=./... -covermode=atomic -coverprofile=coverage.out
+          name: coverage-report
+          path: .
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602

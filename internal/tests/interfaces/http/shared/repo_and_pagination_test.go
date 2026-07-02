@@ -85,6 +85,18 @@ func TestWriteRepoError_DefaultsToInternalError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
+func TestWriteRepoError_DelegatesToWriteError(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	shared.WriteRepoError(c, repository.ErrNotFound)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
 func TestWriteRepoError_MapsApplicationErrors(t *testing.T) {
 	t.Parallel()
 

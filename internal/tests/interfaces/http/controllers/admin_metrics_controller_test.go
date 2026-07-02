@@ -75,6 +75,29 @@ func TestAdminMetricsController_AverageExecutionTime_Success(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestAdminMetricsController_AverageExecutionTime_ServiceError(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	repo := new(repomocks.ServiceOrderRepository)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
+	h := controllers.NewAdminMetricsController(svc)
+
+	repo.On("AverageExecutionMinutes", mock.Anything, (*time.Time)(nil), (*time.Time)(nil)).
+		Return(0.0, assert.AnError).
+		Once()
+
+	r := gin.New()
+	r.GET("/admin/metrics/avg-execution-time", h.AverageExecutionTime)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/metrics/avg-execution-time", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+	repo.AssertExpectations(t)
+}
+
 func TestAdminMetricsController_AverageServiceExecutionTime_Success(t *testing.T) {
 	t.Parallel()
 
@@ -102,6 +125,29 @@ func TestAdminMetricsController_AverageServiceExecutionTime_Success(t *testing.T
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"items"`)
 	assert.Contains(t, w.Body.String(), `"description":"Alinhamento"`)
+	repo.AssertExpectations(t)
+}
+
+func TestAdminMetricsController_AverageServiceExecutionTime_ServiceError(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	repo := new(repomocks.ServiceOrderRepository)
+	svc := admin.NewServiceOrderAdminUseCase(repo)
+	h := controllers.NewAdminMetricsController(svc)
+
+	repo.On("AverageServiceExecutionMinutes", mock.Anything, (*string)(nil), (*time.Time)(nil), (*time.Time)(nil)).
+		Return(nil, assert.AnError).
+		Once()
+
+	r := gin.New()
+	r.GET("/admin/metrics/avg-service-execution-time", h.AverageServiceExecutionTime)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/metrics/avg-service-execution-time", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
 	repo.AssertExpectations(t)
 }
 

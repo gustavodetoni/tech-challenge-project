@@ -101,6 +101,13 @@ definitions:
       vehicle:
         $ref: '#/definitions/dto.ClientServiceOrderVehicleResponse'
     type: object
+  dto.ClientServiceOrderStatusResponse:
+    properties:
+      code:
+        type: string
+      status:
+        type: string
+    type: object
   dto.ClientServiceOrderVehicleResponse:
     properties:
       brand:
@@ -235,6 +242,28 @@ definitions:
     - model
     - model_year
     - plate
+    type: object
+  dto.ExternalBudgetDecisionRequest:
+    properties:
+      decision:
+        type: string
+      document_number:
+        type: string
+      reason:
+        type: string
+    required:
+    - decision
+    - document_number
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
     type: object
   dto.MeResponse:
     properties:
@@ -1040,6 +1069,13 @@ paths:
       - admin-vehicles
   /auth/login:
     post:
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
       responses:
         "200":
           description: OK
@@ -1130,6 +1166,47 @@ paths:
       summary: Reject latest budget
       tags:
       - client-service-orders
+  /client/service-orders/{code}/status:
+    get:
+      parameters:
+      - description: CPF/CNPJ
+        in: query
+        name: document_number
+        required: true
+        type: string
+      - description: Service Order Code
+        in: path
+        name: code
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ClientServiceOrderStatusResponse'
+      summary: Get service order status (client)
+      tags:
+      - client-service-orders
+  /external/service-orders/{code}/budget/decision:
+    post:
+      parameters:
+      - description: Service Order Code
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Budget decision
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ExternalBudgetDecisionRequest'
+      responses:
+        "204":
+          description: No Content
+      summary: Receive external budget approval/rejection notification
+      tags:
+      - external-service-orders
   /health:
     get:
       responses:

@@ -110,6 +110,17 @@ type ClientServiceOrderVehicleResponse struct {
 	Color           *string `json:"color,omitempty"`
 }
 
+type ClientServiceOrderStatusResponse struct {
+	Code   string `json:"code"`
+	Status string `json:"status"`
+}
+
+type ExternalBudgetDecisionRequest struct {
+	DocumentNumber string  `json:"document_number" binding:"required"`
+	Decision       string  `json:"decision" binding:"required"`
+	Reason         *string `json:"reason"`
+}
+
 type ReviseBudgetRequest struct {
 	Services []ServiceOrderItemRequest `json:"services"`
 	Parts    []ServiceOrderItemRequest `json:"parts"`

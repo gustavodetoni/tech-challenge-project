@@ -21,6 +21,13 @@ type Config struct {
 
 	CORS      CORSConfig
 	RateLimit RateLimitConfig
+	Brevo     BrevoConfig
+}
+
+type BrevoConfig struct {
+	APIKey      string
+	SenderEmail string
+	SenderName  string
 }
 
 func Load() (Config, error) {
@@ -37,6 +44,7 @@ func Load() (Config, error) {
 	viper.SetDefault("RATE_LIMIT_BURST", 20)
 	viper.SetDefault("RATE_LIMIT_TTL_SECONDS", int((10 * time.Minute).Seconds()))
 	viper.SetDefault("RATE_LIMIT_CLEANUP_INTERVAL_SECONDS", int((1 * time.Minute).Seconds()))
+	viper.SetDefault("BREVO_SENDER_NAME", "Oficina - Pos")
 	viper.AutomaticEnv()
 
 	portStr := viper.GetString("PORT")
@@ -83,6 +91,12 @@ func Load() (Config, error) {
 		}
 	}
 
+	brevoAPIKey := viper.GetString("BREVO_API_KEY")
+	brevoSenderEmail := viper.GetString("BREVO_SENDER_EMAIL")
+	if (strings.TrimSpace(brevoAPIKey) == "") != (strings.TrimSpace(brevoSenderEmail) == "") {
+		return Config{}, fmt.Errorf("BREVO_API_KEY and BREVO_SENDER_EMAIL must be configured together")
+	}
+
 	return Config{
 		Port:             port,
 		DatabaseURL:      viper.GetString("DATABASE_URL"),
@@ -97,6 +111,11 @@ func Load() (Config, error) {
 			Burst:           rateLimitBurst,
 			TTL:             time.Duration(rateLimitTTLSeconds) * time.Second,
 			CleanupInterval: time.Duration(rateLimitCleanupIntervalSeconds) * time.Second,
+		},
+		Brevo: BrevoConfig{
+			APIKey:      brevoAPIKey,
+			SenderEmail: brevoSenderEmail,
+			SenderName:  viper.GetString("BREVO_SENDER_NAME"),
 		},
 	}, nil
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -122,6 +123,30 @@ func (h *ClientServiceOrderController) Get(c *gin.Context) {
 	})
 }
 
+// @Summary Get service order status (client)
+// @Tags client-service-orders
+// @Param document_number query string true "CPF/CNPJ"
+// @Param code path string true "Service Order Code"
+// @Success 200 {object} dto.ClientServiceOrderStatusResponse
+// @Router /client/service-orders/{code}/status [get]
+func (h *ClientServiceOrderController) Status(c *gin.Context) {
+	code, doc, ok := getCodeAndDocumentNumber(c)
+	if !ok {
+		return
+	}
+
+	view, err := h.svc.ClientGetByCode(c.Request.Context(), code, doc)
+	if err != nil {
+		shared.WriteError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ClientServiceOrderStatusResponse{
+		Code:   view.Code,
+		Status: string(view.Status),
+	})
+}
+
 // @Summary Approve latest budget
 // @Tags client-service-orders
 // @Param document_number query string true "CPF/CNPJ"
@@ -142,6 +167,47 @@ func (h *ClientServiceOrderController) ApproveBudget(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	c.Status(http.StatusNoContent)
+}
+
+// @Summary Receive external budget approval/rejection notification
+// @Tags external-service-orders
+// @Param code path string true "Service Order Code"
+// @Param request body dto.ExternalBudgetDecisionRequest true "Budget decision"
+// @Success 204
+// @Router /external/service-orders/{code}/budget/decision [post]
+func (h *ClientServiceOrderController) ExternalBudgetDecision(c *gin.Context) {
+	code := c.Param("code")
+	var req dto.ExternalBudgetDecisionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	switch strings.ToUpper(strings.TrimSpace(req.Decision)) {
+	case "APPROVED":
+		if err := h.svc.ClientApproveBudget(c.Request.Context(), code, req.DocumentNumber); err != nil {
+			writeBudgetDecisionError(c, err)
+			return
+		}
+	case "REJECTED":
+		reason := ""
+		if req.Reason != nil {
+			reason = strings.TrimSpace(*req.Reason)
+		}
+		if reason == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "reason is required"})
+			return
+		}
+		if err := h.svc.ClientRejectBudget(c.Request.Context(), code, req.DocumentNumber, reason); err != nil {
+			writeBudgetDecisionError(c, err)
+			return
+		}
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid decision"})
+		return
+	}
+
 	c.Status(http.StatusNoContent)
 }
 
@@ -191,4 +257,12 @@ func getCodeAndDocumentNumber(c *gin.Context) (string, string, bool) {
 	}
 
 	return code, doc, true
+}
+
+func writeBudgetDecisionError(c *gin.Context, err error) {
+	if errors.Is(err, repository.ErrNotFound) {
+		shared.WriteError(c, err)
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 }

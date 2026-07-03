@@ -57,6 +57,15 @@ func (m *ServiceOrderFlowRepository) Deliver(ctx context.Context, serviceOrderID
 	return args.Error(0)
 }
 
+func (m *ServiceOrderFlowRepository) GetNotificationDataByID(ctx context.Context, serviceOrderID string) (*repository.ServiceOrderNotificationData, error) {
+	args := m.Called(ctx, serviceOrderID)
+	var out *repository.ServiceOrderNotificationData
+	if v := args.Get(0); v != nil {
+		out = v.(*repository.ServiceOrderNotificationData)
+	}
+	return out, args.Error(1)
+}
+
 func (m *ServiceOrderFlowRepository) GetClientViewByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
 	args := m.Called(ctx, code, documentNumber)
 	var out *repository.ClientServiceOrderView

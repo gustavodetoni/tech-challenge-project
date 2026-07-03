@@ -62,7 +62,15 @@ func (r *ServiceOrderRepository) List(ctx context.Context, limit, offset int, st
 		Joins("join clients c on c.id = so.client_id and c.deleted_at is null").
 		Joins("join vehicles v on v.id = so.vehicle_id and v.deleted_at is null").
 		Where("so.deleted_at is null").
-		Order("so.opened_at desc").
+		Where("so.status NOT IN ?", []string{string(order.StatusFinished), string(order.StatusDelivered)}).
+		Order(`CASE so.status
+			WHEN 'IN_PROGRESS' THEN 1
+			WHEN 'WAITING_APPROVAL' THEN 2
+			WHEN 'IN_DIAGNOSIS' THEN 3
+			WHEN 'RECEIVED' THEN 4
+			ELSE 5
+		END`).
+		Order("so.opened_at asc").
 		Limit(limit).
 		Offset(offset)
 	if status != nil && *status != "" {

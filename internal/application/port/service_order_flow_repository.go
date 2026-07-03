@@ -43,6 +43,14 @@ type ClientServiceOrderView struct {
 	StatusHistory  []order.StatusHistoryEntry
 }
 
+type ServiceOrderNotificationData struct {
+	ServiceOrderID string
+	Code           string
+	Status         order.Status
+	ClientName     string
+	ClientEmail    *string
+}
+
 type CreateBudgetRevisionParams struct {
 	ServiceOrderID  string
 	Budget          order.Budget
@@ -59,6 +67,7 @@ type ServiceOrderFlowRepository interface {
 	Finish(ctx context.Context, serviceOrderID string, changedByUserID *string) error
 	Deliver(ctx context.Context, serviceOrderID string, changedByUserID *string) error
 
+	GetNotificationDataByID(ctx context.Context, serviceOrderID string) (*ServiceOrderNotificationData, error)
 	GetClientViewByCode(ctx context.Context, code string, documentNumber string) (*ClientServiceOrderView, error)
 	ApproveLatestBudgetByCode(ctx context.Context, code string, documentNumber string, approvedByName *string) error
 	RejectLatestBudgetByCode(ctx context.Context, code string, documentNumber string, rejectionReason string) error

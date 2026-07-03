@@ -391,6 +391,38 @@ func (r *ServiceOrderFlowRepository) Deliver(ctx context.Context, serviceOrderID
 	})
 }
 
+func (r *ServiceOrderFlowRepository) GetNotificationDataByID(ctx context.Context, serviceOrderID string) (*repository.ServiceOrderNotificationData, error) {
+	type row struct {
+		ServiceOrderID string
+		Code           string
+		Status         string
+		ClientName     string
+		ClientEmail    *string
+	}
+
+	var out row
+	err := r.db.WithContext(ctx).
+		Table("service_orders so").
+		Select("so.id as service_order_id, so.code, so.status, c.name as client_name, c.email as client_email").
+		Joins("join clients c on c.id = so.client_id and c.deleted_at is null").
+		Where("so.id = ? AND so.deleted_at is null", serviceOrderID).
+		Limit(1).
+		Scan(&out).Error
+	if err != nil {
+		return nil, err
+	}
+	if out.ServiceOrderID == "" {
+		return nil, repository.ErrNotFound
+	}
+	return &repository.ServiceOrderNotificationData{
+		ServiceOrderID: out.ServiceOrderID,
+		Code:           out.Code,
+		Status:         order.Status(out.Status),
+		ClientName:     out.ClientName,
+		ClientEmail:    out.ClientEmail,
+	}, nil
+}
+
 func (r *ServiceOrderFlowRepository) GetClientViewByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
 	timePtrRFC3339 := func(t *time.Time) *string {
 		if t == nil {

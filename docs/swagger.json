@@ -910,6 +910,17 @@
                     "auth"
                 ],
                 "summary": "Login with email/password",
+                "parameters": [
+                    {
+                        "description": "Login request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1036,6 +1047,69 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/controllers.rejectBudgetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/client/service-orders/{code}/status": {
+            "get": {
+                "tags": [
+                    "client-service-orders"
+                ],
+                "summary": "Get service order status (client)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CPF/CNPJ",
+                        "name": "document_number",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Service Order Code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ClientServiceOrderStatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/external/service-orders/{code}/budget/decision": {
+            "post": {
+                "tags": [
+                    "external-service-orders"
+                ],
+                "summary": "Receive external budget approval/rejection notification",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service Order Code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Budget decision",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ExternalBudgetDecisionRequest"
                         }
                     }
                 ],
@@ -1238,6 +1312,17 @@
                 }
             }
         },
+        "dto.ClientServiceOrderStatusResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ClientServiceOrderVehicleResponse": {
             "type": "object",
             "properties": {
@@ -1436,6 +1521,39 @@
                     "type": "string"
                 },
                 "plate": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ExternalBudgetDecisionRequest": {
+            "type": "object",
+            "required": [
+                "decision",
+                "document_number"
+            ],
+            "properties": {
+                "decision": {
+                    "type": "string"
+                },
+                "document_number": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
                     "type": "string"
                 }
             }

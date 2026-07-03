@@ -86,6 +86,10 @@ func Register(router *gin.Engine, deps Deps) {
 
 	clientGroup := router.Group("/client")
 	clientGroup.GET("/service-orders/:code", deps.ClientServiceOrders.Get)
+	clientGroup.GET("/service-orders/:code/status", deps.ClientServiceOrders.Status)
 	clientGroup.POST("/service-orders/:code/budget/approve", deps.ClientServiceOrders.ApproveBudget)
 	clientGroup.POST("/service-orders/:code/budget/reject", deps.ClientServiceOrders.RejectBudget)
+
+	externalGroup := router.Group("/external")
+	externalGroup.POST("/service-orders/:code/budget/decision", deps.ClientServiceOrders.ExternalBudgetDecision)
 }

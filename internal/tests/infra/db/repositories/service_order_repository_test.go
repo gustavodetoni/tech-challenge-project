@@ -51,7 +51,7 @@ func TestServiceOrderRepository_List_WithAndWithoutStatus(t *testing.T) {
 	gdb := newTestGormDB(t, []dbOp{
 		{
 			kind:         dbOpQuery,
-			wantContains: []string{`FROM service_orders so`, `join clients`, `join vehicles`},
+			wantContains: []string{`FROM service_orders so`, `join clients`, `join vehicles`, `so.status NOT IN`, `CASE so.status`, `so.opened_at asc`},
 			columns:      []string{"id", "code", "status", "opened_at", "client_id", "client_name", "vehicle_id", "plate"},
 			rows: [][]any{
 				{"so1", "C-1", "RECEIVED", openedAt, "c1", "Maria", "v1", "ABC1D23"},
@@ -59,7 +59,7 @@ func TestServiceOrderRepository_List_WithAndWithoutStatus(t *testing.T) {
 		},
 		{
 			kind:         dbOpQuery,
-			wantContains: []string{`FROM service_orders so`, `so.status =`},
+			wantContains: []string{`FROM service_orders so`, `so.status NOT IN`, `CASE so.status`, `so.opened_at asc`, `so.status =`},
 			columns:      []string{"id", "code", "status", "opened_at", "client_id", "client_name", "vehicle_id", "plate"},
 			rows: [][]any{
 				{"so2", "C-2", "RECEIVED", openedAt, "c2", "Joao", "v2", "DEF1G23"},

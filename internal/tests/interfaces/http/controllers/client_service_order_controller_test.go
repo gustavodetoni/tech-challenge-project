@@ -360,3 +360,137 @@ func TestClientServiceOrderController_RejectBudget_Success(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, w.Code)
 	flowRepo.AssertExpectations(t)
 }
+
+func TestClientServiceOrderController_Status_Success(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	h := controllers.NewClientServiceOrderController(svc)
+
+	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return(&repository.ClientServiceOrderView{
+		Code:   "C-1",
+		Status: order.StatusInProgress,
+	}, nil).Once()
+
+	r := gin.New()
+	r.GET("/client/service-orders/:code/status", h.Status)
+
+	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1/status?document_number=46420082412", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.JSONEq(t, `{"code":"C-1","status":"IN_PROGRESS"}`, w.Body.String())
+	flowRepo.AssertExpectations(t)
+}
+
+func TestClientServiceOrderController_Status_BadRequest_NoDocumentNumber(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	h := controllers.NewClientServiceOrderController(svc)
+
+	r := gin.New()
+	r.GET("/client/service-orders/:code/status", h.Status)
+
+	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1/status", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestClientServiceOrderController_ExternalBudgetDecision_Approved(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	clientRepo := new(repomocks.ClientRepository)
+	svc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	h := controllers.NewClientServiceOrderController(svc)
+
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
+		ID:             "cl-1",
+		DocumentNumber: "46420082412",
+		Name:           "Maria",
+	}, nil).Once()
+	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", mock.MatchedBy(func(v *string) bool {
+		return v != nil && *v == "Maria"
+	})).Return(nil).Once()
+
+	r := gin.New()
+	r.POST("/external/service-orders/:code/budget/decision", h.ExternalBudgetDecision)
+
+	req := httptest.NewRequest(http.MethodPost, "/external/service-orders/C-1/budget/decision", bytes.NewBufferString(`{"document_number":"464.200.824-12","decision":"APPROVED"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+	clientRepo.AssertExpectations(t)
+	flowRepo.AssertExpectations(t)
+}
+
+func TestClientServiceOrderController_ExternalBudgetDecision_Rejected(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	h := controllers.NewClientServiceOrderController(svc)
+
+	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(nil).Once()
+
+	r := gin.New()
+	r.POST("/external/service-orders/:code/budget/decision", h.ExternalBudgetDecision)
+
+	req := httptest.NewRequest(http.MethodPost, "/external/service-orders/C-1/budget/decision", bytes.NewBufferString(`{"document_number":"464.200.824-12","decision":"REJECTED","reason":"too expensive"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+	flowRepo.AssertExpectations(t)
+}
+
+func TestClientServiceOrderController_ExternalBudgetDecision_BadRequest_InvalidDecision(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	h := controllers.NewClientServiceOrderController(svc)
+
+	r := gin.New()
+	r.POST("/external/service-orders/:code/budget/decision", h.ExternalBudgetDecision)
+
+	req := httptest.NewRequest(http.MethodPost, "/external/service-orders/C-1/budget/decision", bytes.NewBufferString(`{"document_number":"46420082412","decision":"MAYBE"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestClientServiceOrderController_ExternalBudgetDecision_BadRequest_RejectedWithoutReason(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	svc := serviceorder.NewServiceOrderFlowUseCase(new(repomocks.ClientRepository), new(repomocks.VehicleRepository), new(repomocks.ServiceRepository), new(repomocks.PartRepository), flowRepo)
+	h := controllers.NewClientServiceOrderController(svc)
+
+	r := gin.New()
+	r.POST("/external/service-orders/:code/budget/decision", h.ExternalBudgetDecision)
+
+	req := httptest.NewRequest(http.MethodPost, "/external/service-orders/C-1/budget/decision", bytes.NewBufferString(`{"document_number":"46420082412","decision":"REJECTED"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}

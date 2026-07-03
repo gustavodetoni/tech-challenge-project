@@ -35,6 +35,9 @@ func TestLoad_DefaultsAndEnv(t *testing.T) {
 	require.Equal(t, 20, cfg.RateLimit.Burst)
 	require.Equal(t, 10*time.Minute, cfg.RateLimit.TTL)
 	require.Equal(t, 1*time.Minute, cfg.RateLimit.CleanupInterval)
+	require.Empty(t, cfg.Brevo.APIKey)
+	require.Empty(t, cfg.Brevo.SenderEmail)
+	require.Equal(t, "Oficina - Pos", cfg.Brevo.SenderName)
 }
 
 func TestLoad_InvalidPort(t *testing.T) {
@@ -70,4 +73,33 @@ func TestLoad_CORSAllowedOrigins_DisablesAllowAllOrigins(t *testing.T) {
 	require.True(t, cfg.CORS.Enabled)
 	require.False(t, cfg.CORS.AllowAllOrigins)
 	require.Equal(t, []string{"https://front.example", "https://front2.example"}, cfg.CORS.AllowOrigins)
+}
+
+func TestLoad_BrevoConfig(t *testing.T) {
+	viper.Reset()
+	t.Cleanup(viper.Reset)
+
+	t.Setenv("JWT_SECRET", "secret")
+	t.Setenv("DATABASE_URL", "postgres://example")
+	t.Setenv("BREVO_API_KEY", "key")
+	t.Setenv("BREVO_SENDER_EMAIL", "sender@example.com")
+	t.Setenv("BREVO_SENDER_NAME", "Oficina Teste")
+
+	cfg, err := config2.Load()
+	require.NoError(t, err)
+	require.Equal(t, "key", cfg.Brevo.APIKey)
+	require.Equal(t, "sender@example.com", cfg.Brevo.SenderEmail)
+	require.Equal(t, "Oficina Teste", cfg.Brevo.SenderName)
+}
+
+func TestLoad_BrevoPartialConfig(t *testing.T) {
+	viper.Reset()
+	t.Cleanup(viper.Reset)
+
+	t.Setenv("JWT_SECRET", "secret")
+	t.Setenv("DATABASE_URL", "postgres://example")
+	t.Setenv("BREVO_API_KEY", "key")
+
+	_, err := config2.Load()
+	require.Error(t, err)
 }

@@ -2,6 +2,7 @@ package serviceorder_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -179,6 +180,60 @@ func TestServiceOrder_CreateDraft_UpdatesClientContact(t *testing.T) {
 	require.NoError(t, err)
 
 	vehicleRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	clientRepo.AssertExpectations(t)
+	vehicleRepo.AssertExpectations(t)
+	flowRepo.AssertExpectations(t)
+}
+
+func TestServiceOrder_CreateDraft_NotifiesReceivedStatus(t *testing.T) {
+	t.Parallel()
+
+	clientRepo := new(repomocks.ClientRepository)
+	vehicleRepo := new(repomocks.VehicleRepository)
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	notifier := &recordingNotifier{}
+
+	svc := serviceorder.NewServiceOrderFlowUseCase(
+		clientRepo,
+		vehicleRepo,
+		new(repomocks.ServiceRepository),
+		new(repomocks.PartRepository),
+		flowRepo,
+		notifier,
+	)
+
+	email := "cliente@example.com"
+	clientRepo.On("FindByDocument", mock.Anything, "46420082412").Return(&client.Client{
+		ID:             "c1",
+		DocumentNumber: "46420082412",
+		Email:          &email,
+		Name:           "Maria",
+	}, nil).Once()
+	vehicleRepo.On("FindByPlate", mock.Anything, "ABC1D23").Return(&vehicle.Vehicle{ID: "v1", ClientID: "c1", Plate: "ABC1D23"}, nil).Once()
+	flowRepo.On("CreateDraft", mock.Anything, mock.Anything).Return(&order.ServiceOrder{
+		ID:        "so1",
+		Code:      "OS-1",
+		ClientID:  "c1",
+		VehicleID: "v1",
+		Status:    order.StatusReceived,
+	}, &order.Budget{ID: "b1", Status: order.BudgetStatusDraft}, nil).Once()
+	flowRepo.On("GetNotificationDataByID", mock.Anything, "so1").Return(&repository.ServiceOrderNotificationData{
+		ServiceOrderID: "so1",
+		Code:           "OS-1",
+		Status:         order.StatusReceived,
+		ClientName:     "Maria",
+		ClientEmail:    &email,
+	}, nil).Once()
+
+	_, err := svc.CreateDraft(context.Background(), serviceorder.CreateDraftInput{
+		ClientDocumentType:   string(client.DocumentTypeCPF),
+		ClientDocumentNumber: "464.200.824-12",
+		VehiclePlate:         "ABC1D23",
+	})
+	require.NoError(t, err)
+	require.Len(t, notifier.items, 1)
+	assert.Equal(t, "RECEIVED", notifier.items[0].CurrentStatus)
+
 	clientRepo.AssertExpectations(t)
 	vehicleRepo.AssertExpectations(t)
 	flowRepo.AssertExpectations(t)
@@ -453,6 +508,95 @@ func TestServiceOrder_FlowPassthrough_StartSendFinishDeliver(t *testing.T) {
 	flowRepo.AssertExpectations(t)
 }
 
+func TestServiceOrder_StartDiagnosis_NotifiesStatusChanged(t *testing.T) {
+	t.Parallel()
+
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	notifier := &recordingNotifier{}
+	svc := serviceorder.NewServiceOrderFlowUseCase(
+		new(repomocks.ClientRepository),
+		new(repomocks.VehicleRepository),
+		new(repomocks.ServiceRepository),
+		new(repomocks.PartRepository),
+		flowRepo,
+		notifier,
+	)
+
+	email := "cliente@example.com"
+	flowRepo.On("StartDiagnosis", mock.Anything, "so1", (*string)(nil)).Return(nil).Once()
+	flowRepo.On("GetNotificationDataByID", mock.Anything, "so1").Return(&repository.ServiceOrderNotificationData{
+		ServiceOrderID: "so1",
+		Code:           "OS-1",
+		Status:         order.StatusInDiagnosis,
+		ClientName:     "Maria",
+		ClientEmail:    &email,
+	}, nil).Once()
+
+	require.NoError(t, svc.StartDiagnosis(context.Background(), "so1", nil))
+	require.Len(t, notifier.items, 1)
+	assert.Equal(t, "OS-1", notifier.items[0].Code)
+	assert.Equal(t, "IN_DIAGNOSIS", notifier.items[0].CurrentStatus)
+	assert.Equal(t, email, notifier.items[0].ClientEmail)
+	flowRepo.AssertExpectations(t)
+}
+
+func TestServiceOrder_StartDiagnosis_DoesNotFailWhenNotificationFails(t *testing.T) {
+	t.Parallel()
+
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	notifier := &recordingNotifier{err: errors.New("email unavailable")}
+	svc := serviceorder.NewServiceOrderFlowUseCase(
+		new(repomocks.ClientRepository),
+		new(repomocks.VehicleRepository),
+		new(repomocks.ServiceRepository),
+		new(repomocks.PartRepository),
+		flowRepo,
+		notifier,
+	)
+
+	email := "cliente@example.com"
+	flowRepo.On("StartDiagnosis", mock.Anything, "so1", (*string)(nil)).Return(nil).Once()
+	flowRepo.On("GetNotificationDataByID", mock.Anything, "so1").Return(&repository.ServiceOrderNotificationData{
+		ServiceOrderID: "so1",
+		Code:           "OS-1",
+		Status:         order.StatusInDiagnosis,
+		ClientName:     "Maria",
+		ClientEmail:    &email,
+	}, nil).Once()
+
+	require.NoError(t, svc.StartDiagnosis(context.Background(), "so1", nil))
+	require.Len(t, notifier.items, 1)
+	flowRepo.AssertExpectations(t)
+}
+
+func TestServiceOrder_StartDiagnosis_SkipsNotificationWithoutClientEmail(t *testing.T) {
+	t.Parallel()
+
+	flowRepo := new(repomocks.ServiceOrderFlowRepository)
+	notifier := &recordingNotifier{}
+	svc := serviceorder.NewServiceOrderFlowUseCase(
+		new(repomocks.ClientRepository),
+		new(repomocks.VehicleRepository),
+		new(repomocks.ServiceRepository),
+		new(repomocks.PartRepository),
+		flowRepo,
+		notifier,
+	)
+
+	flowRepo.On("StartDiagnosis", mock.Anything, "so1", (*string)(nil)).Return(nil).Once()
+	flowRepo.On("GetNotificationDataByID", mock.Anything, "so1").Return(&repository.ServiceOrderNotificationData{
+		ServiceOrderID: "so1",
+		Code:           "OS-1",
+		Status:         order.StatusInDiagnosis,
+		ClientName:     "Maria",
+		ClientEmail:    nil,
+	}, nil).Once()
+
+	require.NoError(t, svc.StartDiagnosis(context.Background(), "so1", nil))
+	require.Empty(t, notifier.items)
+	flowRepo.AssertExpectations(t)
+}
+
 func TestServiceOrder_ReviseBudget_InvalidItem_ReturnsInvalidInput(t *testing.T) {
 	t.Parallel()
 
@@ -469,6 +613,16 @@ func TestServiceOrder_ReviseBudget_InvalidItem_ReturnsInvalidInput(t *testing.T)
 	}, nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, serviceorder.ErrInvalidInput)
+}
+
+type recordingNotifier struct {
+	items []repository.StatusChangedNotification
+	err   error
+}
+
+func (n *recordingNotifier) NotifyStatusChanged(ctx context.Context, input repository.StatusChangedNotification) error {
+	n.items = append(n.items, input)
+	return n.err
 }
 
 func TestServiceOrder_ReviseBudget_ServiceNotFound(t *testing.T) {

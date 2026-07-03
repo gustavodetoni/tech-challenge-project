@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -32,6 +33,7 @@ type ServiceOrderFlowUseCase struct {
 	services repository.ServiceRepository
 	parts    repository.PartRepository
 	flow     repository.ServiceOrderFlowRepository
+	notifier repository.ServiceOrderNotifier
 }
 
 func NewServiceOrderFlowUseCase(
@@ -40,13 +42,19 @@ func NewServiceOrderFlowUseCase(
 	services repository.ServiceRepository,
 	parts repository.PartRepository,
 	flow repository.ServiceOrderFlowRepository,
+	notifiers ...repository.ServiceOrderNotifier,
 ) *ServiceOrderFlowUseCase {
+	var notifier repository.ServiceOrderNotifier
+	if len(notifiers) > 0 {
+		notifier = notifiers[0]
+	}
 	return &ServiceOrderFlowUseCase{
 		clients:  clients,
 		vehicles: vehicles,
 		services: services,
 		parts:    parts,
 		flow:     flow,
+		notifier: notifier,
 	}
 }
 
@@ -201,6 +209,7 @@ func (s *ServiceOrderFlowUseCase) CreateDraft(ctx context.Context, in CreateDraf
 	if err != nil {
 		return nil, err
 	}
+	s.notifyStatusChanged(ctx, createdSO.ID)
 
 	return &CreateDraftOutput{
 		ServiceOrderID: createdSO.ID,
@@ -261,19 +270,35 @@ func (s *ServiceOrderFlowUseCase) ReviseBudget(ctx context.Context, serviceOrder
 }
 
 func (s *ServiceOrderFlowUseCase) StartDiagnosis(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
-	return s.flow.StartDiagnosis(ctx, serviceOrderID, changedByUserID)
+	if err := s.flow.StartDiagnosis(ctx, serviceOrderID, changedByUserID); err != nil {
+		return err
+	}
+	s.notifyStatusChanged(ctx, serviceOrderID)
+	return nil
 }
 
 func (s *ServiceOrderFlowUseCase) SendBudget(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
-	return s.flow.SendLatestBudget(ctx, serviceOrderID, changedByUserID)
+	if err := s.flow.SendLatestBudget(ctx, serviceOrderID, changedByUserID); err != nil {
+		return err
+	}
+	s.notifyStatusChanged(ctx, serviceOrderID)
+	return nil
 }
 
 func (s *ServiceOrderFlowUseCase) Finish(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
-	return s.flow.Finish(ctx, serviceOrderID, changedByUserID)
+	if err := s.flow.Finish(ctx, serviceOrderID, changedByUserID); err != nil {
+		return err
+	}
+	s.notifyStatusChanged(ctx, serviceOrderID)
+	return nil
 }
 
 func (s *ServiceOrderFlowUseCase) Deliver(ctx context.Context, serviceOrderID string, changedByUserID *string) error {
-	return s.flow.Deliver(ctx, serviceOrderID, changedByUserID)
+	if err := s.flow.Deliver(ctx, serviceOrderID, changedByUserID); err != nil {
+		return err
+	}
+	s.notifyStatusChanged(ctx, serviceOrderID)
+	return nil
 }
 
 func (s *ServiceOrderFlowUseCase) ClientGetByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
@@ -296,6 +321,30 @@ func (s *ServiceOrderFlowUseCase) ClientApproveBudget(ctx context.Context, code 
 
 func (s *ServiceOrderFlowUseCase) ClientRejectBudget(ctx context.Context, code string, documentNumber string, reason string) error {
 	return s.flow.RejectLatestBudgetByCode(ctx, code, document.Normalize(documentNumber), reason)
+}
+
+func (s *ServiceOrderFlowUseCase) notifyStatusChanged(ctx context.Context, serviceOrderID string) {
+	if s.notifier == nil {
+		return
+	}
+	data, err := s.flow.GetNotificationDataByID(ctx, serviceOrderID)
+	if err != nil {
+		log.Printf("service order status notification skipped: service_order_id=%s err=%v", serviceOrderID, err)
+		return
+	}
+	if data.ClientEmail == nil || strings.TrimSpace(*data.ClientEmail) == "" {
+		log.Printf("service order status notification skipped: service_order_id=%s missing client email", serviceOrderID)
+		return
+	}
+	if err := s.notifier.NotifyStatusChanged(ctx, repository.StatusChangedNotification{
+		ServiceOrderID: data.ServiceOrderID,
+		Code:           data.Code,
+		ClientName:     data.ClientName,
+		ClientEmail:    *data.ClientEmail,
+		CurrentStatus:  string(data.Status),
+	}); err != nil {
+		log.Printf("service order status notification failed: service_order_id=%s err=%v", serviceOrderID, err)
+	}
 }
 
 func (s *ServiceOrderFlowUseCase) buildServiceLines(ctx context.Context, items []ItemInput) ([]order.BudgetServiceItem, int64, error) {

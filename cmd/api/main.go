@@ -10,11 +10,13 @@ import (
 
 	adminApp "github.com/soat-architecture/tech-challenge-project/internal/application/admin"
 	appAuth "github.com/soat-architecture/tech-challenge-project/internal/application/auth"
+	appPort "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
 	"github.com/soat-architecture/tech-challenge-project/internal/config"
 	"github.com/soat-architecture/tech-challenge-project/internal/infra/auth"
 	"github.com/soat-architecture/tech-challenge-project/internal/infra/db"
 	"github.com/soat-architecture/tech-challenge-project/internal/infra/db/repositories"
+	"github.com/soat-architecture/tech-challenge-project/internal/infra/email"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/controllers"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/routes"
@@ -80,7 +82,19 @@ func main() {
 	partSvc := adminApp.NewPartInventoryUseCase(partRepo)
 	serviceOrderSvc := adminApp.NewServiceOrderAdminUseCase(serviceOrderRepo)
 	userSvc := adminApp.NewUserAdminUseCase(userRepo)
-	serviceOrderFlowSvc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo)
+	var serviceOrderNotifier appPort.ServiceOrderNotifier
+	if cfg.Brevo.APIKey != "" && cfg.Brevo.SenderEmail != "" {
+		serviceOrderNotifier, err = email.NewBrevoNotifier(email.BrevoConfig{
+			APIKey:      cfg.Brevo.APIKey,
+			SenderEmail: cfg.Brevo.SenderEmail,
+			SenderName:  cfg.Brevo.SenderName,
+		}, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("Brevo service order notifications enabled")
+	}
+	serviceOrderFlowSvc := serviceorder.NewServiceOrderFlowUseCase(clientRepo, vehicleRepo, serviceRepo, partRepo, serviceOrderFlowRepo, serviceOrderNotifier)
 
 	routes.Register(router, routes.Deps{
 		Health: controllers.NewHealthController(),

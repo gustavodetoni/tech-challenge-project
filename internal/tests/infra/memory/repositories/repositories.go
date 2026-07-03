@@ -866,6 +866,27 @@ func (r *ServiceOrderFlowRepository) Deliver(ctx context.Context, serviceOrderID
 	return r.transitionLocked(so, order.StatusDelivered, changedByUserID, nil, nil, now)
 }
 
+func (r *ServiceOrderFlowRepository) GetNotificationDataByID(ctx context.Context, serviceOrderID string) (*repository.ServiceOrderNotificationData, error) {
+	r.s.mu.Lock()
+	defer r.s.mu.Unlock()
+
+	so := r.s.serviceOrdersByID[serviceOrderID]
+	if so == nil {
+		return nil, repository.ErrNotFound
+	}
+	cl := r.s.clientsByID[so.ClientID]
+	if cl == nil {
+		return nil, repository.ErrNotFound
+	}
+	return &repository.ServiceOrderNotificationData{
+		ServiceOrderID: so.ID,
+		Code:           so.Code,
+		Status:         so.Status,
+		ClientName:     cl.Name,
+		ClientEmail:    cl.Email,
+	}, nil
+}
+
 func (r *ServiceOrderFlowRepository) GetClientViewByCode(ctx context.Context, code string, documentNumber string) (*repository.ClientServiceOrderView, error) {
 	r.s.mu.Lock()
 	defer r.s.mu.Unlock()

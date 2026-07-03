@@ -8,14 +8,13 @@ on:
       - completed
 
 permissions:
-  actions: read
   contents: read
   pull-requests: read
 
 jobs:
   sonar:
     name: SonarQube
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && ((github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') || github.event.workflow_run.event == 'pull_request') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,13 +23,16 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Download coverage artifact
-        uses: actions/download-artifact@v8
+      - name: Setup Go
+        uses: actions/setup-go@v6
         with:
-          name: coverage-report
-          path: .
-          github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          go-version-file: go.mod
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests with coverage
+        run: make tests
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602

@@ -9,6 +9,7 @@ COPY cmd ./cmd
 COPY internal ./internal
 COPY pkg ./pkg
 COPY docs ./docs
+COPY version.go ./
 
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o api ./cmd/api
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o seed ./cmd/seed

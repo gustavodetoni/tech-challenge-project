@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tech-challenge
+  labels:
+    app.kubernetes.io/name: tech-challenge
+    app.kubernetes.io/part-of: tech-challenge-project

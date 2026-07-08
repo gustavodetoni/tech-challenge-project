@@ -7,3 +7,4 @@ bin/
 coverage.out
 .spec/
 .conductor/
+k8s/overlays/local/.env.k8s.local

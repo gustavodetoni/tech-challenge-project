@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tech-challenge-postgres
+  namespace: tech-challenge
+  labels:
+    app.kubernetes.io/name: tech-challenge-postgres
+    app.kubernetes.io/component: database
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: tech-challenge-postgres
+      app.kubernetes.io/component: database
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tech-challenge-api
+              app.kubernetes.io/component: api
+      ports:
+        - protocol: TCP
+          port: 5432

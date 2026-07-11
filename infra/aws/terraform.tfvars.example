@@ -1,0 +1,7 @@
+project_name    = "tech-challenge"
+aws_region      = "us-east-1"
+cluster_version = "1.30"
+
+db_name     = "tech_challenge"
+db_user     = "tech_challenge"
+db_password = "troque-essa-senha"

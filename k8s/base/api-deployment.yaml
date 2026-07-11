@@ -65,6 +65,9 @@ spec:
                 name: tech-challenge-api-config
             - secretRef:
                 name: tech-challenge-api-secret
+          env:
+            - name: RATE_LIMIT_ENABLED
+              value: "false"
           startupProbe:
             httpGet:
               path: /health
@@ -77,7 +80,7 @@ spec:
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
-            timeoutSeconds: 2
+            timeoutSeconds: 5
             failureThreshold: 3
           livenessProbe:
             httpGet:
@@ -85,15 +88,15 @@ spec:
               port: http
             initialDelaySeconds: 20
             periodSeconds: 20
-            timeoutSeconds: 2
-            failureThreshold: 3
+            timeoutSeconds: 5
+            failureThreshold: 6
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 5m
+              memory: 64Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 200m
+              memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

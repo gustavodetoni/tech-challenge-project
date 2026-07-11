@@ -1,0 +1,71 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+images:
+  - name: docker.io/gustavodetoni/tech-challenge-project
+    newTag: latest
+generatorOptions:
+  disableNameSuffixHash: true
+secretGenerator:
+  - name: tech-challenge-api-secret
+    namespace: tech-challenge
+    envs:
+      - .env.k8s.aws
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: StatefulSet
+      name: tech-challenge-postgres
+      namespace: tech-challenge
+    patch: |-
+      $patch: delete
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: tech-challenge-postgres
+        namespace: tech-challenge
+  - target:
+      version: v1
+      kind: Service
+      name: tech-challenge-postgres
+      namespace: tech-challenge
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: tech-challenge-postgres
+        namespace: tech-challenge
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: NetworkPolicy
+      name: tech-challenge-postgres
+      namespace: tech-challenge
+    patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: tech-challenge-postgres
+        namespace: tech-challenge
+  - target:
+      version: v1
+      kind: Service
+      name: tech-challenge-api
+      namespace: tech-challenge
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: LoadBalancer
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: tech-challenge-api
+      namespace: tech-challenge
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/initContainers

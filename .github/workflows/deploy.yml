@@ -1,0 +1,374 @@
+name: Deploy AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Acao da infraestrutura"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
+
+env:
+  AWS_REGION: us-east-1
+  K8S_NAMESPACE: tech-challenge
+  K8S_DEPLOYMENT: tech-challenge-api
+  K8S_CONTAINER: api
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: deploy-aws-${{ inputs.action }}
+  cancel-in-progress: false
+
+jobs:
+  validate-release:
+    name: Validate Release
+    if: ${{ inputs.action == 'apply' }}
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.release.outputs.image }}
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+      commit_sha: ${{ steps.release.outputs.commit_sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate selected branch
+        run: |
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            echo "::error::Deploy must be executed from the main branch. Selected branch: ${{ github.ref_name }}"
+            exit 1
+          fi
+
+      - name: Read release version
+        id: release
+        run: |
+          git fetch origin main --tags
+
+          version="$(sed -nE 's/^const[[:space:]]+Version[[:space:]]*=[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)"$/\1/p' version.go)"
+          if [ -z "$version" ]; then
+            echo "::error::Version must be declared as: const Version = \"X.Y.Z\""
+            exit 1
+          fi
+
+          current_main="$(git rev-parse origin/main)"
+          current_head="$(git rev-parse HEAD)"
+          if [ "$current_head" != "$current_main" ]; then
+            echo "::error::Selected workflow commit is not the current origin/main commit"
+            echo "HEAD=$current_head"
+            echo "origin/main=$current_main"
+            exit 1
+          fi
+
+          tag="v$version"
+          tag_commit="$(git rev-parse "refs/tags/$tag^{commit}" 2>/dev/null || true)"
+          if [ -z "$tag_commit" ]; then
+            echo "::error::Release tag $tag was not found. Run the Release workflow successfully first."
+            exit 1
+          fi
+          if [ "$tag_commit" != "$current_main" ]; then
+            echo "::error::Release tag $tag does not point to the current origin/main commit"
+            echo "$tag=$tag_commit"
+            echo "origin/main=$current_main"
+            exit 1
+          fi
+
+          image="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/tech-challenge-project"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$version" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=$current_main" >> "$GITHUB_OUTPUT"
+          echo "Validated release candidate: $image:$version ($current_main)"
+
+      - name: Validate previous workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
+        run: |
+          for workflow in quality.yml sonar.yml release.yml; do
+            passed="$(gh run list \
+              --workflow "$workflow" \
+              --branch main \
+              --commit "$COMMIT_SHA" \
+              --json status,conclusion \
+              --jq '[.[] | select(.status == "completed" and .conclusion == "success")] | length')"
+
+            if [ "$passed" -lt 1 ]; then
+              echo "::error::Workflow $workflow has no successful run for commit $COMMIT_SHA"
+              exit 1
+            fi
+
+            echo "Workflow $workflow passed for commit $COMMIT_SHA"
+          done
+
+      - name: Validate GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release view "v${{ steps.release.outputs.version }}" --json tagName,url
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Verify Docker Hub image
+        run: docker manifest inspect "${{ steps.release.outputs.image }}:${{ steps.release.outputs.tag }}"
+
+  terraform-apply:
+    name: Provision Infrastructure
+    if: ${{ inputs.action == 'apply' }}
+    needs: validate-release
+    runs-on: ubuntu-latest
+    outputs:
+      cluster_name: ${{ steps.tf-outputs.outputs.cluster_name }}
+      database_host: ${{ steps.tf-outputs.outputs.database_host }}
+      database_name: ${{ steps.tf-outputs.outputs.database_name }}
+      database_port: ${{ steps.tf-outputs.outputs.database_port }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Ensure Terraform state bucket
+        env:
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          if ! aws s3api head-bucket --bucket "$TF_STATE_BUCKET" 2>/dev/null; then
+            aws s3api create-bucket \
+              --bucket "$TF_STATE_BUCKET" \
+              --region "$AWS_REGION"
+            aws s3api put-bucket-versioning \
+              --bucket "$TF_STATE_BUCKET" \
+              --versioning-configuration Status=Enabled
+          fi
+
+      - name: Terraform init
+        working-directory: infra/aws
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=tech-challenge/aws/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+
+      - name: Terraform validate
+        working-directory: infra/aws
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: infra/aws
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+        run: terraform plan -out=tfplan
+
+      - name: Terraform apply
+        working-directory: infra/aws
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform outputs
+        id: tf-outputs
+        working-directory: infra/aws
+        run: |
+          echo "cluster_name=$(terraform output -raw cluster_name)" >> "$GITHUB_OUTPUT"
+          echo "database_host=$(terraform output -raw database_host)" >> "$GITHUB_OUTPUT"
+          echo "database_name=$(terraform output -raw database_name)" >> "$GITHUB_OUTPUT"
+          echo "database_port=$(terraform output -raw database_port)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy Application
+    needs:
+      - validate-release
+      - terraform-apply
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region "$AWS_REGION" \
+            --name "${{ needs.terraform-apply.outputs.cluster_name }}"
+
+      - name: Create Kubernetes secret env file
+        env:
+          DATABASE_HOST: ${{ needs.terraform-apply.outputs.database_host }}
+          DATABASE_NAME: ${{ needs.terraform-apply.outputs.database_name }}
+          DATABASE_PORT: ${{ needs.terraform-apply.outputs.database_port }}
+          DATABASE_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+        run: |
+          {
+            echo "DATABASE_URL=postgres://tech_challenge:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?sslmode=require"
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
+            echo "JWT_ISSUER=tech-challenge-project"
+            echo "JWT_EXPIRY_MINUTES=10080"
+            echo "BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}"
+            echo "BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}"
+            echo "BREVO_SENDER_NAME=Oficina - Pos"
+          } > k8s/overlays/aws/.env.k8s.aws
+
+      - name: Apply Kubernetes manifests
+        run: kubectl apply -k k8s/overlays/aws
+
+      - name: Deploy database migrations and seed
+        run: |
+          kubectl delete job tech-challenge-db-deploy -n $K8S_NAMESPACE --ignore-not-found
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: tech-challenge-db-deploy
+            namespace: $K8S_NAMESPACE
+          spec:
+            backoffLimit: 2
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: db-deploy
+                    image: ${{ needs.validate-release.outputs.image }}:${{ needs.validate-release.outputs.tag }}
+                    command:
+                      - /seed
+                    envFrom:
+                      - secretRef:
+                          name: tech-challenge-api-secret
+          EOF
+          kubectl wait --for=condition=complete \
+            job/tech-challenge-db-deploy \
+            -n $K8S_NAMESPACE \
+            --timeout=180s
+
+      - name: Update application image
+        run: |
+          kubectl set image deployment/$K8S_DEPLOYMENT \
+            $K8S_CONTAINER=${{ needs.validate-release.outputs.image }}:${{ needs.validate-release.outputs.tag }} \
+            -n $K8S_NAMESPACE
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment/$K8S_DEPLOYMENT -n $K8S_NAMESPACE --timeout=180s
+
+      - name: Print application URL
+        run: |
+          for i in $(seq 1 60); do
+            app_host="$(kubectl get svc "$K8S_DEPLOYMENT" \
+              -n "$K8S_NAMESPACE" \
+              -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+
+            if [ -n "$app_host" ]; then
+              app_url="http://$app_host:8080"
+              echo "Application URL: $app_url"
+              echo "Healthcheck URL: $app_url/health"
+              {
+                echo "## Application URL"
+                echo ""
+                echo "- API: $app_url"
+                echo "- Healthcheck: $app_url/health"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+
+            echo "Waiting for LoadBalancer hostname..."
+            sleep 10
+          done
+
+          echo "::error::LoadBalancer hostname was not created in time"
+          kubectl get svc "$K8S_DEPLOYMENT" -n "$K8S_NAMESPACE" -o wide
+          exit 1
+
+  terraform-destroy:
+    name: Destroy Infrastructure
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'destroy' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Ensure Terraform state bucket exists
+        env:
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          aws s3api head-bucket --bucket "$TF_STATE_BUCKET"
+
+      - name: Terraform init
+        working-directory: infra/aws
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=tech-challenge/aws/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+
+      - name: Delete Kubernetes manifests
+        working-directory: infra/aws
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+        run: |
+          cluster_name="$(terraform output -raw cluster_name 2>/dev/null || true)"
+
+          if [ -z "$cluster_name" ]; then
+            echo "Cluster output not found. Skipping Kubernetes cleanup."
+            exit 0
+          fi
+
+          if ! aws eks describe-cluster --region "$AWS_REGION" --name "$cluster_name" >/dev/null 2>&1; then
+            echo "Cluster $cluster_name not found. Skipping Kubernetes cleanup."
+            exit 0
+          fi
+
+          aws eks update-kubeconfig \
+            --region "$AWS_REGION" \
+            --name "$cluster_name"
+
+          kubectl delete -k ../../k8s/overlays/aws --ignore-not-found=true || true
+
+      - name: Terraform destroy
+        working-directory: infra/aws
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+        run: terraform destroy -auto-approve

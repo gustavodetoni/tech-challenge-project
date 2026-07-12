@@ -17,6 +17,7 @@ env:
   K8S_NAMESPACE: tech-challenge
   K8S_DEPLOYMENT: tech-challenge-api
   K8S_CONTAINER: api
+  DOCKER_IMAGE: docker.io/gustavodetoni/tech-challenge-project
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
 
@@ -34,7 +35,6 @@ jobs:
     if: ${{ inputs.action == 'apply' }}
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ steps.release.outputs.image }}
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
       commit_sha: ${{ steps.release.outputs.commit_sha }}
@@ -85,12 +85,10 @@ jobs:
             exit 1
           fi
 
-          image="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/tech-challenge-project"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$version" >> "$GITHUB_OUTPUT"
-          echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "commit_sha=$current_main" >> "$GITHUB_OUTPUT"
-          echo "Validated release candidate: $image:$version ($current_main)"
+          echo "Validated release candidate: $DOCKER_IMAGE:$version ($current_main)"
 
       - name: Validate previous workflows
         env:
@@ -125,7 +123,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Verify Docker Hub image
-        run: docker manifest inspect "${{ steps.release.outputs.image }}:${{ steps.release.outputs.tag }}"
+        run: docker manifest inspect "$DOCKER_IMAGE:${{ steps.release.outputs.tag }}"
 
   terraform-apply:
     name: Provision Infrastructure
@@ -264,7 +262,7 @@ jobs:
                 restartPolicy: Never
                 containers:
                   - name: db-deploy
-                    image: ${{ needs.validate-release.outputs.image }}:${{ needs.validate-release.outputs.tag }}
+                    image: ${{ env.DOCKER_IMAGE }}:${{ needs.validate-release.outputs.tag }}
                     command:
                       - /seed
                     envFrom:
@@ -287,7 +285,7 @@ jobs:
       - name: Update application image
         run: |
           kubectl set image deployment/$K8S_DEPLOYMENT \
-            $K8S_CONTAINER=${{ needs.validate-release.outputs.image }}:${{ needs.validate-release.outputs.tag }} \
+            $K8S_CONTAINER=$DOCKER_IMAGE:${{ needs.validate-release.outputs.tag }} \
             -n $K8S_NAMESPACE
 
       - name: Wait for rollout

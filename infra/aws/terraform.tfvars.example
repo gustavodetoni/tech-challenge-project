@@ -1,6 +1,6 @@
 project_name    = "tech-challenge"
 aws_region      = "us-east-1"
-cluster_version = "1.30"
+cluster_version = "1.33"
 
 db_name     = "tech_challenge"
 db_user     = "tech_challenge"

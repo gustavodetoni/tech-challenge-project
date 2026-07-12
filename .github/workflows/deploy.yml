@@ -244,9 +244,12 @@ jobs:
       - name: Apply Kubernetes manifests
         run: kubectl apply -k k8s/overlays/aws
 
-      - name: Deploy database migrations and seed
+      - name: Deploy database migrations
         run: |
+          echo "Deleting previous database migration job, if it exists"
           kubectl delete job tech-challenge-db-deploy -n $K8S_NAMESPACE --ignore-not-found
+
+          echo "Creating database migration job"
           cat <<EOF | kubectl apply -f -
           apiVersion: batch/v1
           kind: Job
@@ -255,6 +258,7 @@ jobs:
             namespace: $K8S_NAMESPACE
           spec:
             backoffLimit: 2
+            activeDeadlineSeconds: 1200
             template:
               spec:
                 restartPolicy: Never
@@ -266,11 +270,19 @@ jobs:
                     envFrom:
                       - secretRef:
                           name: tech-challenge-api-secret
+                    env:
+                      - name: SEED_ENABLED
+                        value: "false"
           EOF
+
+          echo "Waiting for database migration job to complete"
           kubectl wait --for=condition=complete \
             job/tech-challenge-db-deploy \
             -n $K8S_NAMESPACE \
-            --timeout=180s
+            --timeout=1200s
+
+          echo "Database migration job completed"
+          kubectl logs -n $K8S_NAMESPACE -l job-name=tech-challenge-db-deploy --all-containers --tail=-1
 
       - name: Update application image
         run: |

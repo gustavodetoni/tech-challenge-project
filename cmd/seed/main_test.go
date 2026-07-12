@@ -116,6 +116,34 @@ func TestRun_SuccessAndOptions(t *testing.T) {
 	}, gotOpts)
 }
 
+func TestRun_SeedDisabled(t *testing.T) {
+	// Not parallel: overrides package-level vars.
+	t.Setenv("DATABASE_URL", "postgres://example")
+	t.Setenv("SEED_ENABLED", "false")
+
+	origConnect := connectDB
+	origInit := initAndCheck
+	origRunSeed := runSeed
+	t.Cleanup(func() {
+		connectDB = origConnect
+		initAndCheck = origInit
+		runSeed = origRunSeed
+	})
+
+	var seedCalled bool
+	connectDB = func(ctx context.Context, databaseURL string) (*gorm.DB, error) {
+		return &gorm.DB{}, nil
+	}
+	initAndCheck = func(ctx context.Context, gdb *gorm.DB) error { return nil }
+	runSeed = func(ctx context.Context, gdb *gorm.DB, opts seed.Options) error {
+		seedCalled = true
+		return nil
+	}
+
+	require.NoError(t, run(context.Background()))
+	require.False(t, seedCalled)
+}
+
 func TestRun_PropagatesErrors(t *testing.T) {
 	// Not parallel: overrides package-level vars.
 	t.Setenv("DATABASE_URL", "postgres://example")

@@ -43,19 +43,29 @@ func run(ctx context.Context) error {
 		Now:      nowUTC(),
 	}
 
+	log.Println("Connecting to database")
 	gormDB, err := connectDB(ctx, databaseURL)
 	if err != nil {
 		return err
 	}
 	log.Println("Connected to database")
 
+	log.Println("Applying database migrations")
 	if err := initAndCheck(ctx, gormDB); err != nil {
 		return err
 	}
+	log.Println("Database migrations applied")
 
+	if !envBool("SEED_ENABLED", true) {
+		log.Println("Seed disabled: migrations applied")
+		return nil
+	}
+
+	log.Println("Running database seed")
 	if err := runSeed(ctx, gormDB, opts); err != nil {
 		return err
 	}
+	log.Println("Database seed complete")
 
 	return nil
 }

@@ -14,10 +14,12 @@ type Config struct {
 	Port        int
 	DatabaseURL string
 
-	JWTSecret        string
-	JWTIssuer        string
-	JWTAudience      string
-	JWTExpiryMinutes int
+	JWTSecret         string
+	JWTIssuer         string
+	JWTAudience       string
+	JWTExpiryMinutes  int
+	ClientJWTIssuer   string
+	ClientJWTAudience string
 
 	CORS      CORSConfig
 	RateLimit RateLimitConfig
@@ -36,6 +38,8 @@ func Load() (Config, error) {
 	viper.SetDefault("JWT_ISSUER", "tech-challenge-project")
 	viper.SetDefault("JWT_AUDIENCE", "")
 	viper.SetDefault("JWT_EXPIRY_MINUTES", "60")
+	viper.SetDefault("CLIENT_JWT_ISSUER", "tech-challenge-auth-lambda")
+	viper.SetDefault("CLIENT_JWT_AUDIENCE", "")
 	viper.SetDefault("CORS_ENABLED", true)
 	viper.SetDefault("CORS_ALLOW_CREDENTIALS", false)
 	viper.SetDefault("CORS_ALLOWED_ORIGINS", "")
@@ -98,13 +102,15 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Port:             port,
-		DatabaseURL:      viper.GetString("DATABASE_URL"),
-		JWTSecret:        viper.GetString("JWT_SECRET"),
-		JWTIssuer:        viper.GetString("JWT_ISSUER"),
-		JWTAudience:      viper.GetString("JWT_AUDIENCE"),
-		JWTExpiryMinutes: jwtExpiryMinutes,
-		CORS:             corsCfg,
+		Port:              port,
+		DatabaseURL:       viper.GetString("DATABASE_URL"),
+		JWTSecret:         viper.GetString("JWT_SECRET"),
+		JWTIssuer:         viper.GetString("JWT_ISSUER"),
+		JWTAudience:       viper.GetString("JWT_AUDIENCE"),
+		JWTExpiryMinutes:  jwtExpiryMinutes,
+		ClientJWTIssuer:   viper.GetString("CLIENT_JWT_ISSUER"),
+		ClientJWTAudience: viper.GetString("CLIENT_JWT_AUDIENCE"),
+		CORS:              corsCfg,
 		RateLimit: RateLimitConfig{
 			Enabled:         rateLimitEnabled,
 			RPS:             rateLimitRPS,

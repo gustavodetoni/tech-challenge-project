@@ -114,3 +114,50 @@ func TestAuthMiddleware_RequireRoles_EmptyRolesAllowsAnyRole(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
+
+func TestAuthMiddleware_RequireClientAuth_AllowsClientToken(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	jwtManager := jwtAuth.NewManager("secret", "issuer", "", time.Minute)
+	mw := middlewares.NewAuthMiddleware(jwtManager)
+
+	token, _, err := jwtManager.NewClientToken("client-1", "CPF", "46420082412")
+	require.NoError(t, err)
+
+	r := gin.New()
+	r.GET("/client", mw.RequireClientAuth(), func(c *gin.Context) {
+		doc, ok := middlewares.GetClientDocumentNumber(c)
+		require.True(t, ok)
+		assert.Equal(t, "46420082412", doc)
+		c.Status(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/client", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestAuthMiddleware_RequireClientAuth_RejectsAdminToken(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	jwtManager := jwtAuth.NewManager("secret", "issuer", "", time.Minute)
+	mw := middlewares.NewAuthMiddleware(jwtManager)
+
+	token, _, err := jwtManager.NewToken("admin-1", "ADMIN")
+	require.NoError(t, err)
+
+	r := gin.New()
+	r.GET("/client", mw.RequireClientAuth(), func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	req := httptest.NewRequest(http.MethodGet, "/client", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}

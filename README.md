@@ -36,6 +36,7 @@ HTTP/Gin -> Controllers -> Application Services -> Domain -> Repository Ports ->
 - Abertura de ordem de servico.
 - Consulta de ordem e status.
 - Fluxo de diagnostico, orcamento, aprovacao/rejeicao, execucao, finalizacao e entrega.
+- Rotas de cliente protegidas por JWT emitido pela Lambda de autenticacao CPF/CNPJ.
 - Endpoint externo para decisao de orcamento.
 - Metricas administrativas.
 

@@ -233,6 +233,7 @@ jobs:
             echo "DATABASE_URL=postgres://tech_challenge:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?sslmode=require"
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
             echo "JWT_ISSUER=tech-challenge-project"
+            echo "CLIENT_JWT_ISSUER=tech-challenge-auth-lambda"
             echo "JWT_EXPIRY_MINUTES=10080"
             echo "BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}"
             echo "BREVO_SENDER_EMAIL=${{ secrets.BREVO_SENDER_EMAIL }}"

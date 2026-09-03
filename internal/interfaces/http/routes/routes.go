@@ -85,6 +85,7 @@ func Register(router *gin.Engine, deps Deps) {
 	adminOnly.PUT("/users/:id/role", deps.AdminUsers.UpdateRole)
 
 	clientGroup := router.Group("/client")
+	clientGroup.Use(deps.AuthMW.RequireClientAuth())
 	clientGroup.GET("/service-orders/:code", deps.ClientServiceOrders.Get)
 	clientGroup.GET("/service-orders/:code/status", deps.ClientServiceOrders.Status)
 	clientGroup.POST("/service-orders/:code/budget/approve", deps.ClientServiceOrders.ApproveBudget)

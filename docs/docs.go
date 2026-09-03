@@ -967,18 +967,16 @@ const docTemplate = `{
         },
         "/client/service-orders/{code}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "client-service-orders"
                 ],
                 "summary": "Get service order progress (client)",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "CPF/CNPJ",
-                        "name": "document_number",
-                        "in": "query",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Service Order Code",
@@ -999,18 +997,16 @@ const docTemplate = `{
         },
         "/client/service-orders/{code}/budget/approve": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "client-service-orders"
                 ],
                 "summary": "Approve latest budget",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "CPF/CNPJ",
-                        "name": "document_number",
-                        "in": "query",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Service Order Code",
@@ -1028,18 +1024,16 @@ const docTemplate = `{
         },
         "/client/service-orders/{code}/budget/reject": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "client-service-orders"
                 ],
                 "summary": "Reject latest budget",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "CPF/CNPJ",
-                        "name": "document_number",
-                        "in": "query",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Service Order Code",
@@ -1066,18 +1060,16 @@ const docTemplate = `{
         },
         "/client/service-orders/{code}/status": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "client-service-orders"
                 ],
                 "summary": "Get service order status (client)",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "CPF/CNPJ",
-                        "name": "document_number",
-                        "in": "query",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Service Order Code",

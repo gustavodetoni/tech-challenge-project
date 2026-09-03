@@ -11,6 +11,7 @@ import (
 	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/application/serviceorder"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 )
 
@@ -24,7 +25,7 @@ func NewClientServiceOrderController(svc *serviceorder.ServiceOrderFlowUseCase) 
 
 // @Summary Get service order progress (client)
 // @Tags client-service-orders
-// @Param document_number query string true "CPF/CNPJ"
+// @Security BearerAuth
 // @Param code path string true "Service Order Code"
 // @Success 200 {object} dto.ClientServiceOrderResponse
 // @Router /client/service-orders/{code} [get]
@@ -125,7 +126,7 @@ func (h *ClientServiceOrderController) Get(c *gin.Context) {
 
 // @Summary Get service order status (client)
 // @Tags client-service-orders
-// @Param document_number query string true "CPF/CNPJ"
+// @Security BearerAuth
 // @Param code path string true "Service Order Code"
 // @Success 200 {object} dto.ClientServiceOrderStatusResponse
 // @Router /client/service-orders/{code}/status [get]
@@ -149,7 +150,7 @@ func (h *ClientServiceOrderController) Status(c *gin.Context) {
 
 // @Summary Approve latest budget
 // @Tags client-service-orders
-// @Param document_number query string true "CPF/CNPJ"
+// @Security BearerAuth
 // @Param code path string true "Service Order Code"
 // @Success 204
 // @Router /client/service-orders/{code}/budget/approve [post]
@@ -217,7 +218,7 @@ type rejectBudgetRequest struct {
 
 // @Summary Reject latest budget
 // @Tags client-service-orders
-// @Param document_number query string true "CPF/CNPJ"
+// @Security BearerAuth
 // @Param code path string true "Service Order Code"
 // @Param request body rejectBudgetRequest true "Rejection reason"
 // @Success 204
@@ -247,12 +248,10 @@ func (h *ClientServiceOrderController) RejectBudget(c *gin.Context) {
 
 func getCodeAndDocumentNumber(c *gin.Context) (string, string, bool) {
 	code := c.Param("code")
-	doc := c.Query("document_number")
+	doc, ok := middlewares.GetClientDocumentNumber(c)
 
-	if doc == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "document_number is required",
-		})
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return "", "", false
 	}
 

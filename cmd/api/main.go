@@ -65,7 +65,8 @@ func main() {
 	router.Use(rateLimitMW)
 
 	jwtManager := auth.NewManager(cfg.JWTSecret, cfg.JWTIssuer, cfg.JWTAudience, time.Duration(cfg.JWTExpiryMinutes)*time.Minute)
-	authMW := middlewares.NewAuthMiddleware(jwtManager)
+	clientJWTManager := auth.NewManager(cfg.JWTSecret, cfg.ClientJWTIssuer, cfg.ClientJWTAudience, time.Duration(cfg.JWTExpiryMinutes)*time.Minute)
+	authMW := middlewares.NewAuthMiddlewareWithClientJWT(jwtManager, clientJWTManager)
 	userRepo := repositories.NewUserRepository(gormDB)
 	authService := appAuth.NewAuthUseCase(userRepo, jwtManager)
 

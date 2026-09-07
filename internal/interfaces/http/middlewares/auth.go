@@ -38,7 +38,7 @@ func (m *AuthMiddleware) RequireAuth() gin.HandlerFunc {
 		tokenString := bearerTokenFromHeader(c.GetHeader("Authorization"))
 		claims, err := m.jwt.ParseAndValidate(tokenString)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, ErrorResponse(c, "unauthorized"))
 			return
 		}
 
@@ -61,12 +61,12 @@ func (m *AuthMiddleware) RequireRoles(roles ...string) gin.HandlerFunc {
 		tokenString := bearerTokenFromHeader(c.GetHeader("Authorization"))
 		claims, err := m.jwt.ParseAndValidate(tokenString)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, ErrorResponse(c, "unauthorized"))
 			return
 		}
 		if len(roleSet) > 0 {
 			if _, ok := roleSet[claims.Role]; !ok {
-				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+				c.AbortWithStatusJSON(http.StatusForbidden, ErrorResponse(c, "forbidden"))
 				return
 			}
 		}
@@ -82,7 +82,7 @@ func (m *AuthMiddleware) RequireClientAuth() gin.HandlerFunc {
 		tokenString := bearerTokenFromHeader(c.GetHeader("Authorization"))
 		claims, err := m.clientJWT.ParseAndValidate(tokenString)
 		if err != nil || !isClientClaims(claims) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, ErrorResponse(c, "unauthorized"))
 			return
 		}
 

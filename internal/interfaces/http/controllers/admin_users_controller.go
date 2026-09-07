@@ -29,20 +29,20 @@ func NewAdminUsersController(svc *admin.UserAdminUseCase) *AdminUsersController 
 func (h *AdminUsersController) UpdateRole(c *gin.Context) {
 	claims, ok := middlewares.GetClaims(c)
 	if !ok || claims == nil || claims.Role != "ADMIN" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		shared.WriteHTTPError(c, http.StatusForbidden, "forbidden")
 		return
 	}
 
 	id := c.Param("id")
 	var req dto.UpdateUserRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	if err := h.svc.UpdateRoleFromInput(c.Request.Context(), admin.UpdateUserRoleInput{UserID: id, Role: req.Role}); err != nil {
 		if errors.Is(err, admin.ErrInvalidInput) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 		shared.WriteError(c, err)

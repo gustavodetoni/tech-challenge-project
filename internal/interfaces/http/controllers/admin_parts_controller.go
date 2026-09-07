@@ -50,7 +50,7 @@ func (h *AdminPartsController) List(c *gin.Context) {
 func (h *AdminPartsController) Create(c *gin.Context) {
 	var req dto.CreatePartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 	p, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreatePartInput{
@@ -62,7 +62,7 @@ func (h *AdminPartsController) Create(c *gin.Context) {
 		Active:         true,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	c.JSON(http.StatusCreated, mapper.PartResponseFromDomain(*p))
@@ -93,7 +93,7 @@ func (h *AdminPartsController) Update(c *gin.Context) {
 	id := c.Param("id")
 	var req dto.CreatePartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 	p, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdatePartInput{
@@ -134,7 +134,7 @@ func (h *AdminPartsController) AdjustStock(c *gin.Context) {
 	id := c.Param("id")
 	var req dto.AdjustStockRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -156,7 +156,7 @@ func (h *AdminPartsController) AdjustStock(c *gin.Context) {
 			shared.WriteError(c, err)
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	c.JSON(http.StatusOK, mapper.PartResponseFromDomain(*p))

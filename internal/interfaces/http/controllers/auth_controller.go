@@ -10,6 +10,7 @@ import (
 	repository "github.com/soat-architecture/tech-challenge-project/internal/application/port"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/dto"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/shared"
 )
 
 type AuthController struct {
@@ -29,7 +30,7 @@ func NewAuthController(auth *appAuth.AuthUseCase, users repository.UserRepositor
 func (a *AuthController) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -41,11 +42,11 @@ func (a *AuthController) Register(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, appAuth.ErrInvalidInput):
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, appAuth.ErrEmailInUse):
-			c.JSON(http.StatusConflict, gin.H{"error": "email already in use"})
+			shared.WriteHTTPError(c, http.StatusConflict, "email already in use")
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+			shared.WriteHTTPError(c, http.StatusInternalServerError, "internal error")
 		}
 		return
 	}
@@ -67,7 +68,7 @@ func (a *AuthController) Register(c *gin.Context) {
 func (a *AuthController) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -78,11 +79,11 @@ func (a *AuthController) Login(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, appAuth.ErrInvalidInput):
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, appAuth.ErrInvalidCredentials):
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			shared.WriteHTTPError(c, http.StatusUnauthorized, "invalid credentials")
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+			shared.WriteHTTPError(c, http.StatusInternalServerError, "internal error")
 		}
 		return
 	}
@@ -103,7 +104,7 @@ func (a *AuthController) Login(c *gin.Context) {
 func (a *AuthController) Me(c *gin.Context) {
 	claims, ok := middlewares.GetClaims(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		shared.WriteHTTPError(c, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -111,9 +112,9 @@ func (a *AuthController) Me(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, repository.ErrNotFound):
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			shared.WriteHTTPError(c, http.StatusUnauthorized, "unauthorized")
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+			shared.WriteHTTPError(c, http.StatusInternalServerError, "internal error")
 		}
 		return
 	}

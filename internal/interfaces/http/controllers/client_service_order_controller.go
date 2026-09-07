@@ -165,7 +165,7 @@ func (h *ClientServiceOrderController) ApproveBudget(c *gin.Context) {
 			shared.WriteError(c, err)
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -181,7 +181,7 @@ func (h *ClientServiceOrderController) ExternalBudgetDecision(c *gin.Context) {
 	code := c.Param("code")
 	var req dto.ExternalBudgetDecisionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -197,7 +197,7 @@ func (h *ClientServiceOrderController) ExternalBudgetDecision(c *gin.Context) {
 			reason = strings.TrimSpace(*req.Reason)
 		}
 		if reason == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "reason is required"})
+			shared.WriteHTTPError(c, http.StatusBadRequest, "reason is required")
 			return
 		}
 		if err := h.svc.ClientRejectBudget(c.Request.Context(), code, req.DocumentNumber, reason); err != nil {
@@ -205,7 +205,7 @@ func (h *ClientServiceOrderController) ExternalBudgetDecision(c *gin.Context) {
 			return
 		}
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid decision"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid decision")
 		return
 	}
 
@@ -231,7 +231,7 @@ func (h *ClientServiceOrderController) RejectBudget(c *gin.Context) {
 
 	var req rejectBudgetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -240,7 +240,7 @@ func (h *ClientServiceOrderController) RejectBudget(c *gin.Context) {
 			shared.WriteError(c, err)
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -251,7 +251,7 @@ func getCodeAndDocumentNumber(c *gin.Context) (string, string, bool) {
 	doc, ok := middlewares.GetClientDocumentNumber(c)
 
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		shared.WriteHTTPError(c, http.StatusUnauthorized, "unauthorized")
 		return "", "", false
 	}
 
@@ -263,5 +263,5 @@ func writeBudgetDecisionError(c *gin.Context, err error) {
 		shared.WriteError(c, err)
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 }

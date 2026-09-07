@@ -48,7 +48,7 @@ func (h *AdminClientsController) List(c *gin.Context) {
 func (h *AdminClientsController) Create(c *gin.Context) {
 	var req dto.CreateClientRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *AdminClientsController) Create(c *gin.Context) {
 		Phone:          req.Phone,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *AdminClientsController) Update(c *gin.Context) {
 	id := c.Param("id")
 	var req dto.CreateClientRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 

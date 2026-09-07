@@ -1,8 +1,16 @@
 # Infra AWS
 
-Este Terraform cria a infraestrutura usada pela esteira de deploy.
+Este Terraform e legado da fase anterior e foi mantido apenas como referencia historica.
+Na entrega atual do Tech Challenge, a infraestrutura oficial esta segregada em:
 
-## Recursos Criados
+```text
+tech-challenge-infra-k8s
+tech-challenge-infra-database
+```
+
+Nao use este diretorio como fonte oficial para homologacao/producao nesta fase.
+
+## Recursos Do Fluxo Legado
 
 - VPC com subnets publicas e privadas.
 - NAT Gateway para os nodes privados acessarem a internet.
@@ -13,7 +21,8 @@ Este Terraform cria a infraestrutura usada pela esteira de deploy.
 
 ## State Do Terraform
 
-A esteira usa backend S3 para manter o state entre execucoes do GitHub Actions.
+No fluxo legado, a esteira usava backend S3 para manter o state entre execucoes do GitHub Actions.
+No fluxo atual, cada repositorio de infraestrutura possui seu proprio backend/state.
 
 Cadastre no GitHub Secrets um nome de bucket globalmente unico:
 
@@ -43,13 +52,16 @@ BREVO_SENDER_EMAIL
 
 ## Aplicar Pela Esteira
 
-Ao fazer push na `main`, a cadeia automatica continua sendo:
+Este fluxo nao deve ser usado como deploy oficial da entrega atual.
+Ele fica documentado apenas para consulta.
+
+No fluxo legado, ao fazer push na `main`, a cadeia automatica era:
 
 ```text
 Quality -> Sonar -> Release
 ```
 
-O deploy em AWS e manual pelo GitHub Actions:
+O deploy em AWS era manual pelo GitHub Actions:
 
 ```text
 Deploy AWS -> Run workflow -> action=apply
@@ -63,7 +75,7 @@ Antes de aplicar a infraestrutura, o workflow valida:
 - `Quality`, `Sonar` e `Release` passaram com sucesso para esse commit.
 - A imagem Docker versionada existe no Docker Hub.
 
-Depois das validacoes, o workflow executa:
+Depois das validacoes, o workflow legado executava:
 
 1. `terraform init`.
 2. `terraform plan`.

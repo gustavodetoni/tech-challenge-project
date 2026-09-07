@@ -47,7 +47,7 @@ func (h *AdminServicesController) List(c *gin.Context) {
 func (h *AdminServicesController) Create(c *gin.Context) {
 	var req dto.CreateServiceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 	svc, err := h.svc.CreateFromInput(c.Request.Context(), admin.CreateServiceInput{
@@ -58,7 +58,7 @@ func (h *AdminServicesController) Create(c *gin.Context) {
 		Active:           true,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	c.JSON(http.StatusCreated, mapper.ServiceResponseFromDomain(*svc))
@@ -89,7 +89,7 @@ func (h *AdminServicesController) Update(c *gin.Context) {
 	id := c.Param("id")
 	var req dto.CreateServiceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 	svc, err := h.svc.UpdateFromInput(c.Request.Context(), id, admin.UpdateServiceInput{

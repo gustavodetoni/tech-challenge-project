@@ -204,7 +204,7 @@ Mais detalhes: [infra/aws/README.md](infra/aws/README.md)
 Workflows em [.github/workflows](.github/workflows):
 
 ```text
-Quality -> Sonar -> Release -> Deploy AWS manual
+Quality -> Sonar -> Release -> Deploy manual da aplicacao
 ```
 
 ## Observabilidade
@@ -258,64 +258,61 @@ docker.io/DOCKERHUB_USERNAME/tech-challenge-project:latest
 
 - Cria GitHub Release.
 
-### Deploy AWS Legado
+### Deploy Da Aplicacao
 
-O workflow `Deploy AWS` deste repositorio e legado/manual e nao e a fonte oficial da entrega atual.
-O deploy cloud final deve usar os repositorios segregados de infraestrutura e a imagem gerada pelo workflow de release da aplicacao.
+O workflow `Deploy` deste repositorio e manual para facilitar a demonstracao no AWS Academy e permitir remover a aplicacao depois da gravacao.
+Ele nao provisiona VPC, EKS, API Gateway ou RDS; essa responsabilidade fica nos repositorios segregados de infraestrutura.
 
-Fluxo legado:
-
-```text
-Deploy AWS -> Run workflow -> action=apply
-```
-
-Antes do deploy, valida:
-
-- Branch `main`.
-- Tag `vX.Y.Z` da versao atual.
-- Tag apontando para o commit atual da `main`.
-- `Quality`, `Sonar` e `Release` com sucesso para o commit.
-- GitHub Release existente.
-- Imagem Docker versionada existente no Docker Hub.
-
-Depois executa:
-
-- `terraform init`.
-- `terraform plan`.
-- `terraform apply`.
-- Gera Secret Kubernetes com `DATABASE_URL`.
-- Aplica manifests `k8s/overlays/aws`.
-- Executa deploy do banco via `Job` Kubernetes usando `/seed`.
-- Atualiza imagem do Deployment.
-- Aguarda rollout.
-- Imprime URL publica da API no log e no resumo do GitHub Actions.
-
-Para derrubar a infra:
+Fluxo previsto:
 
 ```text
-Deploy AWS -> Run workflow -> action=destroy
+pull_request -> Quality/Sonar
+main         -> Release da imagem Docker
+Run workflow -> action=apply, environment=homolog, image_tag=latest
+Run workflow -> action=destroy, environment=homolog
 ```
 
-O destroy remove os manifests Kubernetes, quando o cluster ainda existe, e depois executa `terraform destroy`.
+Inputs do workflow manual:
+
+```text
+action          apply ou destroy
+environment     homolog ou prod
+image_tag       tag Docker publicada pelo workflow Release
+cluster_name    opcional; se vazio usa tech-challenge-<ambiente>-eks
+run_migrations  yes para executar /seed antes do rollout
+```
+
+O deploy executa:
+
+- Conexao no EKS via AWS Academy.
+- Validacao do Deployment criado pelo repo `tech-challenge-infra-k8s`.
+- Migrations via `Job` Kubernetes usando o binario `/seed`.
+- Atualizacao da imagem Docker no Deployment.
+- Aguardo do rollout.
+
+Para remover apenas a aplicacao:
+
+```text
+Deploy -> Run workflow -> action=destroy
+```
+
+O destroy remove Deployment, HPA, Service, ConfigMap, Secret, ServiceAccount e o Job de migrations da aplicacao.
+A infraestrutura cloud deve ser destruida depois pelos repositorios `tech-challenge-auth-lambda`, `tech-challenge-infra-database` e `tech-challenge-infra-k8s`.
 
 ## Secrets Do GitHub Actions
 
 Configure:
 
 ```text
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
-DOCKERHUB_USERNAME
-DOCKERHUB_TOKEN
-TF_STATE_BUCKET
-TF_VAR_DB_PASSWORD
-JWT_SECRET
-BREVO_API_KEY
-BREVO_SENDER_EMAIL
-SONAR_TOKEN
+AWS_ACCESS_KEY_ID      deploy manual no EKS
+AWS_SECRET_ACCESS_KEY  deploy manual no EKS
+AWS_SESSION_TOKEN      deploy manual no EKS usando AWS Academy
+DOCKERHUB_USERNAME     release da imagem Docker
+DOCKERHUB_TOKEN        release da imagem Docker
+SONAR_TOKEN            analise Sonar
 ```
 
-`BREVO_API_KEY` e `BREVO_SENDER_EMAIL` podem ficar vazios caso o envio de e-mail nao seja demonstrado.
+Secrets como `DATABASE_URL`, `JWT_SECRET`, `BREVO_API_KEY` e `BREVO_SENDER_EMAIL` sao aplicados no Kubernetes pelo repositorio `tech-challenge-infra-k8s`.
 
 ## Teste De Escalabilidade
 

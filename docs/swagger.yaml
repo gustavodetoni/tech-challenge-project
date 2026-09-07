@@ -1104,11 +1104,6 @@ paths:
   /client/service-orders/{code}:
     get:
       parameters:
-      - description: CPF/CNPJ
-        in: query
-        name: document_number
-        required: true
-        type: string
       - description: Service Order Code
         in: path
         name: code
@@ -1119,17 +1114,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/dto.ClientServiceOrderResponse'
+      security:
+      - BearerAuth: []
       summary: Get service order progress (client)
       tags:
       - client-service-orders
   /client/service-orders/{code}/budget/approve:
     post:
       parameters:
-      - description: CPF/CNPJ
-        in: query
-        name: document_number
-        required: true
-        type: string
       - description: Service Order Code
         in: path
         name: code
@@ -1138,17 +1130,14 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Approve latest budget
       tags:
       - client-service-orders
   /client/service-orders/{code}/budget/reject:
     post:
       parameters:
-      - description: CPF/CNPJ
-        in: query
-        name: document_number
-        required: true
-        type: string
       - description: Service Order Code
         in: path
         name: code
@@ -1163,17 +1152,14 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Reject latest budget
       tags:
       - client-service-orders
   /client/service-orders/{code}/status:
     get:
       parameters:
-      - description: CPF/CNPJ
-        in: query
-        name: document_number
-        required: true
-        type: string
       - description: Service Order Code
         in: path
         name: code
@@ -1184,6 +1170,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/dto.ClientServiceOrderStatusResponse'
+      security:
+      - BearerAuth: []
       summary: Get service order status (client)
       tags:
       - client-service-orders

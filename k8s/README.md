@@ -1,6 +1,14 @@
 # Guia Local Do Kubernetes
 
-Este diretório contém os manifestos Kubernetes do projeto Tech Challenge.
+Este diretorio contem manifestos Kubernetes mantidos para execucao local e referencia historica da aplicacao principal.
+
+Na entrega atual do Tech Challenge, a fonte oficial dos manifests de homologacao/producao passou a ser:
+
+```text
+tech-challenge-infra-k8s
+```
+
+Use este diretorio apenas para testes locais da API ou comparacao com a estrutura anterior.
 
 O overlay local usa a imagem publicada no Docker Hub pela esteira de release:
 

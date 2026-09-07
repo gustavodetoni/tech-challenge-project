@@ -24,6 +24,8 @@ func TestLoad_DefaultsAndEnv(t *testing.T) {
 	require.Equal(t, "tech-challenge-project", cfg.JWTIssuer)
 	require.Equal(t, "", cfg.JWTAudience)
 	require.Equal(t, 60, cfg.JWTExpiryMinutes)
+	require.Equal(t, "tech-challenge-auth-lambda", cfg.ClientJWTIssuer)
+	require.Equal(t, "", cfg.ClientJWTAudience)
 	require.True(t, cfg.CORS.Enabled)
 	require.True(t, cfg.CORS.AllowAllOrigins)
 	require.False(t, cfg.CORS.AllowCredentials)

@@ -16,10 +16,11 @@ import (
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/client"
 	"github.com/soat-architecture/tech-challenge-project/internal/domain/order"
 	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/controllers"
+	"github.com/soat-architecture/tech-challenge-project/internal/interfaces/http/middlewares"
 	repomocks "github.com/soat-architecture/tech-challenge-project/internal/tests/interfaces/repository/mocks"
 )
 
-func TestClientServiceOrderController_Get_BadRequest_NoDocumentNumber(t *testing.T) {
+func TestClientServiceOrderController_Get_Unauthorized_NoClientToken(t *testing.T) {
 	t.Parallel()
 
 	gin.SetMode(gin.TestMode)
@@ -34,7 +35,7 @@ func TestClientServiceOrderController_Get_BadRequest_NoDocumentNumber(t *testing
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestClientServiceOrderController_Get_Success(t *testing.T) {
@@ -68,9 +69,9 @@ func TestClientServiceOrderController_Get_Success(t *testing.T) {
 	}, nil).Once()
 
 	r := gin.New()
-	r.GET("/client/service-orders/:code", h.Get)
+	r.GET("/client/service-orders/:code", withClientDocument("46420082412"), h.Get)
 
-	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -93,9 +94,9 @@ func TestClientServiceOrderController_Get_NotFound(t *testing.T) {
 	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return((*repository.ClientServiceOrderView)(nil), repository.ErrNotFound).Once()
 
 	r := gin.New()
-	r.GET("/client/service-orders/:code", h.Get)
+	r.GET("/client/service-orders/:code", withClientDocument("46420082412"), h.Get)
 
-	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -114,9 +115,9 @@ func TestClientServiceOrderController_Get_InternalError(t *testing.T) {
 	flowRepo.On("GetClientViewByCode", mock.Anything, "C-1", "46420082412").Return((*repository.ClientServiceOrderView)(nil), assert.AnError).Once()
 
 	r := gin.New()
-	r.GET("/client/service-orders/:code", h.Get)
+	r.GET("/client/service-orders/:code", withClientDocument("46420082412"), h.Get)
 
-	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -141,9 +142,9 @@ func TestClientServiceOrderController_ApproveBudget_NotFound(t *testing.T) {
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", (*string)(nil)).Return(repository.ErrNotFound).Once()
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
+	r.POST("/client/service-orders/:code/budget/approve", withClientDocument("46420082412"), h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -152,7 +153,7 @@ func TestClientServiceOrderController_ApproveBudget_NotFound(t *testing.T) {
 	flowRepo.AssertExpectations(t)
 }
 
-func TestClientServiceOrderController_ApproveBudget_BadRequest_NoDocumentNumber(t *testing.T) {
+func TestClientServiceOrderController_ApproveBudget_Unauthorized_NoClientToken(t *testing.T) {
 	t.Parallel()
 
 	gin.SetMode(gin.TestMode)
@@ -168,7 +169,7 @@ func TestClientServiceOrderController_ApproveBudget_BadRequest_NoDocumentNumber(
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestClientServiceOrderController_ApproveBudget_BadRequest_GenericError(t *testing.T) {
@@ -188,9 +189,9 @@ func TestClientServiceOrderController_ApproveBudget_BadRequest_GenericError(t *t
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", (*string)(nil)).Return(assert.AnError).Once()
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
+	r.POST("/client/service-orders/:code/budget/approve", withClientDocument("46420082412"), h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -216,9 +217,9 @@ func TestClientServiceOrderController_ApproveBudget_Success(t *testing.T) {
 	flowRepo.On("ApproveLatestBudgetByCode", mock.Anything, "C-1", "46420082412", (*string)(nil)).Return(nil).Once()
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
+	r.POST("/client/service-orders/:code/budget/approve", withClientDocument("46420082412"), h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -246,9 +247,9 @@ func TestClientServiceOrderController_ApproveBudget_Success_UsesClientName(t *te
 	})).Return(nil).Once()
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/approve", h.ApproveBudget)
+	r.POST("/client/service-orders/:code/budget/approve", withClientDocument("46420082412"), h.ApproveBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/approve", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -266,9 +267,9 @@ func TestClientServiceOrderController_RejectBudget_BadRequest_InvalidBody(t *tes
 	h := controllers.NewClientServiceOrderController(svc)
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/reject", h.RejectBudget)
+	r.POST("/client/service-orders/:code/budget/reject", withClientDocument("46420082412"), h.RejectBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject?document_number=46420082412", bytes.NewBufferString(`{}`))
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject", bytes.NewBufferString(`{}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -287,9 +288,9 @@ func TestClientServiceOrderController_RejectBudget_NotFound(t *testing.T) {
 	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(repository.ErrNotFound).Once()
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/reject", h.RejectBudget)
+	r.POST("/client/service-orders/:code/budget/reject", withClientDocument("46420082412"), h.RejectBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject?document_number=46420082412", bytes.NewBufferString(`{"reason":"too expensive"}`))
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject", bytes.NewBufferString(`{"reason":"too expensive"}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -298,7 +299,7 @@ func TestClientServiceOrderController_RejectBudget_NotFound(t *testing.T) {
 	flowRepo.AssertExpectations(t)
 }
 
-func TestClientServiceOrderController_RejectBudget_BadRequest_NoDocumentNumber(t *testing.T) {
+func TestClientServiceOrderController_RejectBudget_Unauthorized_NoClientToken(t *testing.T) {
 	t.Parallel()
 
 	gin.SetMode(gin.TestMode)
@@ -314,7 +315,7 @@ func TestClientServiceOrderController_RejectBudget_BadRequest_NoDocumentNumber(t
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestClientServiceOrderController_RejectBudget_BadRequest_GenericError(t *testing.T) {
@@ -328,9 +329,9 @@ func TestClientServiceOrderController_RejectBudget_BadRequest_GenericError(t *te
 	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(assert.AnError).Once()
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/reject", h.RejectBudget)
+	r.POST("/client/service-orders/:code/budget/reject", withClientDocument("46420082412"), h.RejectBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject?document_number=46420082412", bytes.NewBufferString(`{"reason":"too expensive"}`))
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject", bytes.NewBufferString(`{"reason":"too expensive"}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -350,9 +351,9 @@ func TestClientServiceOrderController_RejectBudget_Success(t *testing.T) {
 	flowRepo.On("RejectLatestBudgetByCode", mock.Anything, "C-1", "46420082412", "too expensive").Return(nil).Once()
 
 	r := gin.New()
-	r.POST("/client/service-orders/:code/budget/reject", h.RejectBudget)
+	r.POST("/client/service-orders/:code/budget/reject", withClientDocument("46420082412"), h.RejectBudget)
 
-	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject?document_number=46420082412", bytes.NewBufferString(`{"reason":"too expensive"}`))
+	req := httptest.NewRequest(http.MethodPost, "/client/service-orders/C-1/budget/reject", bytes.NewBufferString(`{"reason":"too expensive"}`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -375,9 +376,9 @@ func TestClientServiceOrderController_Status_Success(t *testing.T) {
 	}, nil).Once()
 
 	r := gin.New()
-	r.GET("/client/service-orders/:code/status", h.Status)
+	r.GET("/client/service-orders/:code/status", withClientDocument("46420082412"), h.Status)
 
-	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1/status?document_number=46420082412", nil)
+	req := httptest.NewRequest(http.MethodGet, "/client/service-orders/C-1/status", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -386,7 +387,7 @@ func TestClientServiceOrderController_Status_Success(t *testing.T) {
 	flowRepo.AssertExpectations(t)
 }
 
-func TestClientServiceOrderController_Status_BadRequest_NoDocumentNumber(t *testing.T) {
+func TestClientServiceOrderController_Status_Unauthorized_NoClientToken(t *testing.T) {
 	t.Parallel()
 
 	gin.SetMode(gin.TestMode)
@@ -401,7 +402,7 @@ func TestClientServiceOrderController_Status_BadRequest_NoDocumentNumber(t *test
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestClientServiceOrderController_ExternalBudgetDecision_Approved(t *testing.T) {
@@ -493,4 +494,11 @@ func TestClientServiceOrderController_ExternalBudgetDecision_BadRequest_Rejected
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func withClientDocument(documentNumber string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(middlewares.ContextClientDocumentNumberKey, documentNumber)
+		c.Next()
+	}
 }

@@ -95,7 +95,7 @@ func parseFromTo(c *gin.Context) (*time.Time, *time.Time, bool) {
 	if v := c.Query("from"); v != "" {
 		tm, err := time.Parse(time.RFC3339, v)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid from"})
+			shared.WriteHTTPError(c, http.StatusBadRequest, "invalid from")
 			return nil, nil, false
 		}
 		fromPtr = &tm
@@ -103,7 +103,7 @@ func parseFromTo(c *gin.Context) (*time.Time, *time.Time, bool) {
 	if v := c.Query("to"); v != "" {
 		tm, err := time.Parse(time.RFC3339, v)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid to"})
+			shared.WriteHTTPError(c, http.StatusBadRequest, "invalid to")
 			return nil, nil, false
 		}
 		toPtr = &tm

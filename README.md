@@ -2,6 +2,13 @@
 
 API em Go para gestao de oficina mecanica, cobrindo clientes, veiculos, servicos, pecas, usuarios e ordens de servico. A fase 2 evolui a aplicacao para aumentar qualidade, resiliencia, escalabilidade e automacao de infraestrutura/deploy.
 
+## Repositorios Da Entrega
+
+- Aplicacao principal: https://github.com/gustavodetoni/tech-challenge-project
+- Lambda Auth CPF/CNPJ: https://github.com/gustavodetoni/tech-challenge-auth-lambda
+- Infra Kubernetes: https://github.com/gustavodetoni/tech-challenge-infra-k8s
+- Infra Database: https://github.com/gustavodetoni/tech-challenge-infra-database
+
 ## Objetivos Da Fase 2
 
 - Manter a aplicacao organizada em camadas, seguindo Clean Architecture/Arquitetura Hexagonal.
@@ -36,15 +43,18 @@ HTTP/Gin -> Controllers -> Application Services -> Domain -> Repository Ports ->
 - Abertura de ordem de servico.
 - Consulta de ordem e status.
 - Fluxo de diagnostico, orcamento, aprovacao/rejeicao, execucao, finalizacao e entrega.
+- Rotas de cliente protegidas por JWT emitido pela Lambda de autenticacao CPF/CNPJ.
 - Endpoint externo para decisao de orcamento.
 - Metricas administrativas.
 
 ## Documentacao Das APIs
 
 - Swagger local: http://localhost:8080/swagger/index.html
+- Swagger publicado: sera atualizado apos deploy da API.
 - Swagger JSON: [docs/swagger.json](docs/swagger.json)
 - Swagger YAML: [docs/swagger.yaml](docs/swagger.yaml)
 - Collection Postman: [docs/collections/tech-challenge.postman_collection.json](docs/collections/tech-challenge.postman_collection.json)
+- Collection Postman no GitHub: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/collections/tech-challenge.postman_collection.json
 
 ## Execucao Local Com Docker Compose
 
@@ -110,11 +120,12 @@ O `Dockerfile` gera dois binarios:
 
 ## Kubernetes
 
-Os manifestos ficam em [k8s](k8s):
+Os manifestos mantidos em [k8s](k8s) sao legado/referencia local da aplicacao principal.
+Para a entrega atual do Tech Challenge, a fonte oficial de Kubernetes cloud passou a ser o repositorio separado `tech-challenge-infra-k8s`.
 
 - `k8s/base`: manifests base.
 - `k8s/overlays/local`: execucao local com Postgres dentro do cluster.
-- `k8s/overlays/aws`: deploy AWS usando RDS e Service `LoadBalancer`.
+- `k8s/overlays/aws`: referencia legada do deploy AWS antes da segregacao em repositorios.
 
 Recursos contemplados:
 
@@ -156,11 +167,23 @@ kubectl delete -k k8s/overlays/local
 
 Mais detalhes: [k8s/README.md](k8s/README.md)
 
+Fonte oficial para homologacao/producao:
+
+```text
+tech-challenge-infra-k8s
+```
+
 ## Infraestrutura AWS Com Terraform
 
-Os scripts Terraform ficam em [infra/aws](infra/aws).
+Os scripts Terraform mantidos em [infra/aws](infra/aws) sao legado da fase anterior e referencia historica do deploy monorepo.
+Para a entrega atual, a infraestrutura foi segregada nos repositorios oficiais:
 
-Recursos provisionados:
+```text
+tech-challenge-infra-k8s
+tech-challenge-infra-database
+```
+
+Recursos agora provisionados pelos repositorios oficiais:
 
 - VPC.
 - Subnets publicas e privadas.
@@ -169,8 +192,10 @@ Recursos provisionados:
 - Node group gerenciado.
 - RDS PostgreSQL privado.
 - Security Group permitindo acesso ao RDS pelos nodes do EKS.
+- API Gateway.
+- Observabilidade Datadog.
 
-O deploy principal usa Terraform pela esteira do GitHub Actions. O state fica em bucket S3 configurado pelo secret `TF_STATE_BUCKET`.
+O deploy cloud final deve seguir a ordem documentada no repo `tech-challenge-infra-k8s`.
 
 Mais detalhes: [infra/aws/README.md](infra/aws/README.md)
 
@@ -179,8 +204,27 @@ Mais detalhes: [infra/aws/README.md](infra/aws/README.md)
 Workflows em [.github/workflows](.github/workflows):
 
 ```text
-Quality -> Sonar -> Release -> Deploy AWS manual
+Quality -> Sonar -> Release -> Deploy manual da aplicacao
 ```
+
+## Observabilidade
+
+A API emite logs estruturados em JSON para cada requisicao HTTP.
+Cada request recebe um `X-Correlation-ID`; quando o cliente envia esse header, o valor e preservado, caso contrario a API gera um UUID.
+
+Campos principais dos logs:
+
+- `correlation_id`
+- `method`
+- `path`
+- `route`
+- `status`
+- `latency_ms`
+- `client_ip`
+- `user_agent`
+
+O mesmo `correlation_id` e propagado para o contexto da request, header da resposta e respostas JSON de erro padronizadas.
+Isso permite correlacionar API Gateway, API principal, logs de erro e traces coletados pelo agente de observabilidade.
 
 ### Quality
 
@@ -214,61 +258,61 @@ docker.io/DOCKERHUB_USERNAME/tech-challenge-project:latest
 
 - Cria GitHub Release.
 
-### Deploy AWS
+### Deploy Da Aplicacao
 
-Executado manualmente pelo GitHub Actions:
+O workflow `Deploy` deste repositorio e manual para facilitar a demonstracao no AWS Academy e permitir remover a aplicacao depois da gravacao.
+Ele nao provisiona VPC, EKS, API Gateway ou RDS; essa responsabilidade fica nos repositorios segregados de infraestrutura.
 
-```text
-Deploy AWS -> Run workflow -> action=apply
-```
-
-Antes do deploy, valida:
-
-- Branch `main`.
-- Tag `vX.Y.Z` da versao atual.
-- Tag apontando para o commit atual da `main`.
-- `Quality`, `Sonar` e `Release` com sucesso para o commit.
-- GitHub Release existente.
-- Imagem Docker versionada existente no Docker Hub.
-
-Depois executa:
-
-- `terraform init`.
-- `terraform plan`.
-- `terraform apply`.
-- Gera Secret Kubernetes com `DATABASE_URL`.
-- Aplica manifests `k8s/overlays/aws`.
-- Executa deploy do banco via `Job` Kubernetes usando `/seed`.
-- Atualiza imagem do Deployment.
-- Aguarda rollout.
-- Imprime URL publica da API no log e no resumo do GitHub Actions.
-
-Para derrubar a infra:
+Fluxo previsto:
 
 ```text
-Deploy AWS -> Run workflow -> action=destroy
+pull_request -> Quality/Sonar
+main         -> Release da imagem Docker
+Run workflow -> action=apply, environment=homolog, image_tag=latest
+Run workflow -> action=destroy, environment=homolog
 ```
 
-O destroy remove os manifests Kubernetes, quando o cluster ainda existe, e depois executa `terraform destroy`.
+Inputs do workflow manual:
+
+```text
+action          apply ou destroy
+environment     homolog ou prod
+image_tag       tag Docker publicada pelo workflow Release
+cluster_name    opcional; se vazio usa tech-challenge-<ambiente>-eks
+run_migrations  yes para executar /seed antes do rollout
+```
+
+O deploy executa:
+
+- Conexao no EKS via AWS Academy.
+- Validacao do Deployment criado pelo repo `tech-challenge-infra-k8s`.
+- Migrations via `Job` Kubernetes usando o binario `/seed`.
+- Atualizacao da imagem Docker no Deployment.
+- Aguardo do rollout.
+
+Para remover apenas a aplicacao:
+
+```text
+Deploy -> Run workflow -> action=destroy
+```
+
+O destroy remove Deployment, HPA, Service, ConfigMap, Secret, ServiceAccount e o Job de migrations da aplicacao.
+A infraestrutura cloud deve ser destruida depois pelos repositorios `tech-challenge-auth-lambda`, `tech-challenge-infra-database` e `tech-challenge-infra-k8s`.
 
 ## Secrets Do GitHub Actions
 
 Configure:
 
 ```text
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
-DOCKERHUB_USERNAME
-DOCKERHUB_TOKEN
-TF_STATE_BUCKET
-TF_VAR_DB_PASSWORD
-JWT_SECRET
-BREVO_API_KEY
-BREVO_SENDER_EMAIL
-SONAR_TOKEN
+AWS_ACCESS_KEY_ID      deploy manual no EKS
+AWS_SECRET_ACCESS_KEY  deploy manual no EKS
+AWS_SESSION_TOKEN      deploy manual no EKS usando AWS Academy
+DOCKERHUB_USERNAME     release da imagem Docker
+DOCKERHUB_TOKEN        release da imagem Docker
+SONAR_TOKEN            analise Sonar
 ```
 
-`BREVO_API_KEY` e `BREVO_SENDER_EMAIL` podem ficar vazios caso o envio de e-mail nao seja demonstrado.
+Secrets como `DATABASE_URL`, `JWT_SECRET`, `BREVO_API_KEY` e `BREVO_SENDER_EMAIL` sao aplicados no Kubernetes pelo repositorio `tech-challenge-infra-k8s`.
 
 ## Teste De Escalabilidade
 
@@ -290,7 +334,18 @@ kubectl top pods -n tech-challenge
 
 Mais detalhes: [scripts/k6s/README.md](scripts/k6s/README.md)
 
+## Links
+
+- Repositorio: https://github.com/gustavodetoni/tech-challenge-project
+- Swagger local: http://localhost:8080/swagger/index.html
+- Swagger YAML: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/swagger.yaml
+- Swagger JSON: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/swagger.json
+- Postman: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/collections/tech-challenge.postman_collection.json
+- Deploy homologacao: sera atualizado apos o primeiro deploy cloud.
+- Deploy producao: sera atualizado apos o primeiro deploy cloud.
+
 ## Documentos Complementares
 
+- Arquitetura global, RFCs, ADRs e sequencias: [docs/architecture](docs/architecture)
 - Documentacao C4/Event Storming: [docs/documentation](docs/documentation)
 - Relatorios Sonar: [docs/sonar](docs/sonar)

@@ -29,7 +29,7 @@ func NewAdminServiceOrderFlowController(svc *serviceorder.ServiceOrderFlowUseCas
 func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 	var req dto.CreateServiceOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -57,13 +57,13 @@ func (h *AdminServiceOrderFlowController) CreateDraft(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceorder.ErrInvalidInput):
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, repository.ErrConflict):
-			c.JSON(http.StatusConflict, gin.H{"error": "conflict"})
+			shared.WriteHTTPError(c, http.StatusConflict, "conflict")
 		case errors.Is(err, repository.ErrNotFound):
-			c.JSON(http.StatusBadRequest, gin.H{"error": "service/part not found"})
+			shared.WriteHTTPError(c, http.StatusBadRequest, "service/part not found")
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+			shared.WriteHTTPError(c, http.StatusInternalServerError, "internal error")
 		}
 		return
 	}
@@ -88,7 +88,7 @@ func (h *AdminServiceOrderFlowController) ReviseBudget(c *gin.Context) {
 
 	var req dto.ReviseBudgetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -114,13 +114,13 @@ func (h *AdminServiceOrderFlowController) ReviseBudget(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceorder.ErrInvalidInput):
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, repository.ErrNotFound):
 			shared.WriteError(c, err)
 		case errors.Is(err, repository.ErrConflict):
-			c.JSON(http.StatusConflict, gin.H{"error": "conflict"})
+			shared.WriteHTTPError(c, http.StatusConflict, "conflict")
 		default:
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		}
 		return
 	}

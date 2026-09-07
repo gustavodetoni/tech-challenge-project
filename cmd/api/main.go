@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -49,8 +51,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	observabilityLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	router := gin.New()
-	router.Use(gin.Recovery())
+	router.Use(middlewares.RequestLogger(observabilityLogger))
+	router.Use(middlewares.RequestRecovery(observabilityLogger))
 
 	corsMW, err := config.NewCORSMiddleware(cfg.CORS)
 	if err != nil {
@@ -65,7 +69,8 @@ func main() {
 	router.Use(rateLimitMW)
 
 	jwtManager := auth.NewManager(cfg.JWTSecret, cfg.JWTIssuer, cfg.JWTAudience, time.Duration(cfg.JWTExpiryMinutes)*time.Minute)
-	authMW := middlewares.NewAuthMiddleware(jwtManager)
+	clientJWTManager := auth.NewManager(cfg.JWTSecret, cfg.ClientJWTIssuer, cfg.ClientJWTAudience, time.Duration(cfg.JWTExpiryMinutes)*time.Minute)
+	authMW := middlewares.NewAuthMiddlewareWithClientJWT(jwtManager, clientJWTManager)
 	userRepo := repositories.NewUserRepository(gormDB)
 	authService := appAuth.NewAuthUseCase(userRepo, jwtManager)
 

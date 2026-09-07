@@ -52,7 +52,7 @@ func (h *AdminVehiclesController) CreateForClient(c *gin.Context) {
 	clientID := c.Param("id")
 	var req dto.CreateVehicleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *AdminVehiclesController) CreateForClient(c *gin.Context) {
 		Notes:           req.Notes,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		shared.WriteHTTPError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	c.JSON(http.StatusCreated, mapper.VehicleResponseFromDomain(*v))
@@ -100,7 +100,7 @@ func (h *AdminVehiclesController) Update(c *gin.Context) {
 	id := c.Param("id")
 	var req dto.CreateVehicleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		shared.WriteHTTPError(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 

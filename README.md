@@ -50,11 +50,17 @@ HTTP/Gin -> Controllers -> Application Services -> Domain -> Repository Ports ->
 ## Documentacao Das APIs
 
 - Swagger local: http://localhost:8080/swagger/index.html
-- Swagger publicado: sera atualizado apos deploy da API.
+- Swagger publicado: https://hwq42fgalh.execute-api.us-east-1.amazonaws.com/swagger/index.html
 - Swagger JSON: [docs/swagger.json](docs/swagger.json)
 - Swagger YAML: [docs/swagger.yaml](docs/swagger.yaml)
 - Collection Postman: [docs/collections/tech-challenge.postman_collection.json](docs/collections/tech-challenge.postman_collection.json)
 - Collection Postman no GitHub: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/collections/tech-challenge.postman_collection.json
+
+## Governanca Dos Repositorios
+
+Os quatro repositorios da entrega possuem branch protection ativa na branch `main`, exigindo Pull Request para merge, execucao das validacoes de CI e impedindo commits diretos como fluxo oficial de desenvolvimento.
+
+Branches de homologacao e producao sao atendidas por GitHub Actions. O deploy e automatizado pela esteira: apos o disparo definido no workflow, a pipeline executa validacoes, aplica configuracoes, publica artefatos e realiza o rollout no ambiente AWS sem comandos manuais nos servidores.
 
 ## Execucao Local Com Docker Compose
 
@@ -195,7 +201,13 @@ Recursos agora provisionados pelos repositorios oficiais:
 - API Gateway.
 - Observabilidade Datadog.
 
-O deploy cloud final deve seguir a ordem documentada no repo `tech-challenge-infra-k8s`.
+As pastas Terraform oficiais da entrega sao:
+
+- `tech-challenge-infra-k8s/terraform`: VPC, EKS, API Gateway, VPC Link, security groups e integracoes.
+- `tech-challenge-infra-database/terraform`: RDS PostgreSQL gerenciado.
+- `tech-challenge-auth-lambda/terraform`: Lambda serverless de autenticacao por CPF/CNPJ.
+
+O deploy cloud final e executado pelas esteiras de GitHub Actions usando Terraform e deve seguir a ordem documentada no repo `tech-challenge-infra-k8s`.
 
 Mais detalhes: [infra/aws/README.md](infra/aws/README.md)
 
@@ -204,13 +216,17 @@ Mais detalhes: [infra/aws/README.md](infra/aws/README.md)
 Workflows em [.github/workflows](.github/workflows):
 
 ```text
-Quality -> Sonar -> Release -> Deploy manual da aplicacao
+Pull Request -> Quality/Sonar
+main/homolog/prod -> Release -> Deploy automatizado da aplicacao
 ```
+
+A pipeline de deploy da aplicacao usa GitHub Actions para conectar no EKS da AWS, validar o Deployment criado pela infraestrutura Kubernetes, executar migrations em `Job` Kubernetes, atualizar a imagem Docker publicada no Docker Hub e aguardar o rollout do Deployment.
 
 ## Observabilidade
 
 A API emite logs estruturados em JSON para cada requisicao HTTP.
 Cada request recebe um `X-Correlation-ID`; quando o cliente envia esse header, o valor e preservado, caso contrario a API gera um UUID.
+Esse identificador funciona como `traceId`/`correlation_id` da requisicao e permite acompanhar o mesmo fluxo entre API Gateway, API principal, logs, erros padronizados e traces coletados pelo Datadog Agent.
 
 Campos principais dos logs:
 
@@ -224,7 +240,7 @@ Campos principais dos logs:
 - `user_agent`
 
 O mesmo `correlation_id` e propagado para o contexto da request, header da resposta e respostas JSON de erro padronizadas.
-Isso permite correlacionar API Gateway, API principal, logs de erro e traces coletados pelo agente de observabilidade.
+A observabilidade da aplicacao em Kubernetes foi implementada com Datadog Agent instalado no cluster pelo repositorio `tech-challenge-infra-k8s`, coletando metricas de pods/deployments/nodes, logs estruturados, latencia, erros HTTP, healthchecks e traces correlacionados pelo `traceId`.
 
 ### Quality
 
@@ -260,19 +276,19 @@ docker.io/DOCKERHUB_USERNAME/tech-challenge-project:latest
 
 ### Deploy Da Aplicacao
 
-O workflow `Deploy` deste repositorio e manual para facilitar a demonstracao no AWS Academy e permitir remover a aplicacao depois da gravacao.
+O workflow `Deploy` automatiza o rollout da aplicacao no EKS usando GitHub Actions.
 Ele nao provisiona VPC, EKS, API Gateway ou RDS; essa responsabilidade fica nos repositorios segregados de infraestrutura.
 
 Fluxo previsto:
 
 ```text
 pull_request -> Quality/Sonar
-main         -> Release da imagem Docker
-Run workflow -> action=apply, environment=homolog, image_tag=latest
-Run workflow -> action=destroy, environment=homolog
+main/homolog/prod -> Release da imagem Docker
+Deploy           -> action=apply, environment=homolog/prod, image_tag=latest
+Destroy          -> action=destroy, environment=homolog/prod
 ```
 
-Inputs do workflow manual:
+Inputs do workflow:
 
 ```text
 action          apply ou destroy
@@ -304,9 +320,9 @@ A infraestrutura cloud deve ser destruida depois pelos repositorios `tech-challe
 Configure:
 
 ```text
-AWS_ACCESS_KEY_ID      deploy manual no EKS
-AWS_SECRET_ACCESS_KEY  deploy manual no EKS
-AWS_SESSION_TOKEN      deploy manual no EKS usando AWS Academy
+AWS_ACCESS_KEY_ID      deploy automatizado no EKS
+AWS_SECRET_ACCESS_KEY  deploy automatizado no EKS
+AWS_SESSION_TOKEN      deploy automatizado no EKS usando AWS Academy
 DOCKERHUB_USERNAME     release da imagem Docker
 DOCKERHUB_TOKEN        release da imagem Docker
 SONAR_TOKEN            analise Sonar
@@ -341,8 +357,9 @@ Mais detalhes: [scripts/k6s/README.md](scripts/k6s/README.md)
 - Swagger YAML: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/swagger.yaml
 - Swagger JSON: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/swagger.json
 - Postman: https://github.com/gustavodetoni/tech-challenge-project/blob/main/docs/collections/tech-challenge.postman_collection.json
-- Deploy homologacao: sera atualizado apos o primeiro deploy cloud.
-- Deploy producao: sera atualizado apos o primeiro deploy cloud.
+- Deploy homologacao: https://hwq42fgalh.execute-api.us-east-1.amazonaws.com
+- Healthcheck homologacao: https://hwq42fgalh.execute-api.us-east-1.amazonaws.com/health
+- Deploy producao: mesmo fluxo automatizado de deploy, usando `environment=prod`.
 
 ## Documentos Complementares
 

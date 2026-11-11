@@ -1,6 +1,6 @@
-# Tech Challenge API
+# Tech Challenge — Fase 4
 
-API em Go para gestao de oficina mecanica, cobrindo clientes, veiculos, servicos, pecas, usuarios e ordens de servico. A fase 2 evolui a aplicacao para aumentar qualidade, resiliencia, escalabilidade e automacao de infraestrutura/deploy.
+Este repositório preserva a API legada da Fase 3 e centraliza a documentação da evolução para microsserviços da Fase 4. A implementação de negócio distribuída está nos três repositórios abaixo.
 
 ## Repositorios Da Entrega
 
@@ -8,6 +8,81 @@ API em Go para gestao de oficina mecanica, cobrindo clientes, veiculos, servicos
 - Lambda Auth CPF/CNPJ: https://github.com/gustavodetoni/tech-challenge-auth-lambda
 - Infra Kubernetes: https://github.com/gustavodetoni/tech-challenge-infra-k8s
 - Infra Database: https://github.com/gustavodetoni/tech-challenge-infra-database
+- OS Service: `../tech-challenge-os-service`
+- Billing Service: `../tech-challenge-billing-service`
+- Execution Service: `../tech-challenge-execution-service`
+
+## Ambiente integrado da Fase 4
+
+```bash
+docker compose -f docker-compose.phase4.yml up --build
+```
+
+Serviços locais:
+
+| Serviço | URL | Banco |
+|---|---:|---|
+| OS Service | http://localhost:8081 | PostgreSQL `os_service` |
+| Billing Service | http://localhost:8082 | PostgreSQL `billing_service` |
+| Execution Service | http://localhost:8083 | MongoDB `execution_service` |
+| RabbitMQ Management | http://localhost:15672 | `guest/guest` |
+
+Para executar a demonstração:
+
+```bash
+bash scripts/demo-saga.sh
+```
+
+O script cria uma OS, cria o orçamento, cria o pagamento, simula o webhook aprovado, consulta a execução, finaliza o reparo e consulta o status final. Para mostrar compensação, use uma segunda OS e invoque `POST /service-orders/{id}/cancel`.
+
+Contratos OpenAPI:
+
+- [OS Service](../tech-challenge-os-service/docs/openapi.yaml)
+- [Billing Service](../tech-challenge-billing-service/docs/openapi.yaml)
+- [Execution Service](../tech-challenge-execution-service/docs/openapi.yaml)
+
+## Saga Pattern, falhas e testes
+
+A Saga é orquestrada pelo OS Service. O fluxo normal é:
+
+```text
+ServiceOrderCreated
+→ orçamento
+→ pagamento aprovado
+→ PaymentConfirmed
+→ execução
+→ ServiceOrderExecutionCompleted
+```
+
+O tratamento de falha também está implementado:
+
+```text
+ExecutionFailed
+→ OS Service marca a OS como CANCELED
+→ PaymentRefundRequested
+→ Billing Service solicita estorno ao Mercado Pago
+→ orçamento marcado como REFUNDED
+```
+
+Para simular a falha:
+
+```bash
+curl -X POST http://localhost:8083/executions/ORDER_ID/fail
+```
+
+Os testes unitários dos três serviços ficam nas respectivas pastas `tests/`. O OS Service possui o BDD executável Godog em `tests/order_saga_bdd_test.go`, baseado em `features/order_saga.feature`, cobrindo o fluxo de sucesso e a compensação após falha.
+
+Cada serviço apresenta atualmente 100% de cobertura no pacote `internal/application`, e os respectivos CI exigem mínimo de 80% nesse pacote.
+
+## Fase 4 — Microsserviços
+
+Os serviços da Fase 4 foram adicionados como repositórios independentes no diretório raiz do workspace:
+
+- `tech-challenge-os-service`: ordens de serviço, Saga e Outbox.
+- `tech-challenge-billing-service`: orçamentos, pagamentos e Mercado Pago.
+- `tech-challenge-execution-service`: execução da OS com MongoDB.
+
+O ambiente local integrado está em [docker-compose.phase4.yml](docker-compose.phase4.yml) e a arquitetura está documentada em [phase4-microservices.md](docs/architecture/phase4-microservices.md).
 
 ## Objetivos Da Fase 2
 

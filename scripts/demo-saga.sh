@@ -39,5 +39,6 @@ sleep 1
 curl -fsS "$OS_URL/service-orders/$ORDER_ID" | jq .
 
 echo "7. Demonstração de compensação"
-echo "Para demonstrar rollback, crie outra OS e execute:"
-echo "curl -X POST $OS_URL/service-orders/<ORDER_ID>/cancel"
+echo "Para demonstrar a falha automática, crie uma segunda OS, aguarde o pagamento e execute antes da finalização:"
+echo "curl -X POST $EXECUTION_URL/executions/<ORDER_ID>/fail"
+echo "O Execution Service publicará ExecutionFailed; o OS Service cancelará a OS e o Billing Service solicitará o estorno."

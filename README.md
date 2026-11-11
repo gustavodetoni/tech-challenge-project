@@ -41,6 +41,39 @@ Contratos OpenAPI:
 - [Billing Service](../tech-challenge-billing-service/docs/openapi.yaml)
 - [Execution Service](../tech-challenge-execution-service/docs/openapi.yaml)
 
+## Saga Pattern, falhas e testes
+
+A Saga é orquestrada pelo OS Service. O fluxo normal é:
+
+```text
+ServiceOrderCreated
+→ orçamento
+→ pagamento aprovado
+→ PaymentConfirmed
+→ execução
+→ ServiceOrderExecutionCompleted
+```
+
+O tratamento de falha também está implementado:
+
+```text
+ExecutionFailed
+→ OS Service marca a OS como CANCELED
+→ PaymentRefundRequested
+→ Billing Service solicita estorno ao Mercado Pago
+→ orçamento marcado como REFUNDED
+```
+
+Para simular a falha:
+
+```bash
+curl -X POST http://localhost:8083/executions/ORDER_ID/fail
+```
+
+Os testes unitários dos três serviços ficam nas respectivas pastas `tests/`. O OS Service possui o BDD executável Godog em `tests/order_saga_bdd_test.go`, baseado em `features/order_saga.feature`, cobrindo o fluxo de sucesso e a compensação após falha.
+
+Cada serviço apresenta atualmente 100% de cobertura no pacote `internal/application`, e os respectivos CI exigem mínimo de 80% nesse pacote.
+
 ## Fase 4 — Microsserviços
 
 Os serviços da Fase 4 foram adicionados como repositórios independentes no diretório raiz do workspace:

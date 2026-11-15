@@ -74,6 +74,15 @@ Os testes unitários dos três serviços ficam nas respectivas pastas `tests/`. 
 
 Cada serviço apresenta atualmente 100% de cobertura no pacote `internal/application`, e os respectivos CI exigem mínimo de 80% nesse pacote.
 
+As falhas das etapas anteriores também possuem compensação:
+
+```text
+QuoteCreationFailed ou PaymentFailed
+→ OS Service marca a OS como CANCELED
+```
+
+Falhas locais de banco usam rollback transacional; falhas entre microsserviços usam eventos de compensação publicados no RabbitMQ.
+
 ## Fase 4 — Microsserviços
 
 Os serviços da Fase 4 foram adicionados como repositórios independentes no diretório raiz do workspace:
@@ -441,3 +450,32 @@ Mais detalhes: [scripts/k6s/README.md](scripts/k6s/README.md)
 - Arquitetura global, RFCs, ADRs e sequencias: [docs/architecture](docs/architecture)
 - Documentacao C4/Event Storming: [docs/documentation](docs/documentation)
 - Relatorios Sonar: [docs/sonar](docs/sonar)
+
+## Mapa de conformidade da Fase 4
+
+| Exigência | Onde está implementada |
+|---|---|
+| OS Service | [tech-challenge-os-service](../tech-challenge-os-service) |
+| Billing Service | [tech-challenge-billing-service](../tech-challenge-billing-service) |
+| Execution Service | [tech-challenge-execution-service](../tech-challenge-execution-service) |
+| Bancos SQL | PostgreSQL independente para OS e Billing |
+| Banco NoSQL | MongoDB independente para Execution |
+| Mensageria | RabbitMQ e exchange `tech-challenge.events` |
+| Saga | Orquestrada pelo OS Service |
+| Compensações | Cancelamento da OS, `PaymentFailed`, `QuoteCreationFailed`, `ExecutionFailed` e estorno |
+| Testes unitários | Pasta `tests/` em cada microsserviço |
+| BDD | Godog em `tech-challenge-os-service/tests/order_saga_bdd_test.go` |
+| CI/CD | Workflows independentes nos três microsserviços |
+| Kubernetes | Manifestos centralizados em [tech-challenge-infra-k8s](../tech-challenge-infra-k8s/k8s/base/microservices.yaml) |
+| Qualidade | Cobertura, `go vet`, SonarQube e build no CI |
+| Observabilidade | Datadog Agent no EKS e logs estruturados |
+
+## Decisão sobre os manifestos Kubernetes
+
+Cada microsserviço possui seu próprio repositório, Dockerfile, pipeline e workflow de deploy. Os manifestos Kubernetes foram centralizados intencionalmente no repositório `tech-challenge-infra-k8s`, que é o repositório oficial de infraestrutura da solução.
+
+Essa decisão evita duplicação e garante que homologação e produção usem a mesma composição de cluster. O arquivo [microservices.yaml](../tech-challenge-infra-k8s/k8s/base/microservices.yaml) contém os Deployments e Services dos três microsserviços; os overlays definem ambiente, Secrets e tags. Os workflows dos serviços atualizam apenas suas próprias imagens.
+
+## Evidências esperadas
+
+Para a avaliação, devem ser apresentados os links ou prints de execução dos três CI, cobertura mínima de 80%, BDD, SonarQube, deploy Kubernetes, pods/rollout no EKS, eventos RabbitMQ e Datadog.

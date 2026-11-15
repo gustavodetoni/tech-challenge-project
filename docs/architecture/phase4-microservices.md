@@ -14,6 +14,8 @@ Nenhum serviço acessa o banco de outro serviço. As integrações são feitas p
 
 O OS Service inicia a Saga ao publicar `ServiceOrderCreated`. O Billing Service cria o orçamento e publica `PaymentConfirmed` após o webhook do Mercado Pago. O Execution Service consome esse evento e publica `ExecutionStarted`/`ServiceOrderExecutionCompleted`. Em falha, o Execution Service publica `ExecutionFailed`, o OS Service cancela a ordem e publica `PaymentRefundRequested`; o Billing Service executa o estorno e marca o orçamento como `REFUNDED`.
 
+Falhas na criação do orçamento publicam `QuoteCreationFailed` e falhas de pagamento publicam `PaymentFailed`; ambos levam o OS Service a `CANCELED` sem estorno quando ainda não existe pagamento confirmado.
+
 Cada serviço possui Outbox ou persistência local antes da publicação, consumidores idempotentes e filas duráveis. A compensação da criação da OS é `POST /service-orders/{id}/cancel`; falhas de pagamento ou execução permanecem rastreáveis por `saga_id` e podem ser reprocessadas pela fila.
 
 ## Operação local
